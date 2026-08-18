@@ -1,0 +1,44 @@
+name: Assemble play assets
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'assets/parts/**'
+      - '.github/workflows/assemble.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: assemble-assets
+  cancel-in-progress: false
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Concatenate parts into final assets
+        run: |
+          set -euo pipefail
+          mkdir -p assets
+          cat assets/parts/css_*.txt > assets/index.css
+          cat assets/parts/js_*.txt > assets/index.js
+          wc -c assets/index.css assets/index.js
+          test "$(wc -c < assets/index.css)" -ge 467000
+          test "$(wc -c < assets/index.js)" -ge 687000
+      - name: Commit assembled assets
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/index.css assets/index.js
+          if git diff --cached --quiet; then
+            echo "No assembled-asset changes"
+            exit 0
+          fi
+          git commit -m "Add play assets"
+          git push
