@@ -5,7 +5,6 @@ on:
     branches: [main]
     paths:
       - 'assets/parts/**'
-      - '.github/workflows/assemble.yml'
   workflow_dispatch:
 
 permissions:
@@ -24,15 +23,27 @@ jobs:
       - name: Concatenate parts into final assets
         run: |
           set -euo pipefail
+          css_n=$(ls assets/parts/css_*.txt 2>/dev/null | wc -l)
+          js_n=$(ls assets/parts/js_*.txt 2>/dev/null | wc -l)
+          echo "css parts=$css_n js parts=$js_n"
+          if [ "$css_n" -lt 6 ] || [ "$js_n" -lt 9 ]; then
+            echo "Not all parts uploaded yet; skipping assemble"
+            exit 0
+          fi
           mkdir -p assets
           cat assets/parts/css_*.txt > assets/index.css
           cat assets/parts/js_*.txt > assets/index.js
           wc -c assets/index.css assets/index.js
-          test "$(wc -c < assets/index.css)" -ge 467000
-          test "$(wc -c < assets/index.js)" -ge 687000
+          test "$(wc -c < assets/index.css)" -eq 467310
+          test "$(wc -c < assets/index.js)" -eq 687985
       - name: Commit assembled assets
         run: |
           set -euo pipefail
+          css_n=$(ls assets/parts/css_*.txt 2>/dev/null | wc -l)
+          js_n=$(ls assets/parts/js_*.txt 2>/dev/null | wc -l)
+          if [ "$css_n" -lt 6 ] || [ "$js_n" -lt 9 ]; then
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add assets/index.css assets/index.js
