@@ -1,2 +1,1 @@
-# electromat-play
-Playable build of ELECTROMAT Night Shift
+ELECTROMAT Night Shift — play here.
