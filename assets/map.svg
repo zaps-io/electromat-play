@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800">
+  <rect width="1200" height="800" fill="#101014"/>
+  <g fill="none" stroke="#2a2a33" stroke-width="1">
+    <path d="M0 80 H1200 M0 160 H1200 M0 240 H1200 M0 320 H1200 M0 400 H1200 M0 480 H1200 M0 560 H1200 M0 640 H1200 M0 720 H1200"/>
+    <path d="M80 0 V800 M160 0 V800 M240 0 V800 M320 0 V800 M400 0 V800 M480 0 V800 M560 0 V800 M640 0 V800 M720 0 V800 M800 0 V800 M880 0 V800 M960 0 V800 M1040 0 V800 M1120 0 V800"/>
+  </g>
+
+  <!-- CA -->
+  <path d="M48 70 L168 78 L198 250 L168 410 L198 560 L182 730 L92 742 L52 500 L36 230 Z" fill="#1a1a22" stroke="#B8BCC0" stroke-opacity="0.35"/>
+  <!-- NV -->
+  <path d="M168 78 L318 90 L308 250 L258 360 L198 250 Z" fill="#22222c" stroke="#B8BCC0" stroke-opacity="0.35"/>
+  <!-- UT -->
+  <path d="M318 90 L478 98 L468 250 L358 300 L308 250 Z" fill="#1c1c26" stroke="#B8BCC0" stroke-opacity="0.35"/>
+  <!-- CO -->
+  <path d="M478 98 L708 110 L698 270 L468 250 Z" fill="#242430" stroke="#B8BCC0" stroke-opacity="0.35"/>
+  <!-- AZ -->
+  <path d="M198 250 L358 300 L468 250 L560 430 L470 620 L198 560 L168 410 Z" fill="#1e1e28" stroke="#B8BCC0" stroke-opacity="0.35"/>
+  <!-- NM -->
+  <path d="M468 250 L698 270 L720 430 L590 620 L470 620 L560 430 Z" fill="#20202a" stroke="#B8BCC0" stroke-opacity="0.35"/>
+  <!-- TX (west/north) -->
+  <path d="M590 620 L720 430 L980 410 L1040 520 L900 680 L720 700 Z" fill="#191922" stroke="#B8BCC0" stroke-opacity="0.35"/>
+
+  <g fill="#B8BCC0" fill-opacity="0.35" font-family="Share Tech Mono, monospace" font-size="18" letter-spacing="4">
+    <text x="90" y="400">CA</text>
+    <text x="230" y="180">NV</text>
+    <text x="360" y="170">UT</text>
+    <text x="560" y="180">CO</text>
+    <text x="320" y="470">AZ</text>
+    <text x="600" y="400">NM</text>
+    <text x="820" y="560">TX</text>
+  </g>
+
+  <path d="M130 230 L230 175 L400 130 L520 210 L640 155 M155 430 L300 330 L360 285 L400 370 L420 455 L455 545 L590 560 L900 430 M155 430 L175 535 L455 545 M420 455 L580 420 L600 330 L640 155 M420 455 L300 330 L230 175 M130 230 L155 430" fill="none" stroke="#E63225" stroke-opacity="0.38" stroke-width="3"/>
+
+  <text x="40" y="40" fill="#E63225" font-family="Anton, sans-serif" font-size="28">WESTERN INTERCONNECT</text>
+  <text x="40" y="62" fill="#B8BCC0" font-family="Share Tech Mono, monospace" font-size="12">THE STATION IS NOT BUILT YET. THE CONTINENT ALREADY IS.</text>
+</svg>

@@ -1,1 +1,156 @@
-<!doctype html><html><head><meta charset="utf-8"><title>Private</title></head><body>This project is private.</body></html>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ZAPS EMPIRE</title>
+    <meta
+      name="description"
+      content="The station is not built yet. The continent already is."
+    />
+    <link rel="icon" href="assets/brand/zaps-wordmark-only-red.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600;700&family=Share+Tech+Mono&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="crt-vignette" aria-hidden="true"></div>
+
+    <section id="title-screen" class="screen" data-screen="title">
+      <img class="title-crt" src="assets/title-crt.svg" alt="" />
+      <div class="title-inner">
+        <p class="kicker">CONTINENTAL OPERATIONS // TERMINAL 001</p>
+        <div class="brand-lockup" data-lockup="cream">
+          <img
+            class="wordmark"
+            src="assets/brand/zaps-wordmark-only-cream.svg"
+            alt=""
+          />
+          <span class="empire-word">EMPIRE</span>
+        </div>
+        <p class="tagline">The station is not built yet. The continent already is.</p>
+        <div class="title-actions">
+          <button id="btn-open-board" class="btn-primary" type="button">
+            OPEN THE BOARD
+          </button>
+          <button id="btn-continue" class="btn-ghost hidden" type="button">
+            CONTINUE CAMPAIGN
+          </button>
+        </div>
+        <p class="title-meta">16 CITIES · 7 STATES · AZ NV CA NM CO UT TX</p>
+      </div>
+    </section>
+
+    <section id="briefing-screen" class="screen hidden" data-screen="briefing">
+      <div class="briefing-card">
+        <p class="kicker">BRIEFING // PHOENIX HQ</p>
+        <h1>Claim the corridor before the others do.</h1>
+        <p>
+          You command Zaps continental build-out. Phoenix is live. Tucson and
+          Flagstaff are still dirt. Rivals already hold the coasts and the
+          Front Range.
+        </p>
+        <ul>
+          <li>Deploy DC chargers, MCS, BESS, lounges, and markets.</li>
+          <li>Win share with price, speed, and amenities — not slogans.</li>
+          <li>Cut deals. Survive price wars. Hold seven states.</li>
+        </ul>
+        <p class="briefing-rivals">
+          On the board now: <strong>VOLTSPAN</strong>, <strong>GRIDHAWK</strong>,
+          <strong>ARCWAY</strong>. Later: REDNODE, AMPFIELD.
+        </p>
+        <button id="btn-enter" class="btn-primary" type="button">
+          ENTER THE CONTINENT
+        </button>
+      </div>
+    </section>
+
+    <section id="board-screen" class="screen hidden" data-screen="board">
+      <header class="hud">
+        <div class="brand-lockup compact" data-lockup="cream">
+          <img
+            class="wordmark"
+            src="assets/brand/zaps-wordmark-only-cream.svg"
+            alt=""
+          />
+          <span class="empire-word">EMPIRE</span>
+        </div>
+        <div class="hud-stats">
+          <div class="stat">
+            <span class="stat-label">MONTH</span>
+            <span id="stat-date" class="stat-value">Y1 M01</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">CASH</span>
+            <span id="stat-cash" class="stat-value">$0</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">SHARE</span>
+            <span id="stat-share" class="stat-value">0%</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">CITIES</span>
+            <span id="stat-cities" class="stat-value">1/16</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">NET</span>
+            <span id="stat-net" class="stat-value">$0</span>
+          </div>
+        </div>
+        <div class="hud-controls">
+          <div class="speed" role="group" aria-label="Game speed">
+            <button data-speed="0" type="button">PAUSE</button>
+            <button data-speed="1" class="active" type="button">1×</button>
+            <button data-speed="2" type="button">2×</button>
+            <button data-speed="4" type="button">4×</button>
+          </div>
+          <button id="btn-save" class="btn-tiny" type="button">SAVE</button>
+          <button id="btn-load" class="btn-tiny" type="button">LOAD</button>
+          <button id="btn-new" class="btn-tiny" type="button">NEW</button>
+        </div>
+      </header>
+
+      <div class="board-body">
+        <div class="map-wrap">
+          <div class="map-stage" id="map-stage">
+            <div class="map-frame">
+              <img class="map-art" src="assets/map.svg" alt="Southwest charging continent" />
+              <svg class="corridor-layer" id="corridor-layer" viewBox="0 0 1200 800" aria-hidden="true"></svg>
+              <div id="city-layer" class="city-layer"></div>
+            </div>
+          </div>
+          <aside class="ticker" id="ticker" aria-live="polite"></aside>
+        </div>
+
+        <aside class="inspector" id="inspector">
+          <p class="kicker" id="insp-kicker">SELECT A CITY</p>
+          <h2 id="insp-name">Continent</h2>
+          <p id="insp-blurb" class="insp-blurb">
+            Click a node. Deploy into dirt. Price the kilowatt. Watch rivals
+            answer.
+          </p>
+          <div id="insp-body" class="insp-body"></div>
+        </aside>
+      </div>
+
+      <footer class="tray">
+        <div class="tray-label">DEPLOY</div>
+        <div class="tray-grid" id="tray-grid"></div>
+        <div class="tray-note">
+          Space pause · 1 2 4 speed · click city then deploy. Builds queue up to
+          three crews.
+        </div>
+      </footer>
+    </section>
+
+    <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+      <div class="modal-card" id="modal-card"></div>
+    </div>
+
+    <script src="game.js"></script>
+  </body>
+</html>
