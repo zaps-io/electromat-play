@@ -178,7 +178,6 @@
   let selected = "phoenix";
   let timer = null;
   let lastNet = 0;
-  let speedBeforeModal = 1;
 
   function emptySite() {
     return { dc: 0, mcs: 0, bess: 0, lounge: 0, market: 0 };
@@ -234,8 +233,9 @@
       cities,
       unlocked: ["voltspan", "gridhawk", "arcway"],
       debtStreak: 0,
-      nextDeal: 22 + Math.floor(Math.random() * 10),
+      nextDeal: 48 + Math.floor(Math.random() * 20),
       pendingDeal: null,
+      warFired: false,
       over: null,
     };
   }
@@ -353,8 +353,8 @@
     el.className = `toast ${kind}`;
     el.textContent = msg;
     host.appendChild(el);
-    setTimeout(() => el.remove(), 5200);
-    while (host.children.length > 2) host.firstElementChild.remove();
+    setTimeout(() => el.remove(), 4200);
+    while (host.children.length > 1) host.firstElementChild.remove();
   }
 
   function crewsBusy() {
@@ -429,7 +429,6 @@
     else site[job.type] += 1;
     const who = job.faction === YOU ? "Zaps" : RIVALS[job.faction].name;
     log(`${who} brings ${BUILD[job.type].name} online in ${CITY_BY_ID[job.city].name}.`, job.faction === YOU ? "good" : "bad");
-    if (job.faction === YOU) toast(`${BUILD[job.type].name} online · ${CITY_BY_ID[job.city].name}`, "good");
   }
 
   function activeRivals() {
@@ -478,57 +477,26 @@
     maybeRivalWar(rid, targetId);
   }
 
-  function modalOpen() {
-    return $("modal") && !$("modal").classList.contains("hidden");
-  }
-
   function maybeRivalWar(rid, targetId) {
+    if (state.warFired) return;
     const city = state.cities[targetId];
     const rival = RIVALS[rid];
-    if ((city.share[YOU] || 0) <= 0.42 || city.price[rid] <= 0.32) return;
-    if (Math.random() > 0.055) return;
+    if (!hasCap(city.sites[YOU])) return;
+    if ((city.share[YOU] || 0) <= 0.45 || city.price[rid] <= 0.32) return;
+    if (Math.random() > 0.02) return;
+    state.warFired = true;
     city.price[rid] = Math.max(0.28, +(city.price[rid] - 0.03).toFixed(2));
     city.war = 3;
     const cityName = CITY_BY_ID[targetId].name;
     log(`${rival.name} opens a price war in ${cityName}.`, "deal");
-    const youHold = hasCap(city.sites[YOU]);
-    if (youHold && !state.over && !modalOpen() && Math.random() < 0.32) {
-      speedBeforeModal = state.speed || 1;
-      setSpeed(0);
-      showModal({
-        kicker: "PRICE WAR",
-        title: `${rival.name} undercuts ${cityName}`,
-        body: `They dropped to $${city.price[rid].toFixed(2)}/kWh. Match at $0.32 or hold rate and bleed share.`,
-        actions: [
-          {
-            label: "MATCH $0.32",
-            primary: true,
-            run() {
-              city.price[YOU] = 0.32;
-              hideModal();
-              setSpeed(speedBeforeModal || 1);
-              renderAll();
-            },
-          },
-          {
-            label: "HOLD RATE",
-            run() {
-              hideModal();
-              setSpeed(speedBeforeModal || 1);
-            },
-          },
-        ],
-      });
-    } else {
-      toast(`${rival.name} PRICE WAR · ${cityName}`, "bad");
-    }
+    toast(`${rival.name} PRICE WAR · ${cityName}`, "bad");
   }
 
   function maybeDeal() {
     if (state.over || state.pendingDeal) return;
     if (state.month < state.nextDeal) return;
-    state.nextDeal = state.month + 18 + Math.floor(Math.random() * 14);
-    if (Math.random() > 0.4) return;
+    state.nextDeal = state.month + 40 + Math.floor(Math.random() * 24);
+    if (Math.random() > 0.12) return;
     const ids = Object.keys(DEALS);
     state.pendingDeal = ids[Math.floor(Math.random() * ids.length)];
     const deal = DEALS[state.pendingDeal];
@@ -667,7 +635,6 @@
   function saveManual() {
     persistQuiet();
     log("Campaign saved to this browser.", "good");
-    toast("Campaign saved.", "good");
   }
 
   function readSave() {
@@ -676,8 +643,9 @@
 
   function hydrate(raw) {
     state = JSON.parse(raw);
-    if (state.nextDeal == null) state.nextDeal = state.month + 18;
+    if (state.nextDeal == null) state.nextDeal = state.month + 48;
     if (state.pendingDeal === undefined) state.pendingDeal = null;
+    if (state.warFired == null) state.warFired = false;
     selected = hasCap(state.cities.phoenix.sites[YOU])
       ? "phoenix"
       : CITIES.find((c) => hasCap(state.cities[c.id].sites[YOU]))?.id || "phoenix";
@@ -748,6 +716,7 @@
       row.appendChild(b);
     }
     card.append(k, h, p, row);
+    $("deal-sheet")?.classList.add("hidden");
     $("modal").classList.remove("hidden");
   }
 
@@ -826,26 +795,28 @@
 
   function lotLabel(x, y, w, h, text, detail) {
     if (!detail) return "";
-    return `<text x="${x + w / 2}" y="${y + h - 3.2}" text-anchor="middle" fill="${PAL.steel}" font-size="5.2" font-family="Share Tech Mono, monospace">${text}</text>`;
+    return `<text x="${x + w / 2}" y="${y + h - 3.6}" text-anchor="middle" fill="${PAL.cream}" font-size="9" font-weight="700" font-family="Share Tech Mono, monospace">${text}</text>`;
   }
 
   function dcStall(x, y, w, h, { live, raising, extra, detail }) {
     if (raising) {
       return (
         lotBox(x, y, w, h, PAL.ink, PAL.amber, true) +
-        `<path d="M${x + 4} ${y + h - 4} L${x + w / 2} ${y + 5} L${x + w - 4} ${y + h - 4}" fill="none" stroke="${PAL.amber}" stroke-width="1.2"/>` +
+        `<path d="M${x + 5} ${y + h - 6} L${x + w / 2} ${y + 6} L${x + w - 5} ${y + h - 6}" fill="none" stroke="${PAL.amber}" stroke-width="2"/>` +
         lotLabel(x, y, w, h, "RAISE DC", detail)
       );
     }
     if (!live) {
       return lotBox(x, y, w, h, PAL.dirt, "#4a453c", true) + lotLabel(x, y, w, h, "DC LOT", detail);
     }
-    const plus = extra > 0 && detail ? `<text x="${x + w - 6}" y="${y + 8}" fill="${PAL.cream}" font-size="6" font-family="Share Tech Mono, monospace">+${extra}</text>` : "";
+    const plus = extra > 0 ? `<text x="${x + w - 8}" y="${y + 11}" fill="${PAL.cream}" font-size="10" font-family="Share Tech Mono, monospace">+${extra}</text>` : "";
     return (
-      lotBox(x, y, w, h, PAL.charcoal, PAL.cream) +
-      `<rect x="${x + 4}" y="${y + 5}" width="${w - 8}" height="${h * 0.34}" fill="${PAL.cyan}"/>` +
-      `<rect x="${x + 4}" y="${y + h * 0.48}" width="${w - 8}" height="3.2" fill="${PAL.red}"/>` +
-      `<rect x="${x + 6}" y="${y + h - 10}" width="${w - 12}" height="4" fill="${PAL.amber}"/>` +
+      lotBox(x, y, w, h, PAL.pad, PAL.cream) +
+      `<rect x="${x + 3}" y="${y + 3}" width="${w - 6}" height="${h * 0.42}" fill="${PAL.cyan}"/>` +
+      `<rect x="${x + 6}" y="${y + 6}" width="${w - 12}" height="${h * 0.22}" fill="${PAL.charcoal}"/>` +
+      `<rect x="${x + w / 2 - 3}" y="${y + h * 0.42}" width="6" height="${h * 0.22}" fill="${PAL.red}"/>` +
+      `<rect x="${x + 7}" y="${y + h - 13}" width="${(w - 18) / 2}" height="5" fill="${PAL.amber}"/>` +
+      `<rect x="${x + w / 2 + 2}" y="${y + h - 13}" width="${(w - 18) / 2}" height="5" fill="${PAL.amber}"/>` +
       plus +
       lotLabel(x, y, w, h, "DC", detail)
     );
@@ -1019,11 +990,20 @@
       });
       const compound = document.createElement("div");
       compound.className = "compound";
-      compound.innerHTML = compoundMarkup(city, false);
+      compound.innerHTML = compoundMarkup(city, true);
       const label = document.createElement("span");
       label.className = "city-label";
       label.textContent = meta.name.toUpperCase();
       btn.append(compound);
+      if (youSite.dc || youSite.mcs) {
+        const kit = document.createElement("span");
+        kit.className = "city-kit";
+        const bits = [];
+        if (youSite.dc) bits.push(`${youSite.dc} DC`);
+        if (youSite.mcs) bits.push(`${youSite.mcs} MCS`);
+        kit.textContent = bits.join(" · ");
+        btn.append(kit);
+      }
       if (raising) {
         const raise = document.createElement("span");
         raise.className = "city-raise";
@@ -1033,6 +1013,14 @@
       btn.append(label);
       layer.appendChild(btn);
     }
+  }
+
+  function applyMapZoom() {
+    const frame = $("map-frame");
+    if (!frame || !selected) return;
+    const meta = CITY_BY_ID[selected];
+    frame.style.transformOrigin = `${(meta.x / 1200) * 100}% ${(meta.y / 800) * 100}%`;
+    frame.classList.add("zoomed");
   }
 
   function renderInspector() {
@@ -1134,6 +1122,7 @@
     renderInspector();
     renderTray();
     renderTicker();
+    applyMapZoom();
   }
 
   function hasSave() {

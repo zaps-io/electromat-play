@@ -268,7 +268,7 @@ button {
 
 .board-body {
   display: grid;
-  grid-template-columns: 1fr 320px;
+  grid-template-columns: 1fr 380px;
   min-height: 0;
 }
 
@@ -286,12 +286,19 @@ button {
   place-items: center;
   padding: 0.4rem;
   container-type: size;
+  overflow: hidden;
 }
 
 .map-frame {
   position: relative;
   width: min(100cqw, calc(100cqh * 1.5));
   aspect-ratio: 1200 / 800;
+  transition: transform 0.4s ease;
+  transform-origin: 50% 50%;
+}
+
+.map-frame.zoomed {
+  transform: scale(1.7);
 }
 
 .map-art,
@@ -323,45 +330,55 @@ button {
   border: 0;
   padding: 0;
   color: inherit;
+  z-index: 1;
 }
 
 .city-node .compound {
   display: block;
-  width: 58px;
-  height: 44px;
+  width: 150px;
+  height: 112px;
   filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.72));
 }
 
 .city-node.tier-2 .compound {
-  width: 68px;
-  height: 52px;
+  width: 176px;
+  height: 132px;
 }
 
 .city-node.tier-3 .compound {
-  width: 78px;
-  height: 58px;
+  width: 204px;
+  height: 154px;
 }
 
-.city-node.rival .compound,
-.city-node.hostile .compound {
-  width: 44px;
-  height: 34px;
+.city-node.rival:not(.zaps) .compound,
+.city-node.hostile:not(.zaps) .compound {
+  width: 112px;
+  height: 84px;
   filter: drop-shadow(0 2px 5px rgba(0, 212, 245, 0.28));
 }
 
 .city-node.dirt .compound {
-  width: 18px;
-  height: 18px;
+  width: 36px;
+  height: 36px;
   filter: none;
 }
 
 .city-node.selected {
-  z-index: 4;
+  z-index: 6;
 }
 
 .city-node.selected .compound {
-  outline: 1px dashed var(--cream);
-  outline-offset: 3px;
+  width: 248px;
+  height: 186px;
+  outline: 2px dashed var(--cream);
+  outline-offset: 5px;
+}
+
+.city-node.selected.tier-1 .compound,
+.city-node.selected.tier-2 .compound,
+.city-node.selected.tier-3 .compound {
+  width: 248px;
+  height: 186px;
 }
 
 .city-node.raising .compound {
@@ -382,26 +399,42 @@ button {
   filter: drop-shadow(0 0 8px rgba(230, 50, 37, 0.45));
 }
 
+.map-frame.zoomed .city-node:not(.selected) {
+  opacity: 0.78;
+}
+
 .city-label {
   display: block;
-  margin-top: 3px;
+  margin-top: 4px;
   white-space: nowrap;
-  font-size: 0.58rem;
+  font-size: 0.78rem;
   letter-spacing: 0.05em;
   color: var(--cream);
   text-shadow: 0 1px 2px #000;
   pointer-events: none;
   text-align: center;
+  font-weight: 600;
 }
 
 .city-node.selected .city-label {
   color: var(--amber);
+  font-size: 0.95rem;
+}
+
+.city-kit {
+  display: block;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: var(--cyan);
+  text-align: center;
+  text-shadow: 0 1px 2px #000;
 }
 
 .city-raise {
   display: block;
   font-family: "Share Tech Mono", monospace;
-  font-size: 0.52rem;
+  font-size: 0.7rem;
   letter-spacing: 0.08em;
   color: var(--amber);
   text-align: center;
