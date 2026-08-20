@@ -268,7 +268,7 @@ button {
 
 .board-body {
   display: grid;
-  grid-template-columns: 1fr 320px;
+  grid-template-columns: 1fr 380px;
   min-height: 0;
 }
 
@@ -286,12 +286,19 @@ button {
   place-items: center;
   padding: 0.4rem;
   container-type: size;
+  overflow: hidden;
 }
 
 .map-frame {
   position: relative;
   width: min(100cqw, calc(100cqh * 1.5));
   aspect-ratio: 1200 / 800;
+  transition: transform 0.4s ease;
+  transform-origin: 50% 50%;
+}
+
+.map-frame.zoomed {
+  transform: scale(1.7);
 }
 
 .map-art,
@@ -315,66 +322,122 @@ button {
   pointer-events: none;
 }
 
-.city {
+.city-node {
   pointer-events: auto;
   position: absolute;
-  transform: translate(-50%, -50%);
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: 2px solid var(--cream);
-  background: #3a3a44;
+  transform: translate(-50%, -62%);
+  background: none;
+  border: 0;
   padding: 0;
-  box-shadow: 0 0 0 3px rgba(18, 18, 23, 0.65);
+  color: inherit;
+  z-index: 1;
 }
 
-.city.zaps {
-  background: var(--red);
-  border-color: var(--cream);
-  box-shadow: 0 0 16px rgba(230, 50, 37, 0.8);
+.city-node .compound {
+  display: block;
+  width: 150px;
+  height: 112px;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.72));
 }
 
-.city.contested {
-  background: var(--amber);
-  border-color: var(--cream);
+.city-node.tier-2 .compound {
+  width: 176px;
+  height: 132px;
 }
 
-.city.rival {
-  background: var(--cyan);
-  border-color: #08343c;
+.city-node.tier-3 .compound {
+  width: 204px;
+  height: 154px;
 }
 
-.city.selected {
-  outline: 2px solid var(--cream);
-  outline-offset: 4px;
+.city-node.rival:not(.zaps) .compound,
+.city-node.hostile:not(.zaps) .compound {
+  width: 112px;
+  height: 84px;
+  filter: drop-shadow(0 2px 5px rgba(0, 212, 245, 0.28));
+}
+
+.city-node.dirt .compound {
+  width: 36px;
+  height: 36px;
+  filter: none;
+}
+
+.city-node.selected {
+  z-index: 6;
+}
+
+.city-node.selected .compound {
+  width: 248px;
+  height: 186px;
+  outline: 2px dashed var(--cream);
+  outline-offset: 5px;
+}
+
+.city-node.selected.tier-1 .compound,
+.city-node.selected.tier-2 .compound,
+.city-node.selected.tier-3 .compound {
+  width: 248px;
+  height: 186px;
+}
+
+.city-node.raising .compound {
+  animation: scaffold-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes scaffold-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.72));
+  }
+  50% {
+    filter: drop-shadow(0 0 10px rgba(232, 154, 46, 0.85));
+  }
+}
+
+.city-node.zaps .compound {
+  filter: drop-shadow(0 0 8px rgba(230, 50, 37, 0.45));
+}
+
+.map-frame.zoomed .city-node:not(.selected) {
+  opacity: 0.78;
 }
 
 .city-label {
-  position: absolute;
-  left: 50%;
-  top: 130%;
-  transform: translateX(-50%);
+  display: block;
+  margin-top: 4px;
   white-space: nowrap;
-  font-size: 0.62rem;
-  letter-spacing: 0.04em;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
   color: var(--cream);
   text-shadow: 0 1px 2px #000;
   pointer-events: none;
+  text-align: center;
+  font-weight: 600;
 }
 
-.city-pips {
-  position: absolute;
-  left: 50%;
-  bottom: 130%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 2px;
-  pointer-events: none;
+.city-node.selected .city-label {
+  color: var(--amber);
+  font-size: 0.95rem;
 }
 
-.city-pips img {
-  width: 10px;
-  height: 10px;
+.city-kit {
+  display: block;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: var(--cyan);
+  text-align: center;
+  text-shadow: 0 1px 2px #000;
+}
+
+.city-raise {
+  display: block;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: var(--amber);
+  text-align: center;
 }
 
 .ticker {
@@ -408,8 +471,145 @@ button {
 
 .inspector h2 {
   font-family: Anton, sans-serif;
-  margin: 0 0 0.4rem;
+  margin: 0 0 0.15rem;
   font-size: 1.8rem;
+}
+
+.insp-phase {
+  margin: 0 0 0.45rem;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  color: var(--amber);
+}
+
+.insp-compound {
+  margin: 0.55rem 0 0.7rem;
+  background: #141418;
+  border: 1px solid var(--line);
+  padding: 0.4rem;
+}
+
+.insp-compound svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.insp-queue {
+  margin-bottom: 0.6rem;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.72rem;
+}
+
+.insp-queue .job {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.25rem;
+  margin-bottom: 0.35rem;
+  color: var(--cream);
+}
+
+.insp-queue .bar {
+  grid-column: 1 / -1;
+  height: 4px;
+  background: #2c2c34;
+}
+
+.insp-queue .bar > span {
+  display: block;
+  height: 100%;
+  background: var(--amber);
+}
+
+.deals-badge {
+  background: var(--amber);
+  color: var(--charcoal);
+  border: 0;
+  padding: 0.35rem 0.6rem;
+  font-family: Anton, sans-serif;
+  letter-spacing: 0.1em;
+  font-size: 0.85rem;
+}
+
+.deals-badge.hot {
+  animation: deals-pulse 1.3s ease-in-out infinite;
+}
+
+@keyframes deals-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(232, 154, 46, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(232, 154, 46, 0.18);
+  }
+}
+
+.toasts {
+  position: fixed;
+  top: 64px;
+  right: 16px;
+  z-index: 35;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-width: min(320px, 42vw);
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--panel);
+  border-left: 3px solid var(--amber);
+  padding: 0.55rem 0.7rem;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.74rem;
+  color: var(--cream);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.toast.good {
+  border-left-color: #8ee0a2;
+}
+
+.toast.bad {
+  border-left-color: var(--red);
+}
+
+.deal-sheet {
+  position: fixed;
+  top: 64px;
+  right: 16px;
+  z-index: 36;
+  width: min(340px, 92vw);
+  background: var(--panel);
+  border: 1px solid var(--amber);
+  padding: 0.9rem 1rem;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+.deal-sheet h3 {
+  font-family: Anton, sans-serif;
+  margin: 0 0 0.4rem;
+  font-size: 1.35rem;
+}
+
+.deal-sheet p {
+  color: var(--steel);
+  font-size: 0.88rem;
+  margin: 0 0 0.8rem;
+}
+
+.deal-sheet .modal-actions {
+  margin-top: 0;
+}
+
+.deal-sheet .btn-primary,
+.deal-sheet .btn-ghost {
+  min-width: 0;
+  flex: 1;
+  font-size: 0.85rem;
+  padding: 0.55rem 0.6rem;
 }
 
 .insp-blurb,
@@ -492,6 +692,16 @@ button {
   display: block;
   color: var(--steel);
   font-size: 0.68rem;
+}
+
+.deploy .ready {
+  color: var(--cyan);
+  letter-spacing: 0.08em;
+}
+
+.deploy .blocked {
+  color: var(--amber);
+  letter-spacing: 0.06em;
 }
 
 .deploy:disabled {

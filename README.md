@@ -12,8 +12,10 @@ This is **not** the FPV night-shift game.
 
 1. Open the public link and click **OPEN THE BOARD**.
 2. Read the Phoenix briefing, then enter the continent.
-3. Click a city. Deploy from the bottom tray. Speed the calendar with PAUSE / 1× / 2× / 4× (or keys `Space`, `1`, `2`, `4`).
-4. SAVE / LOAD writes this browser’s `localStorage`.
+3. Click a city to zoom the yard. Each DC stall is a full lot. Phoenix HQ should read like an AoE town as you add kit.
+4. Speed the calendar with PAUSE / 1× / 2× / 4× (or keys `Space`, `1`, `2`, `4`).
+5. SAVE / LOAD writes this browser’s `localStorage`.
+6. Incentive popups are almost gone. A deal, if it ever appears, is a toast plus the **DEALS** badge. A price war fires at most once per campaign, as a toast — never a modal stack.
 
 Win by majority share in 12 cities, by holding all seven states with MCS in four cities, or by filling the treasury.
 

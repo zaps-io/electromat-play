@@ -1,9 +1,23 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
 (() => {
-  const SAVE_KEY = "zaps-empire-v1";
+  const SAVE_KEY = "zaps-empire-v2";
+  const SAVE_LEGACY = "zaps-empire-v1";
   const YOU = "zaps";
   const TICK = { 0: 0, 1: 1800, 2: 900, 4: 450 };
   const MAX_CREWS = 3;
+  const PAL = {
+    red: "#E63225",
+    charcoal: "#1E1E24",
+    amber: "#E89A2E",
+    cyan: "#00D4F5",
+    cream: "#F5F0E8",
+    steel: "#B8BCC0",
+    pad: "#2a2a33",
+    dirt: "#3a342c",
+    ink: "#121217",
+    panel: "#26262e",
+  };
+  const BOLT = "assets/brand/zaps-wordmark-only-cream.svg";
 
   const BUILD = {
     dc: {
@@ -77,6 +91,80 @@
 
   const CITY_BY_ID = Object.fromEntries(CITIES.map((c) => [c.id, c]));
 
+  const DEALS = {
+    westbound: {
+      title: "WESTBOUND FLEET",
+      body: "A corridor hauler wants MCS in two cities. Sign and take a 12-month truck offtake — or keep the stalls public.",
+      yes: "SIGN OFTAKE",
+      no: "KEEP PUBLIC",
+      accept() {
+        state.cash += 420000;
+        log("Fleet offtake signed. +$420K now, truck demand lifts where you hold MCS.", "deal");
+        toast("Offtake signed. +$420K.", "good");
+        for (const c of CITIES) if (state.cities[c.id].sites[YOU].mcs) state.cities[c.id].truckBoost += 8;
+      },
+    },
+    rebate: {
+      title: "UTILITY REBATE",
+      body: "The interconnect desk will rebate a BESS if you commit to peak shave in any live city.",
+      yes: "TAKE REBATE",
+      no: "PASS",
+      accept() {
+        const live = CITIES.find((c) => hasCap(state.cities[c.id].sites[YOU]));
+        if (!live) return;
+        if (!state.cities[live.id].sites[YOU].bess) {
+          state.cities[live.id].sites[YOU].bess = 1;
+          log(`Rebate BESS drops in ${live.name}.`, "good");
+          toast(`Rebate BESS online in ${live.name}.`, "good");
+        } else {
+          state.cash += 280000;
+          log("Rebate arrives as cash. +$280K.", "good");
+          toast("Rebate arrives as cash. +$280K.", "good");
+        }
+      },
+    },
+    land: {
+      title: "LAND OPTION",
+      body: "A dirt parcel next to an empty node is cheap this month. Exercise and the next deploy anywhere is 30% off.",
+      yes: "EXERCISE",
+      no: "LET IT GO",
+      accept() {
+        state.landOption = 1;
+        log("Land option live. Next deploy is 30% off.", "deal");
+        toast("Land option live. Next deploy −30%.", "deal");
+      },
+    },
+    ceiling: {
+      title: "PRICE CEILING",
+      body: "A city desk wants a consumer ceiling. Drop Phoenix price to $0.34/kWh for 6 months in exchange for loyalty.",
+      yes: "CUT PHOENIX",
+      no: "HOLD RATE",
+      accept() {
+        state.cities.phoenix.price[YOU] = 0.34;
+        state.cities.phoenix.war = 0;
+        log("Phoenix ceiling accepted. Share should thicken.", "deal");
+        toast("Phoenix ceiling accepted.", "deal");
+      },
+    },
+    surge: {
+      title: "CREW SURGE",
+      body: "A civil crew can burn a month of calendar if you float their overtime.",
+      yes: "PAY OVERTIME ($180K)",
+      no: "KEEP THE QUEUE",
+      accept() {
+        if (state.cash < 180000) {
+          log("Overtime declined — treasury too thin.", "bad");
+          toast("Treasury too thin for overtime.", "bad");
+          return;
+        }
+        state.cash -= 180000;
+        for (const q of state.queue) if (q.faction === YOU) q.left = Math.max(1, q.left - 1);
+        log("Crew surge. Your jobs pull one month forward.", "good");
+        toast("Crew surge. Jobs pull one month forward.", "good");
+      },
+    },
+  };
+
   const $ = (id) => document.getElementById(id);
   const money = (n) => {
     const sign = n < 0 ? "-" : "";
@@ -100,7 +188,6 @@
   }
 
   function cityState(id) {
-    const meta = CITY_BY_ID[id];
     const sites = {};
     const price = {};
     for (const f of factionIds()) {
@@ -146,7 +233,9 @@
       cities,
       unlocked: ["voltspan", "gridhawk", "arcway"],
       debtStreak: 0,
-      nextDeal: 5,
+      nextDeal: 48 + Math.floor(Math.random() * 20),
+      pendingDeal: null,
+      warFired: false,
       over: null,
     };
   }
@@ -161,6 +250,18 @@
 
   function amenity(site) {
     return 1 + (site.lounge ? 0.14 : 0) + (site.market ? 0.1 : 0);
+  }
+
+  function siteCount(site) {
+    return site.dc + site.mcs + (site.bess ? 1 : 0) + (site.lounge ? 1 : 0) + (site.market ? 1 : 0);
+  }
+
+  function compoundTier(site) {
+    const n = siteCount(site);
+    if (n >= 6) return 3;
+    if (n >= 3) return 2;
+    if (n >= 1) return 1;
+    return 0;
   }
 
   function recomputeShare(city) {
@@ -232,14 +333,40 @@
     return all ? you / all : 0;
   }
 
+  function campaignPhase() {
+    const n = presenceCount(YOU);
+    if (n >= 10) return "PHASE EMPIRE";
+    if (n >= 4) return "PHASE CORRIDOR";
+    return "PHASE HQ";
+  }
+
   function log(msg, kind = "") {
     state.log.unshift({ t: state.month, msg, kind });
     state.log = state.log.slice(0, 40);
     renderTicker();
   }
 
+  function toast(msg, kind = "deal") {
+    const host = $("toasts");
+    if (!host) return;
+    const el = document.createElement("div");
+    el.className = `toast ${kind}`;
+    el.textContent = msg;
+    host.appendChild(el);
+    setTimeout(() => el.remove(), 4200);
+    while (host.children.length > 1) host.firstElementChild.remove();
+  }
+
   function crewsBusy() {
     return state.queue.filter((q) => q.left > 0 && q.faction === YOU).length;
+  }
+
+  function jobsFor(cityId, faction = YOU) {
+    return state.queue.filter((q) => q.city === cityId && q.faction === faction && q.left > 0);
+  }
+
+  function raisingType(cityId, type, faction = YOU) {
+    return state.queue.some((q) => q.city === cityId && q.type === type && q.faction === faction && q.left > 0);
   }
 
   function deployCost(type, cityId) {
@@ -249,20 +376,28 @@
     return n;
   }
 
-  function canDeploy(type, cityId) {
-    if (state.over) return false;
+  function blockedReason(type, cityId) {
+    if (state.over) return "CAMPAIGN OVER";
     const city = state.cities[cityId];
     const spec = BUILD[type];
     const site = city.sites[YOU];
-    if (state.cash < deployCost(type, cityId)) return false;
-    if (crewsBusy() >= MAX_CREWS) return false;
+    if (state.cash < deployCost(type, cityId)) return "NEED CASH";
+    if (crewsBusy() >= MAX_CREWS) return "CREWS FULL";
     if (spec.unique && (site[type] > 0 || state.queue.some((q) => q.city === cityId && q.type === type && q.faction === YOU))) {
-      return false;
+      return "ALREADY BUILT";
     }
-    if ((type === "mcs" || type === "lounge" || type === "market" || type === "bess") && !hasCap(site) && !state.queue.some((q) => q.city === cityId && q.faction === YOU && (q.type === "dc" || q.type === "mcs"))) {
-      return false;
+    if (
+      (type === "mcs" || type === "lounge" || type === "market" || type === "bess") &&
+      !hasCap(site) &&
+      !state.queue.some((q) => q.city === cityId && q.faction === YOU && (q.type === "dc" || q.type === "mcs"))
+    ) {
+      return "NEED PAD";
     }
-    return true;
+    return "";
+  }
+
+  function canDeploy(type, cityId) {
+    return !blockedReason(type, cityId);
   }
 
   function enqueue(type, cityId, faction = YOU) {
@@ -301,7 +436,6 @@
   }
 
   function rivalCash(rid) {
-    // Soft budget so AI keeps building without a full ledger.
     return 900000 + state.month * 120000 + presenceCount(rid) * 180000;
   }
 
@@ -340,102 +474,88 @@
     if (budget > BUILD[type].cost && state.queue.filter((q) => q.faction === rid).length < 2) {
       enqueue(type, targetId, rid);
     }
+    maybeRivalWar(rid, targetId);
+  }
+
+  function maybeRivalWar(rid, targetId) {
+    if (state.warFired) return;
     const city = state.cities[targetId];
-    if (city.share[YOU] > 0.35 && city.price[rid] > 0.32) {
-      city.price[rid] = Math.max(0.28, +(city.price[rid] - 0.03).toFixed(2));
-      city.war = 3;
-      log(`${rival.name} opens a price war in ${CITY_BY_ID[targetId].name}.`, "deal");
-    }
+    const rival = RIVALS[rid];
+    if (!hasCap(city.sites[YOU])) return;
+    if ((city.share[YOU] || 0) <= 0.45 || city.price[rid] <= 0.32) return;
+    if (Math.random() > 0.02) return;
+    state.warFired = true;
+    city.price[rid] = Math.max(0.28, +(city.price[rid] - 0.03).toFixed(2));
+    city.war = 3;
+    const cityName = CITY_BY_ID[targetId].name;
+    log(`${rival.name} opens a price war in ${cityName}.`, "deal");
+    toast(`${rival.name} PRICE WAR · ${cityName}`, "bad");
   }
 
   function maybeDeal() {
+    if (state.over || state.pendingDeal) return;
     if (state.month < state.nextDeal) return;
-    state.nextDeal = state.month + 4 + Math.floor(Math.random() * 4);
-    const deck = [
-      {
-        title: "WESTBOUND FLEET",
-        body: "A corridor hauler wants MCS in two cities. Sign and take a 12-month truck offtake — or keep the stalls public.",
-        yes: "SIGN OFTAKE",
-        no: "KEEP PUBLIC",
-        accept() {
-          state.cash += 420000;
-          log("Fleet offtake signed. +$420K now, truck demand lifts where you hold MCS.", "deal");
-          for (const c of CITIES) if (state.cities[c.id].sites[YOU].mcs) state.cities[c.id].truckBoost += 8;
-        },
-      },
-      {
-        title: "UTILITY REBATE",
-        body: "The interconnect desk will rebate a BESS if you commit to peak shave in any live city.",
-        yes: "TAKE REBATE",
-        no: "PASS",
-        accept() {
-          const live = CITIES.find((c) => hasCap(state.cities[c.id].sites[YOU]));
-          if (!live) return;
-          if (!state.cities[live.id].sites[YOU].bess) {
-            state.cities[live.id].sites[YOU].bess = 1;
-            log(`Rebate BESS drops in ${live.name}.`, "good");
-          } else {
-            state.cash += 280000;
-            log("Rebate arrives as cash. +$280K.", "good");
-          }
-        },
-      },
-      {
-        title: "LAND OPTION",
-        body: "A dirt parcel next to an empty node is cheap this month. Exercise and the next deploy anywhere is 30% off.",
-        yes: "EXERCISE",
-        no: "LET IT GO",
-        accept() {
-          state.landOption = 1;
-          log("Land option live. Next deploy is 30% off.", "deal");
-        },
-      },
-      {
-        title: "PRICE CEILING",
-        body: "A city desk wants a consumer ceiling. Drop Phoenix price to $0.34/kWh for 6 months in exchange for loyalty.",
-        yes: "CUT PHOENIX",
-        no: "HOLD RATE",
-        accept() {
-          state.cities.phoenix.price[YOU] = 0.34;
-          state.cities.phoenix.war = 0;
-          log("Phoenix ceiling accepted. Share should thicken.", "deal");
-        },
-      },
-      {
-        title: "CREW SURGE",
-        body: "A civil crew can burn a month of calendar if you float their overtime.",
-        yes: "PAY OVERTIME ($180K)",
-        no: "KEEP THE QUEUE",
-        accept() {
-          if (state.cash < 180000) {
-            log("Overtime declined — treasury too thin.", "bad");
-            return;
-          }
-          state.cash -= 180000;
-          for (const q of state.queue) if (q.faction === YOU) q.left = Math.max(1, q.left - 1);
-          log("Crew surge. Your jobs pull one month forward.", "good");
-        },
-      },
-    ];
-    const deal = deck[Math.floor(Math.random() * deck.length)];
-    showModal({
-      kicker: "INCOMING DEAL",
-      title: deal.title,
-      body: deal.body,
-      actions: [
-        {
-          label: deal.yes,
-          primary: true,
-          run() {
-            deal.accept();
-            hideModal();
-            renderAll();
-          },
-        },
-        { label: deal.no, run: hideModal },
-      ],
+    state.nextDeal = state.month + 40 + Math.floor(Math.random() * 24);
+    if (Math.random() > 0.12) return;
+    const ids = Object.keys(DEALS);
+    state.pendingDeal = ids[Math.floor(Math.random() * ids.length)];
+    const deal = DEALS[state.pendingDeal];
+    log(`Deal waiting: ${deal.title}.`, "deal");
+    toast(`DEAL AVAILABLE — ${deal.title}`, "deal");
+  }
+
+  function renderDealChrome() {
+    const badge = $("btn-deals");
+    if (!badge || !state) return;
+    const hot = Boolean(state.pendingDeal);
+    badge.classList.toggle("hidden", !hot);
+    badge.classList.toggle("hot", hot);
+    if (!hot) $("deal-sheet").classList.add("hidden");
+  }
+
+  function openDealSheet() {
+    const sheet = $("deal-sheet");
+    if (!state?.pendingDeal) {
+      sheet.classList.add("hidden");
+      return;
+    }
+    const deal = DEALS[state.pendingDeal];
+    if (!deal) {
+      state.pendingDeal = null;
+      sheet.classList.add("hidden");
+      return;
+    }
+    sheet.innerHTML = "";
+    const k = document.createElement("p");
+    k.className = "kicker";
+    k.textContent = "INCOMING DEAL";
+    const h = document.createElement("h3");
+    h.textContent = deal.title;
+    const p = document.createElement("p");
+    p.textContent = deal.body;
+    const row = document.createElement("div");
+    row.className = "modal-actions";
+    const yes = document.createElement("button");
+    yes.className = "btn-primary";
+    yes.textContent = deal.yes;
+    yes.addEventListener("click", () => {
+      deal.accept();
+      state.pendingDeal = null;
+      sheet.classList.add("hidden");
+      renderAll();
     });
-    log(`Deal on the table: ${deal.title}.`, "deal");
+    const no = document.createElement("button");
+    no.className = "btn-ghost";
+    no.textContent = deal.no;
+    no.addEventListener("click", () => {
+      log(`Passed: ${deal.title}.`);
+      state.pendingDeal = null;
+      sheet.classList.add("hidden");
+      renderAll();
+    });
+    row.append(yes, no);
+    sheet.append(k, h, p, row);
+    sheet.classList.remove("hidden");
   }
 
   function checkEnd() {
@@ -451,7 +571,7 @@
       setSpeed(0);
       showModal({
         kicker: "CONTINENT SECURED",
-        title: "ZAPS EMPIRE HOLDS THE BOARD",
+        title: "THE BOARD IS HELD",
         body: `Month ${state.month}. ${citiesHeld} cities live, ${statesHeld} states, majority in ${majority}. The station was not built yet. The continent already was — and now it is yours.`,
         actions: [{ label: "KEEP PLAYING", primary: true, run: hideModal }],
       });
@@ -517,14 +637,28 @@
     log("Campaign saved to this browser.", "good");
   }
 
+  function readSave() {
+    return localStorage.getItem(SAVE_KEY) || localStorage.getItem(SAVE_LEGACY);
+  }
+
+  function hydrate(raw) {
+    state = JSON.parse(raw);
+    if (state.nextDeal == null) state.nextDeal = state.month + 48;
+    if (state.pendingDeal === undefined) state.pendingDeal = null;
+    if (state.warFired == null) state.warFired = false;
+    selected = hasCap(state.cities.phoenix.sites[YOU])
+      ? "phoenix"
+      : CITIES.find((c) => hasCap(state.cities[c.id].sites[YOU]))?.id || "phoenix";
+  }
+
   function loadManual() {
-    const raw = localStorage.getItem(SAVE_KEY);
+    const raw = readSave();
     if (!raw) {
       log("No save found.", "bad");
+      toast("No save found.", "bad");
       return;
     }
-    state = JSON.parse(raw);
-    selected = hasCap(state.cities.phoenix.sites[YOU]) ? "phoenix" : CITIES.find((c) => hasCap(state.cities[c.id].sites[YOU]))?.id || "phoenix";
+    hydrate(raw);
     log("Campaign loaded.", "good");
     showBoard();
     renderAll();
@@ -532,6 +666,7 @@
 
   function newGame() {
     hideModal();
+    $("deal-sheet").classList.add("hidden");
     state = freshState();
     selected = "phoenix";
     lastNet = 0;
@@ -541,7 +676,7 @@
   }
 
   function setSpeed(v) {
-    state.speed = v;
+    if (state) state.speed = v;
     if (timer) {
       clearInterval(timer);
       timer = null;
@@ -581,6 +716,7 @@
       row.appendChild(b);
     }
     card.append(k, h, p, row);
+    $("deal-sheet")?.classList.add("hidden");
     $("modal").classList.remove("hidden");
   }
 
@@ -621,10 +757,216 @@
   function occupantClass(city) {
     const you = hasCap(city.sites[YOU]);
     const them = activeRivals().some((r) => hasCap(city.sites[r.id]));
-    if (you && them) return "contested";
+    if (you && them) return "contested zaps";
     if (you) return "zaps";
-    if (them) return "rival";
-    return "";
+    if (them) return "rival hostile";
+    return "dirt";
+  }
+
+  function strongestRival(city) {
+    let best = null;
+    let cap = 0;
+    for (const r of activeRivals()) {
+      const c = capacity(city.sites[r.id]);
+      if (c > cap) {
+        cap = c;
+        best = r;
+      }
+    }
+    return best;
+  }
+
+  function rivets(x, y, w, h) {
+    return [
+      [x + 2.2, y + 2.2],
+      [x + w - 2.2, y + 2.2],
+      [x + 2.2, y + h - 2.2],
+      [x + w - 2.2, y + h - 2.2],
+    ]
+      .map(([px, py]) => `<circle cx="${px}" cy="${py}" r="1.15" fill="${PAL.steel}"/>`)
+      .join("");
+  }
+
+  function lotBox(x, y, w, h, fill, stroke, dash = false) {
+    return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" stroke="${stroke}" stroke-width="1.3"${
+      dash ? ' stroke-dasharray="3 2"' : ""
+    }/>`;
+  }
+
+  function lotLabel(x, y, w, h, text, detail) {
+    if (!detail) return "";
+    return `<text x="${x + w / 2}" y="${y + h - 3.6}" text-anchor="middle" fill="${PAL.cream}" font-size="9" font-weight="700" font-family="Share Tech Mono, monospace">${text}</text>`;
+  }
+
+  function dcStall(x, y, w, h, { live, raising, extra, detail }) {
+    if (raising) {
+      return (
+        lotBox(x, y, w, h, PAL.ink, PAL.amber, true) +
+        `<path d="M${x + 5} ${y + h - 6} L${x + w / 2} ${y + 6} L${x + w - 5} ${y + h - 6}" fill="none" stroke="${PAL.amber}" stroke-width="2"/>` +
+        lotLabel(x, y, w, h, "RAISE DC", detail)
+      );
+    }
+    if (!live) {
+      return lotBox(x, y, w, h, PAL.dirt, "#4a453c", true) + lotLabel(x, y, w, h, "DC LOT", detail);
+    }
+    const plus = extra > 0 ? `<text x="${x + w - 8}" y="${y + 11}" fill="${PAL.cream}" font-size="10" font-family="Share Tech Mono, monospace">+${extra}</text>` : "";
+    return (
+      lotBox(x, y, w, h, PAL.pad, PAL.cream) +
+      `<rect x="${x + 3}" y="${y + 3}" width="${w - 6}" height="${h * 0.42}" fill="${PAL.cyan}"/>` +
+      `<rect x="${x + 6}" y="${y + 6}" width="${w - 12}" height="${h * 0.22}" fill="${PAL.charcoal}"/>` +
+      `<rect x="${x + w / 2 - 3}" y="${y + h * 0.42}" width="6" height="${h * 0.22}" fill="${PAL.red}"/>` +
+      `<rect x="${x + 7}" y="${y + h - 13}" width="${(w - 18) / 2}" height="5" fill="${PAL.amber}"/>` +
+      `<rect x="${x + w / 2 + 2}" y="${y + h - 13}" width="${(w - 18) / 2}" height="5" fill="${PAL.amber}"/>` +
+      plus +
+      lotLabel(x, y, w, h, "DC", detail)
+    );
+  }
+
+  function mcsBay(x, y, w, h, { live, raising, detail }) {
+    if (raising) {
+      return lotBox(x, y, w, h, PAL.ink, PAL.amber, true) + lotLabel(x, y, w, h, "RAISE MCS", detail);
+    }
+    if (!live) return lotBox(x, y, w, h, PAL.dirt, "#4a453c", true) + lotLabel(x, y, w, h, "MCS BAY", detail);
+    return (
+      lotBox(x, y, w, h, PAL.charcoal, PAL.amber) +
+      `<path d="M${x + 6} ${y + 6} H${x + w - 6} L${x + w - 14} ${y + h - 12} H${x + 14} Z" fill="${PAL.amber}"/>` +
+      `<rect x="${x + 10}" y="${y + h - 14}" width="${w - 20}" height="6" fill="${PAL.cyan}"/>` +
+      lotLabel(x, y, w, h, "MCS", detail)
+    );
+  }
+
+  function bessStack(x, y, w, h, { live, raising, detail }) {
+    if (raising) return lotBox(x, y, w, h, PAL.ink, PAL.amber, true) + lotLabel(x, y, w, h, "RAISE BESS", detail);
+    if (!live) return lotBox(x, y, w, h, PAL.dirt, "#4a453c", true) + lotLabel(x, y, w, h, "BESS", detail);
+    return (
+      lotBox(x, y, w, h, PAL.charcoal, PAL.cyan) +
+      `<rect x="${x + 5}" y="${y + 6}" width="${w - 10}" height="5" fill="${PAL.cyan}"/>` +
+      `<rect x="${x + 5}" y="${y + 14}" width="${w - 10}" height="5" fill="${PAL.cyan}"/>` +
+      `<rect x="${x + 5}" y="${y + 22}" width="${w - 10}" height="5" fill="${PAL.amber}"/>` +
+      lotLabel(x, y, w, h, "BESS", detail)
+    );
+  }
+
+  function loungeHall(x, y, w, h, { live, raising, detail }) {
+    if (raising) return lotBox(x, y, w, h, PAL.ink, PAL.amber, true) + lotLabel(x, y, w, h, "RAISE LNGE", detail);
+    if (!live) return lotBox(x, y, w, h, PAL.dirt, "#4a453c", true) + lotLabel(x, y, w, h, "LOUNGE", detail);
+    return (
+      lotBox(x, y, w, h, PAL.charcoal, PAL.cream) +
+      `<path d="M${x + 3} ${y + 16} L${x + w / 2} ${y + 4} L${x + w - 3} ${y + 16}" fill="${PAL.cream}"/>` +
+      `<rect x="${x + 8}" y="${y + 17}" width="8" height="8" fill="${PAL.red}"/>` +
+      `<circle cx="${x + w - 11}" cy="${y + 20}" r="3" fill="${PAL.cyan}"/>` +
+      lotLabel(x, y, w, h, "LOUNGE", detail)
+    );
+  }
+
+  function marketHall(x, y, w, h, { live, raising, detail }) {
+    if (raising) return lotBox(x, y, w, h, PAL.ink, PAL.amber, true) + lotLabel(x, y, w, h, "RAISE MKT", detail);
+    if (!live) return lotBox(x, y, w, h, PAL.dirt, "#4a453c", true) + lotLabel(x, y, w, h, "MARKET", detail);
+    return (
+      lotBox(x, y, w, h, PAL.charcoal, PAL.cream) +
+      `<path d="M${x + 2} ${y + 12} H${x + w - 2} L${x + w - 8} ${y + 4} H${x + 8} Z" fill="${PAL.red}"/>` +
+      `<rect x="${x + 8}" y="${y + 14}" width="8" height="8" fill="${PAL.amber}"/>` +
+      `<rect x="${x + w - 16}" y="${y + 14}" width="8" height="8" fill="${PAL.cyan}"/>` +
+      lotLabel(x, y, w, h, "MARKET", detail)
+    );
+  }
+
+  function padDeck(x, y, w, h, { live, detail }) {
+    if (!live) return lotBox(x, y, w, h, PAL.dirt, "#4a453c", true) + lotLabel(x, y, w, h, "PAD", detail);
+    let marks = "";
+    const lanes = detail ? 5 : 3;
+    for (let i = 0; i < lanes; i += 1) {
+      const mx = x + 6 + i * ((w - 12) / lanes);
+      marks += `<rect x="${mx}" y="${y + 6}" width="3" height="${h - 14}" fill="${PAL.cream}" opacity="0.35"/>`;
+    }
+    return lotBox(x, y, w, h, PAL.pad, PAL.red) + marks + lotLabel(x, y, w, h, "PAD", detail);
+  }
+
+  function dirtPlot() {
+    return `<svg viewBox="0 0 24 24" class="compound-svg" aria-hidden="true">
+      <rect x="4" y="4" width="16" height="16" fill="${PAL.dirt}" stroke="${PAL.steel}" stroke-opacity="0.45"/>
+      <path d="M8 8 L16 16 M16 8 L8 16" stroke="${PAL.steel}" stroke-opacity="0.35"/>
+    </svg>`;
+  }
+
+  function rivalYard(city, detail) {
+    const rival = strongestRival(city);
+    if (!rival) return dirtPlot();
+    const site = city.sites[rival.id];
+    const stroke = rival.color;
+    const w = 120;
+    const h = 88;
+    const raising = jobsFor(city.id, rival.id).length > 0;
+    let inner = "";
+    inner += `<rect x="3" y="3" width="${w - 6}" height="${h - 6}" fill="${PAL.ink}" stroke="${stroke}" stroke-width="2"/>`;
+    inner += rivets(3, 3, w - 6, h - 6);
+    inner += padDeck(8, 56, 104, 24, { live: hasCap(site), detail });
+    inner += dcStall(8, 10, 48, 40, { live: site.dc > 0, raising: raisingType(city.id, "dc", rival.id), extra: Math.max(0, site.dc - 1), detail });
+    inner += lotBox(62, 10, 50, 40, PAL.charcoal, stroke);
+    if (site.mcs) inner += `<rect x="68" y="16" width="38" height="10" fill="${PAL.amber}"/>`;
+    else inner += `<rect x="68" y="16" width="38" height="10" fill="${PAL.dirt}"/>`;
+    if (site.bess) inner += `<rect x="68" y="30" width="16" height="14" fill="${PAL.cyan}"/>`;
+    if (detail) {
+      inner += `<text x="60" y="82" text-anchor="middle" fill="${stroke}" font-size="6" font-family="Share Tech Mono, monospace">${rival.name} YARD</text>`;
+    }
+    if (raising) inner += `<rect x="3" y="3" width="${w - 6}" height="${h - 6}" fill="none" stroke="${PAL.amber}" stroke-dasharray="4 3"/>`;
+    return `<svg viewBox="0 0 ${w} ${h}" class="compound-svg" aria-hidden="true">${inner}</svg>`;
+  }
+
+  function zapsCompound(city, detail) {
+    const site = city.sites[YOU];
+    const owned = hasCap(site) || jobsFor(city.id).some((j) => j.type === "dc" || j.type === "mcs");
+    const w = 200;
+    const h = 150;
+    const extraDc = Math.max(0, site.dc - 4);
+    let g = "";
+    g += `<rect x="2" y="2" width="${w - 4}" height="${h - 4}" fill="${PAL.ink}" stroke="${owned ? PAL.red : PAL.steel}" stroke-width="2.2"/>`;
+    g += rivets(2, 2, w - 4, h - 4);
+    g += `<rect x="10" y="7" width="178" height="8" fill="${PAL.charcoal}"/>`;
+    g += `<rect x="10" y="7" width="42" height="8" fill="${PAL.red}"/>`;
+    g += `<rect x="146" y="7" width="42" height="8" fill="${PAL.cyan}" opacity="0.85"/>`;
+    if (owned) {
+      g += `<image href="${BOLT}" x="8" y="6" width="10" height="10"/>`;
+    }
+    if (detail) {
+      g += `<text x="100" y="13.4" text-anchor="middle" fill="${PAL.cream}" font-size="5.6" font-family="Share Tech Mono, monospace">COMPOUND</text>`;
+    }
+
+    const dcLive = [site.dc >= 1, site.dc >= 2, site.dc >= 3, site.dc >= 4];
+    const slots = [
+      [10, 20, 44, 34],
+      [56, 20, 44, 34],
+      [102, 20, 44, 34],
+      [148, 20, 44, 34],
+    ];
+    slots.forEach((box, i) => {
+      g += dcStall(...box, {
+        live: dcLive[i],
+        raising: raisingType(city.id, "dc") && !dcLive[i] && (i === site.dc || (site.dc >= 4 && i === 3)),
+        extra: i === 3 ? extraDc : 0,
+        detail,
+      });
+    });
+
+    g += mcsBay(10, 58, 92, 38, { live: site.mcs > 0, raising: raisingType(city.id, "mcs"), detail });
+    g += bessStack(106, 58, 40, 38, { live: site.bess > 0, raising: raisingType(city.id, "bess"), detail });
+    g += loungeHall(150, 58, 40, 38, { live: site.lounge > 0, raising: raisingType(city.id, "lounge"), detail });
+    g += marketHall(10, 100, 62, 40, { live: site.market > 0, raising: raisingType(city.id, "market"), detail });
+    g += padDeck(76, 100, 114, 40, { live: owned, detail });
+
+    const rival = strongestRival(city);
+    if (rival && hasCap(city.sites[rival.id])) {
+      g += `<rect x="${w - 28}" y="${h - 20}" width="22" height="14" fill="${PAL.ink}" stroke="${rival.color}"/>`;
+      if (detail) g += `<text x="${w - 17}" y="${h - 10}" text-anchor="middle" fill="${rival.color}" font-size="5" font-family="Share Tech Mono, monospace">HST</text>`;
+    }
+    return `<svg viewBox="0 0 ${w} ${h}" class="compound-svg" aria-hidden="true">${g}</svg>`;
+  }
+
+  function compoundMarkup(city, detail) {
+    const you = hasCap(city.sites[YOU]) || jobsFor(city.id).some((j) => j.faction === YOU && (j.type === "dc" || j.type === "mcs"));
+    if (you) return zapsCompound(city, detail);
+    if (activeRivals().some((r) => hasCap(city.sites[r.id]))) return rivalYard(city, detail);
+    return dirtPlot();
   }
 
   function renderCities() {
@@ -633,8 +975,12 @@
     for (const meta of CITIES) {
       const city = state.cities[meta.id];
       recomputeShare(city);
+      const youSite = city.sites[YOU];
       const btn = document.createElement("button");
-      btn.className = `city ${occupantClass(city)} ${selected === meta.id ? "selected" : ""}`;
+      const occ = occupantClass(city);
+      const raising = jobsFor(meta.id).length > 0;
+      const tier = compoundTier(youSite);
+      btn.className = `city-node ${occ} ${selected === meta.id ? "selected" : ""} ${raising ? "raising" : ""} tier-${tier}`;
       btn.style.left = `${(meta.x / 1200) * 100}%`;
       btn.style.top = `${(meta.y / 800) * 100}%`;
       btn.title = `${meta.name}, ${meta.state}`;
@@ -642,33 +988,68 @@
         selected = meta.id;
         renderAll();
       });
-      const pips = document.createElement("div");
-      pips.className = "city-pips";
-      const site = city.sites[YOU];
-      if (site.dc) pips.innerHTML += `<img src="assets/station.svg" alt="">`;
-      if (site.bess) pips.innerHTML += `<img src="assets/bess.svg" alt="">`;
-      if (site.lounge) pips.innerHTML += `<img src="assets/lounge.svg" alt="">`;
-      if (activeRivals().some((r) => hasCap(city.sites[r.id]))) {
-        pips.innerHTML += `<img src="assets/rival.svg" alt="">`;
-      }
+      const compound = document.createElement("div");
+      compound.className = "compound";
+      compound.innerHTML = compoundMarkup(city, true);
       const label = document.createElement("span");
       label.className = "city-label";
       label.textContent = meta.name.toUpperCase();
-      btn.append(pips, label);
+      btn.append(compound);
+      if (youSite.dc || youSite.mcs) {
+        const kit = document.createElement("span");
+        kit.className = "city-kit";
+        const bits = [];
+        if (youSite.dc) bits.push(`${youSite.dc} DC`);
+        if (youSite.mcs) bits.push(`${youSite.mcs} MCS`);
+        kit.textContent = bits.join(" · ");
+        btn.append(kit);
+      }
+      if (raising) {
+        const raise = document.createElement("span");
+        raise.className = "city-raise";
+        raise.textContent = "RAISING";
+        btn.append(raise);
+      }
+      btn.append(label);
       layer.appendChild(btn);
     }
+  }
+
+  function applyMapZoom() {
+    const frame = $("map-frame");
+    if (!frame || !selected) return;
+    const meta = CITY_BY_ID[selected];
+    frame.style.transformOrigin = `${(meta.x / 1200) * 100}% ${(meta.y / 800) * 100}%`;
+    frame.classList.add("zoomed");
   }
 
   function renderInspector() {
     const meta = CITY_BY_ID[selected];
     const city = state.cities[selected];
     recomputeShare(city);
-    $("insp-kicker").textContent = `${meta.state} // NODE`;
+    $("insp-kicker").textContent = `${meta.state} // BASE`;
     $("insp-name").textContent = meta.name;
+    $("insp-phase").textContent = campaignPhase();
     const you = city.sites[YOU];
     $("insp-blurb").textContent = you.dc || you.mcs
-      ? `Your price ${city.price[YOU].toFixed(2)}/kWh. Share ${Math.round((city.share[YOU] || 0) * 100)}%. Queue ${crewsBusy()}/${MAX_CREWS} crews.`
-      : `Unbuilt dirt. Land multiplier ${meta.land.toFixed(2)}. Neighbors: ${meta.neighbors.map((id) => CITY_BY_ID[id].name).join(", ")}.`;
+      ? `Your price ${city.price[YOU].toFixed(2)}/kWh. Share ${Math.round((city.share[YOU] || 0) * 100)}%. Grid ${you.bess ? "STABLE" : "STRAINED"}. Crews ${crewsBusy()}/${MAX_CREWS}.`
+      : `Unbuilt dirt. Land multiplier ${meta.land.toFixed(2)}. Neighbors: ${meta.neighbors.map((id) => CITY_BY_ID[id].name).join(", ")}. Drop a pad to raise a compound.`;
+
+    $("insp-compound").innerHTML = compoundMarkup(city, true);
+
+    const mine = jobsFor(selected);
+    const qel = $("insp-queue");
+    if (!mine.length) {
+      qel.innerHTML = "";
+    } else {
+      qel.innerHTML = mine
+        .map((j) => {
+          const spec = BUILD[j.type];
+          const pct = Math.max(6, Math.round(((spec.months - j.left) / spec.months) * 100));
+          return `<div class="job"><span>${spec.name}</span><span>${j.left} MO</span><div class="bar"><span style="width:${pct}%"></span></div></div>`;
+        })
+        .join("");
+    }
 
     const rows = [
       ["Demand", meta.demand],
@@ -706,11 +1087,14 @@
     grid.innerHTML = "";
     for (const spec of Object.values(BUILD)) {
       const cost = selected ? deployCost(spec.id, selected) : spec.cost;
-      const actual = state.landOption ? Math.round(cost * 0.7) : cost;
+      const block = blockedReason(spec.id, selected);
       const btn = document.createElement("button");
       btn.className = "deploy";
-      btn.disabled = !canDeploy(spec.id, selected);
-      btn.innerHTML = `<img src="${spec.icon}" alt=""><span>${spec.name}<small>${money(actual)} · ${spec.months} mo</small></span>`;
+      btn.disabled = Boolean(block);
+      const status = block
+        ? `<small class="blocked">${money(cost)} · ${block}</small>`
+        : `<small class="ready">${money(cost)} · ${spec.months} mo · READY</small>`;
+      btn.innerHTML = `<img src="${spec.icon}" alt=""><span>${spec.name}${status}</span>`;
       btn.addEventListener("click", () => enqueue(spec.id, selected));
       grid.appendChild(btn);
     }
@@ -724,7 +1108,9 @@
     $("stat-cash").style.color = state.cash < 0 ? "#E63225" : "";
     $("stat-share").textContent = `${Math.round(continentalShare() * 100)}%`;
     $("stat-cities").textContent = `${presenceCount(YOU)}/16`;
+    $("stat-crews").textContent = `${crewsBusy()}/${MAX_CREWS}`;
     $("stat-net").textContent = money(lastNet);
+    renderDealChrome();
   }
 
   function renderAll() {
@@ -736,10 +1122,32 @@
     renderInspector();
     renderTray();
     renderTicker();
+    applyMapZoom();
   }
 
   function hasSave() {
-    return Boolean(localStorage.getItem(SAVE_KEY));
+    return Boolean(readSave());
+  }
+
+  function applyShowcase() {
+    const phx = state.cities.phoenix.sites.zaps;
+    phx.dc = 4;
+    phx.mcs = 2;
+    phx.bess = 1;
+    phx.lounge = 1;
+    phx.market = 1;
+    state.cities.tucson.sites.zaps.dc = 2;
+    state.cities.tucson.sites.zaps.lounge = 1;
+    state.queue.push({ faction: YOU, city: "tucson", type: "mcs", left: 2, cost: 0 });
+    state.cities.flagstaff.sites.zaps.dc = 1;
+    state.cities.vegas.sites.zaps.dc = 2;
+    state.cities.vegas.sites.voltspan.dc = 2;
+    selected = "phoenix";
+    lastNet = 18000;
+    state.log = [
+      { t: 1, msg: "Phoenix HQ compound complete. Pad, four DC, MCS bay, BESS, lounge, market.", kind: "good" },
+      { t: 1, msg: "Tucson MCS raising. Flagstaff pad live. Vegas contested with VOLTSPAN.", kind: "deal" },
+    ];
   }
 
   function openBoard() {
@@ -761,6 +1169,7 @@
     });
     $("btn-save").addEventListener("click", saveManual);
     $("btn-load").addEventListener("click", loadManual);
+    $("btn-deals").addEventListener("click", openDealSheet);
     $("btn-new").addEventListener("click", () => {
       showModal({
         kicker: "RESET",
@@ -783,8 +1192,23 @@
       if (e.key === "1") setSpeed(1);
       if (e.key === "2") setSpeed(2);
       if (e.key === "4") setSpeed(4);
-      if (e.key === "Escape") hideModal();
+      if (e.key === "Escape") {
+        hideModal();
+        $("deal-sheet").classList.add("hidden");
+      }
+      if ((e.key === "d" || e.key === "D") && state?.pendingDeal) openDealSheet();
     });
+
+    const params = new URLSearchParams(location.search);
+    if (params.get("showcase") === "1") {
+      state = freshState();
+      applyShowcase();
+      const pick = params.get("select");
+      if (pick && CITY_BY_ID[pick]) selected = pick;
+      showBoard();
+      setSpeed(0);
+      renderAll();
+    }
   }
 
   boot();
