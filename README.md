@@ -12,8 +12,10 @@ This is **not** the FPV night-shift game.
 
 1. Open the public link and click **OPEN THE BOARD**.
 2. Read the Phoenix briefing, then enter the continent.
-3. Click a city. Deploy from the bottom tray. Speed the calendar with PAUSE / 1× / 2× / 4× (or keys `Space`, `1`, `2`, `4`).
-4. SAVE / LOAD writes this browser’s `localStorage`.
+3. Click a city. The inspector shows the compound plan. Deploy from the bottom tray and watch pad, DC stalls, MCS bay, BESS, lounge, and marketplace rise on the map. Rival cities keep a smaller hostile yard.
+4. Speed the calendar with PAUSE / 1× / 2× / 4× (or keys `Space`, `1`, `2`, `4`).
+5. SAVE / LOAD writes this browser’s `localStorage`.
+6. Deals are uncommon. When one arrives it sits on the **DEALS** badge (or a toast) — not a popup stack. A rare price war is the only incentive that still blocks the board.
 
 Win by majority share in 12 cities, by holding all seven states with MCS in four cities, or by filling the treasury.
 

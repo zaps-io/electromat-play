@@ -56,8 +56,8 @@
         </p>
         <ul>
           <li>Deploy DC chargers, MCS, BESS, lounges, and markets.</li>
+          <li>Each city grows a visible compound as kit lands on the pad.</li>
           <li>Win share with price, speed, and amenities — not slogans.</li>
-          <li>Cut deals. Survive price wars. Hold seven states.</li>
         </ul>
         <p class="briefing-rivals">
           On the board now: <strong>VOLTSPAN</strong>, <strong>GRIDHAWK</strong>,
@@ -97,11 +97,16 @@
             <span id="stat-cities" class="stat-value">1/16</span>
           </div>
           <div class="stat">
+            <span class="stat-label">CREWS</span>
+            <span id="stat-crews" class="stat-value">0/3</span>
+          </div>
+          <div class="stat">
             <span class="stat-label">NET</span>
             <span id="stat-net" class="stat-value">$0</span>
           </div>
         </div>
         <div class="hud-controls">
+          <button id="btn-deals" class="deals-badge hidden" type="button">DEALS</button>
           <div class="speed" role="group" aria-label="Game speed">
             <button data-speed="0" type="button">PAUSE</button>
             <button data-speed="1" class="active" type="button">1×</button>
@@ -129,10 +134,13 @@
         <aside class="inspector" id="inspector">
           <p class="kicker" id="insp-kicker">SELECT A CITY</p>
           <h2 id="insp-name">Continent</h2>
+          <p id="insp-phase" class="insp-phase">PHASE HQ</p>
           <p id="insp-blurb" class="insp-blurb">
-            Click a node. Deploy into dirt. Price the kilowatt. Watch rivals
-            answer.
+            Click a city. The compound is dirt until you drop a pad. Each deploy
+            raises a building you can read from the map.
           </p>
+          <div id="insp-compound" class="insp-compound" aria-hidden="true"></div>
+          <div id="insp-queue" class="insp-queue"></div>
           <div id="insp-body" class="insp-body"></div>
         </aside>
       </div>
@@ -141,11 +149,14 @@
         <div class="tray-label">DEPLOY</div>
         <div class="tray-grid" id="tray-grid"></div>
         <div class="tray-note">
-          Space pause · 1 2 4 speed · click city then deploy. Builds queue up to
-          three crews.
+          Space pause · 1 2 4 speed · click a city, then deploy. Watch the yard
+          grow. Three crews.
         </div>
       </footer>
     </section>
+
+    <div id="toasts" class="toasts" aria-live="polite"></div>
+    <aside id="deal-sheet" class="deal-sheet hidden" aria-live="polite"></aside>
 
     <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
       <div class="modal-card" id="modal-card"></div>
