@@ -1155,6 +1155,10 @@
     state.cities.vegas.sites.voltspan.dc = 2;
     selected = "phoenix";
     lastNet = 18000;
+    state.log = [
+      { t: 1, msg: "Phoenix HQ compound complete. Pad, four DC, MCS bay, BESS, lounge, market.", kind: "good" },
+      { t: 1, msg: "Tucson MCS raising. Flagstaff pad live. Vegas contested with VOLTSPAN.", kind: "deal" },
+    ];
   }
 
   function openBoard() {
@@ -1210,6 +1214,8 @@
     if (params.get("showcase") === "1") {
       state = freshState();
       applyShowcase();
+      const pick = params.get("select");
+      if (pick && CITY_BY_ID[pick]) selected = pick;
       showBoard();
       setSpeed(0);
       renderAll();
