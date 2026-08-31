@@ -1007,89 +1007,87 @@
     const site = city.sites[rival.id];
     const edge = rival.color;
     const raising = jobsFor(city.id, rival.id).length > 0;
-    const w = 280;
-    const h = 190;
-    let g = `<rect width="${w}" height="${h}" fill="#141418"/>`;
-    g += padSlab(28, 168, 180, 110, hasCap(site));
+    const w = 300;
+    const h = 200;
+    let g = padSlab(36, 176, 170, 100, hasCap(site));
     const n = Math.max(1, Math.min(site.dc, 3));
     for (let i = 0; i < n; i += 1) {
-      const box = isoBox(48 + i * 32, 118, 20, 14, 20, site.dc > 0, edge);
+      const box = isoBox(56 + i * 30, 128, 20, 14, 20, site.dc > 0, edge);
       g += box.g;
     }
     if (site.dc > 0) {
-      for (let i = 0; i < n * 3; i += 1) g += dispenser1000(50 + i * 14, 148, true);
-      g += canopy(44, 156, n * 42, 28, 24, true);
+      for (let i = 0; i < n * 3; i += 1) g += dispenser1000(58 + i * 14, 158, true);
+      g += canopy(50, 166, n * 42, 28, 24, true);
     }
-    if (raising) g += scaffold(70, 130, 40, 24, 20);
+    if (raising) g += scaffold(78, 140, 40, 24, 20);
     return `<svg viewBox="0 0 ${w} ${h}" class="compound-svg" aria-hidden="true">${g}</svg>`;
   }
 
   function zapsCompound(city) {
     const site = city.sites[YOU];
     const owned = hasCap(site) || jobsFor(city.id).some((j) => j.type === "dc" || j.type === "mcs");
-    const w = 420;
-    const h = 280;
+    const w = 500;
+    const h = 320;
     const dc = site.dc;
     const raisingDc = raisingType(city.id, "dc");
-    let g = `<rect width="${w}" height="${h}" fill="#141418"/>`;
-    g += padSlab(36, 248, 280, 168, owned);
+    let g = padSlab(56, 292, 270, 175, owned);
 
     if (owned) {
-      g += rectifierCab(52, 108, true);
-      g += rectifierCab(72, 100, dc >= 2);
-      g += dccCombiner(214, 132, true);
+      g += rectifierCab(88, 228, true);
+      g += rectifierCab(108, 220, dc >= 2);
+      g += dccCombiner(236, 236, true);
     }
 
     if (site.bess > 0 || raisingType(city.id, "bess")) {
-      g += bessFarm(128, 96, site.bess > 0, raisingType(city.id, "bess") && site.bess < 1);
+      g += bessFarm(150, 214, site.bess > 0, raisingType(city.id, "bess") && site.bess < 1);
     }
     if (site.lounge > 0 || raisingType(city.id, "lounge")) {
-      g += loungePavilion(268, 118, site.lounge > 0, raisingType(city.id, "lounge") && site.lounge < 1);
+      g += loungePavilion(268, 230, site.lounge > 0, raisingType(city.id, "lounge") && site.lounge < 1);
     }
 
     const cabSlots = [
-      [68, 150],
-      [128, 146],
-      [68, 186],
-      [128, 182],
+      [96, 252],
+      [150, 248],
+      [96, 278],
+      [150, 274],
     ];
     cabSlots.forEach((pos, i) => {
       if (dc > i) g += powerCabinet1500(pos[0], pos[1], true);
       else if (raisingDc && i === dc) g += scaffold(pos[0], pos[1], 24, 16, 26) + isoBox(pos[0], pos[1], 24, 16, 6, false).g;
     });
     if (dc > 4) {
-      g += `<text x="168" y="168" fill="${PAL.amber}" font-size="8" font-family="Share Tech Mono, monospace">+${dc - 4}</text>`;
+      g += `<text x="196" y="246" fill="${PAL.amber}" font-size="8" font-family="Share Tech Mono, monospace">+${dc - 4}</text>`;
     }
 
     const stallCount = Math.min(dc, 4) * 4;
-    const stallY = 210;
-    g += stallLane(54, stallY + 7, Math.max(72, stallCount * 14 + 10), 20, Math.max(4, stallCount || 4), dc > 0);
+    const stallY = 286;
+    g += stallLane(78, stallY + 6, Math.max(72, stallCount * 13.5 + 10), 18, Math.max(4, stallCount || 4), dc > 0);
     for (let i = 0; i < stallCount; i += 1) {
-      g += dispenser1000(56 + i * 14.4, stallY, true);
+      g += dispenser1000(80 + i * 13.6, stallY, true);
     }
     if (dc > 0) {
-      g += canopy(46, stallY + 12, Math.max(80, stallCount * 14.6 + 12), 38, 30, true);
+      g += canopy(70, stallY + 10, Math.max(80, stallCount * 13.8 + 12), 36, 28, true);
     } else if (raisingDc) {
-      g += canopy(46, stallY + 12, 96, 38, 30, false);
+      g += canopy(70, stallY + 10, 96, 36, 28, false);
     }
 
     if (site.mcs > 0 || raisingType(city.id, "mcs")) {
       const live = site.mcs > 0;
-      g += stallLane(48, 246, 90, 22, 3, live);
-      g += isoBox(52, 236, 8, 6, 14, live).g;
-      g += isoBox(118, 236, 8, 6, 14, live).g;
-      g += canopy(42, 250, 100, 40, 32, live, [0.08, 0.5, 0.92]);
-      if (!live) g += scaffold(50, 246, 90, 36, 22);
+      g += stallLane(64, 304, 86, 20, 3, live);
+      g += isoBox(68, 296, 8, 6, 14, live).g;
+      g += isoBox(128, 296, 8, 6, 14, live).g;
+      g += canopy(58, 308, 96, 36, 30, live, [0.08, 0.5, 0.92]);
+      if (!live) g += scaffold(64, 304, 86, 32, 20);
     }
 
     if (site.market > 0 || raisingType(city.id, "market")) {
-      g += marketKiosk(292, 230, site.market > 0, raisingType(city.id, "market") && site.market < 1);
+      g += marketKiosk(300, 286, site.market > 0, raisingType(city.id, "market") && site.market < 1);
     }
 
     if (owned) {
-      g += `<image href="${BOLT}" x="40" y="44" width="12" height="12"/>`;
+      g += `<image href="${BOLT}" x="72" y="200" width="11" height="11"/>`;
     }
-    return `<svg viewBox="0 0 ${w} ${h}" class="compound-svg" aria-hidden="true">${g}</svg>`;
+    return `<svg viewBox="0 0 ${w} ${h}" class="compound-svg" overflow="visible" aria-hidden="true">${g}</svg>`;
   }
 
   function compoundMarkup(city, detail) {
