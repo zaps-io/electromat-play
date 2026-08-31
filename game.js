@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: branded-compounds-2 */
+/* empire-build: branded-compounds-3 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -20,6 +20,14 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
+  const MAP_SPRITES = {
+    flag: "assets/sprites/survey-flag.png",
+    dirt: "assets/sprites/dirt-pad.png",
+    vegas: "assets/sprites/vegas.png",
+    tucson: "assets/sprites/tucson.png",
+    hq: "assets/sprites/phoenix-hq.png",
+    voltspan: "assets/sprites/voltspan.png",
+  };
 
   const BUILD = {
     dc: {
@@ -1143,40 +1151,8 @@
 
   function iconMarkup(city, selectedHere, meta) {
     const kind = mapSpriteKind(city, meta);
-    const raising = jobsFor(meta.id).length > 0;
-    let g = "";
-    if (selectedHere) {
-      g += `<ellipse cx="64" cy="80" rx="40" ry="11" fill="none" stroke="${PAL.cyan}" stroke-width="1.8"/>`;
-    }
-    if (kind === "flag") {
-      g += surveyFlag(28, 72, 1.35);
-    } else if (kind === "dirt") {
-      g += dirtPad(22, 74, 58, 32);
-      if (raising) g += scaffold(40, 60, 18, 10, 10);
-    } else if (kind === "vegas") {
-      g += dirtPad(20, 76, 62, 34);
-      g += concretePad(34, 68, 22, 12);
-      g += slimZeus(40, 66, 0.72, false);
-      g += canopy(32, 68, 26, 14, 13, true, [0.18, 0.82]);
-    } else if (kind === "tucson") {
-      g += dirtPad(14, 78, 78, 36);
-      g += concretePad(26, 70, 36, 14);
-      g += slimZeus(30, 68, 0.68, false);
-      g += slimZeus(44, 68, 0.68, false);
-      g += charcoalCabinet(28, 52, 0.55, true);
-      g += charcoalCabinet(48, 50, 0.55, true);
-    } else if (kind === "hq") {
-      g += dirtPad(24, 76, 68, 28);
-      g += concretePad(28, 68, 38, 12);
-      g += concretePad(68, 64, 22, 12);
-      for (let i = 0; i < 4; i += 1) g += slimZeus(30 + i * 8.6, 66, 0.48, false);
-      g += canopy(26, 68, 42, 13, 12, true);
-      g += charcoalCabinet(30, 50, 0.42, false);
-      g += loungePavilion(68, 60, true, false);
-    } else {
-      g += voltspanYard(18, 72, 1.05);
-    }
-    return `<svg viewBox="0 0 128 88" class="map-icon-svg" overflow="visible" aria-hidden="true">${g}</svg>`;
+    const src = MAP_SPRITES[kind] || MAP_SPRITES.flag;
+    return `<img class="map-sprite" src="${src}" alt="" draggable="false">`;
   }
 
   function renderCities() {
