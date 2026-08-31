@@ -288,9 +288,9 @@ button {
   min-height: 0;
   display: grid;
   place-items: center;
-  padding: 0.5rem;
+  padding: 0.5rem 0.75rem;
   container-type: size;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .map-frame {
@@ -302,7 +302,7 @@ button {
 }
 
 .map-frame.zoomed {
-  transform: scale(1.38);
+  transform: scale(1.22);
 }
 
 .map-art,
@@ -345,7 +345,7 @@ button {
   display: block;
   width: 186px;
   height: auto;
-  aspect-ratio: 500 / 320;
+  aspect-ratio: 540 / 340;
   overflow: visible;
   background: none;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.72));
@@ -380,9 +380,9 @@ button {
 .city-node.selected.tier-1 .compound,
 .city-node.selected.tier-2 .compound,
 .city-node.selected.tier-3 .compound {
-  width: min(360px, 46cqw);
+  width: min(300px, 40cqw);
   height: auto;
-  aspect-ratio: 500 / 320;
+  aspect-ratio: 540 / 340;
   outline: none;
 }
 

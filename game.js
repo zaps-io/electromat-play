@@ -1026,30 +1026,30 @@
   function zapsCompound(city) {
     const site = city.sites[YOU];
     const owned = hasCap(site) || jobsFor(city.id).some((j) => j.type === "dc" || j.type === "mcs");
-    const w = 500;
-    const h = 320;
+    const w = 540;
+    const h = 340;
     const dc = site.dc;
     const raisingDc = raisingType(city.id, "dc");
-    let g = padSlab(56, 292, 270, 175, owned);
+    let g = padSlab(88, 300, 240, 150, owned);
 
     if (owned) {
-      g += rectifierCab(88, 228, true);
-      g += rectifierCab(108, 220, dc >= 2);
-      g += dccCombiner(236, 236, true);
+      g += rectifierCab(110, 236, true);
+      g += rectifierCab(130, 228, dc >= 2);
+      g += dccCombiner(248, 244, true);
     }
 
     if (site.bess > 0 || raisingType(city.id, "bess")) {
-      g += bessFarm(150, 214, site.bess > 0, raisingType(city.id, "bess") && site.bess < 1);
+      g += bessFarm(168, 222, site.bess > 0, raisingType(city.id, "bess") && site.bess < 1);
     }
     if (site.lounge > 0 || raisingType(city.id, "lounge")) {
-      g += loungePavilion(268, 230, site.lounge > 0, raisingType(city.id, "lounge") && site.lounge < 1);
+      g += loungePavilion(250, 238, site.lounge > 0, raisingType(city.id, "lounge") && site.lounge < 1);
     }
 
     const cabSlots = [
-      [96, 252],
-      [150, 248],
-      [96, 278],
-      [150, 274],
+      [118, 258],
+      [168, 254],
+      [118, 284],
+      [168, 280],
     ];
     cabSlots.forEach((pos, i) => {
       if (dc > i) g += powerCabinet1500(pos[0], pos[1], true);
@@ -1060,32 +1060,32 @@
     }
 
     const stallCount = Math.min(dc, 4) * 4;
-    const stallY = 286;
-    g += stallLane(78, stallY + 6, Math.max(72, stallCount * 13.5 + 10), 18, Math.max(4, stallCount || 4), dc > 0);
+    const stallY = 288;
+    g += stallLane(100, stallY + 6, Math.max(72, stallCount * 13.2 + 10), 16, Math.max(4, stallCount || 4), dc > 0);
     for (let i = 0; i < stallCount; i += 1) {
-      g += dispenser1000(80 + i * 13.6, stallY, true);
+      g += dispenser1000(102 + i * 13.2, stallY, true);
     }
     if (dc > 0) {
-      g += canopy(70, stallY + 10, Math.max(80, stallCount * 13.8 + 12), 36, 28, true);
+      g += canopy(92, stallY + 10, Math.max(80, stallCount * 13.4 + 12), 34, 26, true);
     } else if (raisingDc) {
-      g += canopy(70, stallY + 10, 96, 36, 28, false);
+      g += canopy(92, stallY + 10, 96, 34, 26, false);
     }
 
     if (site.mcs > 0 || raisingType(city.id, "mcs")) {
       const live = site.mcs > 0;
-      g += stallLane(64, 304, 86, 20, 3, live);
-      g += isoBox(68, 296, 8, 6, 14, live).g;
-      g += isoBox(128, 296, 8, 6, 14, live).g;
-      g += canopy(58, 308, 96, 36, 30, live, [0.08, 0.5, 0.92]);
-      if (!live) g += scaffold(64, 304, 86, 32, 20);
+      g += stallLane(96, 308, 80, 18, 3, live);
+      g += isoBox(100, 300, 8, 6, 14, live).g;
+      g += isoBox(154, 300, 8, 6, 14, live).g;
+      g += canopy(88, 310, 90, 32, 28, live, [0.08, 0.5, 0.92]);
+      if (!live) g += scaffold(96, 308, 80, 28, 18);
     }
 
     if (site.market > 0 || raisingType(city.id, "market")) {
-      g += marketKiosk(300, 286, site.market > 0, raisingType(city.id, "market") && site.market < 1);
+      g += marketKiosk(268, 292, site.market > 0, raisingType(city.id, "market") && site.market < 1);
     }
 
     if (owned) {
-      g += `<image href="${BOLT}" x="72" y="200" width="11" height="11"/>`;
+      g += `<image href="${BOLT}" x="100" y="214" width="11" height="11"/>`;
     }
     return `<svg viewBox="0 0 ${w} ${h}" class="compound-svg" overflow="visible" aria-hidden="true">${g}</svg>`;
   }
