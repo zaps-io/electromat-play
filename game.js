@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: branded-compounds-3 */
+/* empire-build: branded-compounds-4 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -1134,17 +1134,17 @@
   }
 
   function mapSpriteKind(city, meta) {
-    const you = hasCap(city.sites[YOU]) || jobsFor(city.id).some((j) => j.faction === YOU && (j.type === "dc" || j.type === "mcs"));
-    const rival = strongestRival(city);
-    const them = !you && rival && hasCap(city.sites[rival.id]);
+    const site = city.sites[YOU];
+    const zapsLive = hasCap(site);
+    const voltspanLive = city.sites.voltspan && hasCap(city.sites.voltspan);
     const raising = jobsFor(city.id).length > 0;
-    if (you) {
-      const site = city.sites[YOU];
-      if (meta.id === "phoenix" || (site.lounge > 0 && site.dc >= 2)) return "hq";
-      if (meta.id === "vegas" || site.dc <= 1) return "vegas";
-      return "tucson";
+    if (zapsLive) {
+      if (meta.id === "phoenix") return "hq";
+      if (meta.id === "vegas") return "vegas";
+      if (meta.id === "tucson") return "tucson";
+      return "dirt";
     }
-    if (them) return "voltspan";
+    if (voltspanLive) return "voltspan";
     if (raising) return "dirt";
     return "flag";
   }
@@ -1152,7 +1152,7 @@
   function iconMarkup(city, selectedHere, meta) {
     const kind = mapSpriteKind(city, meta);
     const src = MAP_SPRITES[kind] || MAP_SPRITES.flag;
-    return `<img class="map-sprite" src="${src}" alt="" draggable="false">`;
+    return `<img class="map-sprite" src="${src}" alt="" data-kind="${kind}" draggable="false">`;
   }
 
   function renderCities() {
