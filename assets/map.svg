@@ -1,26 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800">
-  <rect width="1200" height="800" fill="#101014"/>
-  <g fill="none" stroke="#2a2a33" stroke-width="1">
-    <path d="M0 80 H1200 M0 160 H1200 M0 240 H1200 M0 320 H1200 M0 400 H1200 M0 480 H1200 M0 560 H1200 M0 640 H1200 M0 720 H1200"/>
-    <path d="M80 0 V800 M160 0 V800 M240 0 V800 M320 0 V800 M400 0 V800 M480 0 V800 M560 0 V800 M640 0 V800 M720 0 V800 M800 0 V800 M880 0 V800 M960 0 V800 M1040 0 V800 M1120 0 V800"/>
-  </g>
+  <defs>
+    <pattern id="site-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0 H0 V40" fill="none" stroke="#00D4F5" stroke-opacity="0.08" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="800" fill="#1E1E24"/>
+  <rect width="1200" height="800" fill="url(#site-grid)"/>
 
   <!-- CA -->
-  <path d="M48 70 L168 78 L198 250 L168 410 L198 560 L182 730 L92 742 L52 500 L36 230 Z" fill="#1a1a22" stroke="#B8BCC0" stroke-opacity="0.35"/>
+  <path d="M48 70 L168 78 L198 250 L168 410 L198 560 L182 730 L92 742 L52 500 L36 230 Z" fill="#26262e" stroke="#00D4F5" stroke-opacity="0.42" stroke-width="1.6"/>
   <!-- NV -->
-  <path d="M168 78 L318 90 L308 250 L258 360 L198 250 Z" fill="#22222c" stroke="#B8BCC0" stroke-opacity="0.35"/>
+  <path d="M168 78 L318 90 L308 250 L258 360 L198 250 Z" fill="#2a2a33" stroke="#00D4F5" stroke-opacity="0.42" stroke-width="1.6"/>
   <!-- UT -->
-  <path d="M318 90 L478 98 L468 250 L358 300 L308 250 Z" fill="#1c1c26" stroke="#B8BCC0" stroke-opacity="0.35"/>
+  <path d="M318 90 L478 98 L468 250 L358 300 L308 250 Z" fill="#24242c" stroke="#00D4F5" stroke-opacity="0.42" stroke-width="1.6"/>
   <!-- CO -->
-  <path d="M478 98 L708 110 L698 270 L468 250 Z" fill="#242430" stroke="#B8BCC0" stroke-opacity="0.35"/>
+  <path d="M478 98 L708 110 L698 270 L468 250 Z" fill="#2c2c34" stroke="#00D4F5" stroke-opacity="0.42" stroke-width="1.6"/>
   <!-- AZ -->
-  <path d="M198 250 L358 300 L468 250 L560 430 L470 620 L198 560 L168 410 Z" fill="#1e1e28" stroke="#B8BCC0" stroke-opacity="0.35"/>
+  <path d="M198 250 L358 300 L468 250 L560 430 L470 620 L198 560 L168 410 Z" fill="#282830" stroke="#00D4F5" stroke-opacity="0.55" stroke-width="1.8"/>
   <!-- NM -->
-  <path d="M468 250 L698 270 L720 430 L590 620 L470 620 L560 430 Z" fill="#20202a" stroke="#B8BCC0" stroke-opacity="0.35"/>
+  <path d="M468 250 L698 270 L720 430 L590 620 L470 620 L560 430 Z" fill="#26262e" stroke="#00D4F5" stroke-opacity="0.42" stroke-width="1.6"/>
   <!-- TX (west/north) -->
-  <path d="M590 620 L720 430 L980 410 L1040 520 L900 680 L720 700 Z" fill="#191922" stroke="#B8BCC0" stroke-opacity="0.35"/>
+  <path d="M590 620 L720 430 L980 410 L1040 520 L900 680 L720 700 Z" fill="#22222a" stroke="#00D4F5" stroke-opacity="0.42" stroke-width="1.6"/>
 
-  <g fill="#B8BCC0" fill-opacity="0.35" font-family="Share Tech Mono, monospace" font-size="18" letter-spacing="4">
+  <g fill="#E89A2E" fill-opacity="0.85" font-family="Share Tech Mono, monospace" font-size="16" letter-spacing="5">
     <text x="90" y="400">CA</text>
     <text x="230" y="180">NV</text>
     <text x="360" y="170">UT</text>
@@ -30,8 +32,12 @@
     <text x="820" y="560">TX</text>
   </g>
 
-  <path d="M130 230 L230 175 L400 130 L520 210 L640 155 M155 430 L300 330 L360 285 L400 370 L420 455 L455 545 L590 560 L900 430 M155 430 L175 535 L455 545 M420 455 L580 420 L600 330 L640 155 M420 455 L300 330 L230 175 M130 230 L155 430" fill="none" stroke="#E63225" stroke-opacity="0.38" stroke-width="3"/>
+  <path d="M130 230 L230 175 L400 130 L520 210 L640 155 M155 430 L300 330 L360 285 L400 370 L420 455 L455 545 L590 560 L900 430 M155 430 L175 535 L455 545 M420 455 L580 420 L600 330 L640 155 M420 455 L300 330 L230 175 M130 230 L155 430" fill="none" stroke="#00D4F5" stroke-opacity="0.28" stroke-width="2"/>
 
-  <text x="40" y="40" fill="#E63225" font-family="Anton, sans-serif" font-size="28">WESTERN INTERCONNECT</text>
-  <text x="40" y="62" fill="#B8BCC0" font-family="Share Tech Mono, monospace" font-size="12">THE STATION IS NOT BUILT YET. THE CONTINENT ALREADY IS.</text>
+  <!-- Official kiosk bolt — identity only. Never generate ZAPS letterforms. -->
+  <g transform="translate(36,22)">
+    <path d="M18 4.5 L17.2 14 H24 L14.5 27.5 L15.2 18 H8 Z" fill="#E63225"/>
+  </g>
+  <text x="78" y="42" fill="#F5F0E8" font-family="Share Tech Mono, monospace" font-size="18" letter-spacing="6">WESTERN INTERCONNECT</text>
+  <text x="78" y="62" fill="#E89A2E" font-family="Share Tech Mono, monospace" font-size="11" letter-spacing="2.4">THE STATION IS NOT BUILT YET. THE CONTINENT ALREADY IS.</text>
 </svg>

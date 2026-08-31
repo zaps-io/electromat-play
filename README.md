@@ -8,11 +8,17 @@ Static Civ / Command & Conquer charging-empire. Phoenix HQ. Sixteen cities acros
 
 This is **not** the FPV night-shift game.
 
+## Brand
+
+Official cream/red Zaps wordmarks only (`assets/brand/wordmark-*.svg` and the kiosk bolt). Letterforms are never generated.
+
+Palette: `#E63225` identity · `#1E1E24` charcoal · `#E89A2E` amber (information) · `#00D4F5` cyan (structure) · `#F5F0E8` cream yards · `#B8BCC0` chrome.
+
 ## How to play
 
 1. Open the public link and click **OPEN THE BOARD**.
 2. Read the Phoenix briefing, then enter the continent.
-3. Click a city to zoom the yard. Each DC stall is a full lot. Phoenix HQ should read like an AoE town as you add kit.
+3. Click a city to zoom the yard. Each DC stall is a full cream lot. Phoenix HQ should read like an AoE town as you add kit.
 4. Speed the calendar with PAUSE / 1× / 2× / 4× (or keys `Space`, `1`, `2`, `4`).
 5. SAVE / LOAD writes this browser’s `localStorage`.
 6. Incentive popups are almost gone. A deal, if it ever appears, is a toast plus the **DEALS** badge. A price war fires at most once per campaign, as a toast — never a modal stack.

@@ -12,12 +12,13 @@
     cyan: "#00D4F5",
     cream: "#F5F0E8",
     steel: "#B8BCC0",
-    pad: "#2a2a33",
-    dirt: "#3a342c",
+    pad: "#F5F0E8",
+    dirt: "#1E1E24",
     ink: "#121217",
     panel: "#26262e",
+    lot: "#F5F0E8",
   };
-  const BOLT = "assets/brand/zaps-wordmark-only-cream.svg";
+  const BOLT = "assets/brand/zaps-wordmark-only-red.svg";
 
   const BUILD = {
     dc: {
@@ -66,8 +67,8 @@
     voltspan: { id: "voltspan", name: "VOLTSPAN", color: "#00D4F5", home: "la", unlock: 0, priceBias: 1.08 },
     gridhawk: { id: "gridhawk", name: "GRIDHAWK", color: "#E89A2E", home: "dallas", unlock: 0, priceBias: 0.9 },
     arcway: { id: "arcway", name: "ARCWAY", color: "#B8BCC0", home: "denver", unlock: 0, priceBias: 1.02 },
-    rednode: { id: "rednode", name: "REDNODE", color: "#c45c6a", home: "vegas", unlock: 18, priceBias: 0.94 },
-    ampfield: { id: "ampfield", name: "AMPFIELD", color: "#7ec8a3", home: "albuquerque", unlock: 24, priceBias: 1.0 },
+    rednode: { id: "rednode", name: "REDNODE", color: "#B8BCC0", home: "vegas", unlock: 18, priceBias: 0.94 },
+    ampfield: { id: "ampfield", name: "AMPFIELD", color: "#00D4F5", home: "albuquerque", unlock: 24, priceBias: 1.0 },
   };
 
   const CITIES = [
@@ -747,7 +748,7 @@
         const b = CITY_BY_ID[n];
         const aLive = hasCap(state.cities[c.id].sites[YOU]);
         const bLive = hasCap(state.cities[n].sites[YOU]);
-        const col = aLive && bLive ? "#E63225" : "#3a3a44";
+        const col = aLive && bLive ? PAL.cyan : "#3a3a44";
         lines += `<line x1="${c.x}" y1="${c.y}" x2="${b.x}" y2="${b.y}" stroke="${col}" stroke-width="${aLive && bLive ? 3 : 1.2}" stroke-opacity="0.85"/>`;
       }
     }
@@ -776,47 +777,37 @@
     return best;
   }
 
-  function rivets(x, y, w, h) {
-    return [
-      [x + 2.2, y + 2.2],
-      [x + w - 2.2, y + 2.2],
-      [x + 2.2, y + h - 2.2],
-      [x + w - 2.2, y + h - 2.2],
-    ]
-      .map(([px, py]) => `<circle cx="${px}" cy="${py}" r="1.15" fill="${PAL.steel}"/>`)
-      .join("");
-  }
-
   function lotBox(x, y, w, h, fill, stroke, dash = false) {
-    return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" stroke="${stroke}" stroke-width="1.3"${
+    return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1.4" fill="${fill}" stroke="${stroke}" stroke-width="1.15"${
       dash ? ' stroke-dasharray="3 2"' : ""
     }/>`;
   }
 
   function lotLabel(x, y, w, h, text, detail) {
     if (!detail) return "";
-    return `<text x="${x + w / 2}" y="${y + h - 3.6}" text-anchor="middle" fill="${PAL.cream}" font-size="9" font-weight="700" font-family="Share Tech Mono, monospace">${text}</text>`;
+    return `<text x="${x + w / 2}" y="${y + h - 3.4}" text-anchor="middle" fill="${PAL.amber}" font-size="8.4" font-family="Share Tech Mono, monospace">${text}</text>`;
   }
 
   function dcStall(x, y, w, h, { live, raising, extra, detail }) {
     if (raising) {
       return (
-        lotBox(x, y, w, h, PAL.ink, PAL.amber, true) +
-        `<path d="M${x + 5} ${y + h - 6} L${x + w / 2} ${y + 6} L${x + w - 5} ${y + h - 6}" fill="none" stroke="${PAL.amber}" stroke-width="2"/>` +
+        lotBox(x, y, w, h, PAL.dirt, PAL.amber, true) +
+        `<path d="M${x + 6} ${y + h - 8} L${x + w / 2} ${y + 7} L${x + w - 6} ${y + h - 8}" fill="none" stroke="${PAL.amber}" stroke-width="1.4"/>` +
         lotLabel(x, y, w, h, "RAISE DC", detail)
       );
     }
     if (!live) {
-      return lotBox(x, y, w, h, PAL.dirt, "#4a453c", true) + lotLabel(x, y, w, h, "DC LOT", detail);
+      return lotBox(x, y, w, h, PAL.dirt, PAL.cyan, true) + lotLabel(x, y, w, h, "DC LOT", detail);
     }
-    const plus = extra > 0 ? `<text x="${x + w - 8}" y="${y + 11}" fill="${PAL.cream}" font-size="10" font-family="Share Tech Mono, monospace">+${extra}</text>` : "";
+    const plus = extra > 0
+      ? `<text x="${x + w - 7}" y="${y + 10}" fill="${PAL.amber}" font-size="9" font-family="Share Tech Mono, monospace">+${extra}</text>`
+      : "";
     return (
-      lotBox(x, y, w, h, PAL.pad, PAL.cream) +
-      `<rect x="${x + 3}" y="${y + 3}" width="${w - 6}" height="${h * 0.42}" fill="${PAL.cyan}"/>` +
-      `<rect x="${x + 6}" y="${y + 6}" width="${w - 12}" height="${h * 0.22}" fill="${PAL.charcoal}"/>` +
-      `<rect x="${x + w / 2 - 3}" y="${y + h * 0.42}" width="6" height="${h * 0.22}" fill="${PAL.red}"/>` +
-      `<rect x="${x + 7}" y="${y + h - 13}" width="${(w - 18) / 2}" height="5" fill="${PAL.amber}"/>` +
-      `<rect x="${x + w / 2 + 2}" y="${y + h - 13}" width="${(w - 18) / 2}" height="5" fill="${PAL.amber}"/>` +
+      lotBox(x, y, w, h, PAL.lot, PAL.cyan) +
+      `<path d="M${x + 4} ${y + h * 0.42} H${x + w - 4} L${x + w - 8} ${y + 5} H${x + 8} Z" fill="none" stroke="${PAL.cyan}" stroke-width="1.4"/>` +
+      `<rect x="${x + 8}" y="${y + 8}" width="${w - 16}" height="${h * 0.16}" fill="${PAL.charcoal}"/>` +
+      `<rect x="${x + 7}" y="${y + h - 13}" width="${(w - 18) / 2}" height="4" fill="${PAL.amber}"/>` +
+      `<rect x="${x + w / 2 + 2}" y="${y + h - 13}" width="${(w - 18) / 2}" height="4" fill="${PAL.amber}"/>` +
       plus +
       lotLabel(x, y, w, h, "DC", detail)
     );
@@ -824,68 +815,67 @@
 
   function mcsBay(x, y, w, h, { live, raising, detail }) {
     if (raising) {
-      return lotBox(x, y, w, h, PAL.ink, PAL.amber, true) + lotLabel(x, y, w, h, "RAISE MCS", detail);
+      return lotBox(x, y, w, h, PAL.dirt, PAL.amber, true) + lotLabel(x, y, w, h, "RAISE MCS", detail);
     }
-    if (!live) return lotBox(x, y, w, h, PAL.dirt, "#4a453c", true) + lotLabel(x, y, w, h, "MCS BAY", detail);
+    if (!live) return lotBox(x, y, w, h, PAL.dirt, PAL.cyan, true) + lotLabel(x, y, w, h, "MCS BAY", detail);
     return (
-      lotBox(x, y, w, h, PAL.charcoal, PAL.amber) +
-      `<path d="M${x + 6} ${y + 6} H${x + w - 6} L${x + w - 14} ${y + h - 12} H${x + 14} Z" fill="${PAL.amber}"/>` +
-      `<rect x="${x + 10}" y="${y + h - 14}" width="${w - 20}" height="6" fill="${PAL.cyan}"/>` +
+      lotBox(x, y, w, h, PAL.lot, PAL.cyan) +
+      `<path d="M${x + 8} ${y + 6} H${x + w - 8} L${x + w - 14} ${y + h - 14} H${x + 14} Z" fill="none" stroke="${PAL.cyan}" stroke-width="1.5"/>` +
+      `<rect x="${x + 12}" y="${y + h - 16}" width="${w - 24}" height="5" fill="${PAL.amber}"/>` +
       lotLabel(x, y, w, h, "MCS", detail)
     );
   }
 
   function bessStack(x, y, w, h, { live, raising, detail }) {
-    if (raising) return lotBox(x, y, w, h, PAL.ink, PAL.amber, true) + lotLabel(x, y, w, h, "RAISE BESS", detail);
-    if (!live) return lotBox(x, y, w, h, PAL.dirt, "#4a453c", true) + lotLabel(x, y, w, h, "BESS", detail);
+    if (raising) return lotBox(x, y, w, h, PAL.dirt, PAL.amber, true) + lotLabel(x, y, w, h, "RAISE BESS", detail);
+    if (!live) return lotBox(x, y, w, h, PAL.dirt, PAL.cyan, true) + lotLabel(x, y, w, h, "BESS", detail);
     return (
-      lotBox(x, y, w, h, PAL.charcoal, PAL.cyan) +
-      `<rect x="${x + 5}" y="${y + 6}" width="${w - 10}" height="5" fill="${PAL.cyan}"/>` +
-      `<rect x="${x + 5}" y="${y + 14}" width="${w - 10}" height="5" fill="${PAL.cyan}"/>` +
-      `<rect x="${x + 5}" y="${y + 22}" width="${w - 10}" height="5" fill="${PAL.amber}"/>` +
+      lotBox(x, y, w, h, PAL.lot, PAL.cyan) +
+      `<rect x="${x + 6}" y="${y + 6}" width="${w - 12}" height="5" fill="none" stroke="${PAL.cyan}"/>` +
+      `<rect x="${x + 6}" y="${y + 14}" width="${w - 12}" height="5" fill="none" stroke="${PAL.cyan}"/>` +
+      `<rect x="${x + 6}" y="${y + 22}" width="${w - 12}" height="5" fill="${PAL.amber}"/>` +
       lotLabel(x, y, w, h, "BESS", detail)
     );
   }
 
   function loungeHall(x, y, w, h, { live, raising, detail }) {
-    if (raising) return lotBox(x, y, w, h, PAL.ink, PAL.amber, true) + lotLabel(x, y, w, h, "RAISE LNGE", detail);
-    if (!live) return lotBox(x, y, w, h, PAL.dirt, "#4a453c", true) + lotLabel(x, y, w, h, "LOUNGE", detail);
+    if (raising) return lotBox(x, y, w, h, PAL.dirt, PAL.amber, true) + lotLabel(x, y, w, h, "RAISE LNGE", detail);
+    if (!live) return lotBox(x, y, w, h, PAL.dirt, PAL.cyan, true) + lotLabel(x, y, w, h, "LOUNGE", detail);
     return (
-      lotBox(x, y, w, h, PAL.charcoal, PAL.cream) +
-      `<path d="M${x + 3} ${y + 16} L${x + w / 2} ${y + 4} L${x + w - 3} ${y + 16}" fill="${PAL.cream}"/>` +
-      `<rect x="${x + 8}" y="${y + 17}" width="8" height="8" fill="${PAL.red}"/>` +
-      `<circle cx="${x + w - 11}" cy="${y + 20}" r="3" fill="${PAL.cyan}"/>` +
+      lotBox(x, y, w, h, PAL.lot, PAL.cyan) +
+      `<path d="M${x + 5} ${y + 14} H${x + w - 5}" stroke="${PAL.cyan}" stroke-width="1.4"/>` +
+      `<rect x="${x + 8}" y="${y + 16}" width="8" height="10" fill="${PAL.charcoal}"/>` +
+      `<rect x="${x + w - 18}" y="${y + 17}" width="10" height="6" fill="${PAL.amber}"/>` +
       lotLabel(x, y, w, h, "LOUNGE", detail)
     );
   }
 
   function marketHall(x, y, w, h, { live, raising, detail }) {
-    if (raising) return lotBox(x, y, w, h, PAL.ink, PAL.amber, true) + lotLabel(x, y, w, h, "RAISE MKT", detail);
-    if (!live) return lotBox(x, y, w, h, PAL.dirt, "#4a453c", true) + lotLabel(x, y, w, h, "MARKET", detail);
+    if (raising) return lotBox(x, y, w, h, PAL.dirt, PAL.amber, true) + lotLabel(x, y, w, h, "RAISE MKT", detail);
+    if (!live) return lotBox(x, y, w, h, PAL.dirt, PAL.cyan, true) + lotLabel(x, y, w, h, "MARKET", detail);
     return (
-      lotBox(x, y, w, h, PAL.charcoal, PAL.cream) +
-      `<path d="M${x + 2} ${y + 12} H${x + w - 2} L${x + w - 8} ${y + 4} H${x + 8} Z" fill="${PAL.red}"/>` +
-      `<rect x="${x + 8}" y="${y + 14}" width="8" height="8" fill="${PAL.amber}"/>` +
-      `<rect x="${x + w - 16}" y="${y + 14}" width="8" height="8" fill="${PAL.cyan}"/>` +
+      lotBox(x, y, w, h, PAL.lot, PAL.cyan) +
+      `<path d="M${x + 4} ${y + 14} H${x + w - 4} L${x + w - 9} ${y + 6} H${x + 9} Z" fill="none" stroke="${PAL.cyan}" stroke-width="1.4"/>` +
+      `<rect x="${x + 9}" y="${y + 16}" width="10" height="8" fill="${PAL.amber}"/>` +
+      `<rect x="${x + w - 19}" y="${y + 16}" width="10" height="8" fill="none" stroke="${PAL.cyan}"/>` +
       lotLabel(x, y, w, h, "MARKET", detail)
     );
   }
 
   function padDeck(x, y, w, h, { live, detail }) {
-    if (!live) return lotBox(x, y, w, h, PAL.dirt, "#4a453c", true) + lotLabel(x, y, w, h, "PAD", detail);
+    if (!live) return lotBox(x, y, w, h, PAL.dirt, PAL.cyan, true) + lotLabel(x, y, w, h, "PAD", detail);
     let marks = "";
     const lanes = detail ? 5 : 3;
     for (let i = 0; i < lanes; i += 1) {
       const mx = x + 6 + i * ((w - 12) / lanes);
-      marks += `<rect x="${mx}" y="${y + 6}" width="3" height="${h - 14}" fill="${PAL.cream}" opacity="0.35"/>`;
+      marks += `<rect x="${mx}" y="${y + 6}" width="2.2" height="${h - 14}" fill="${PAL.cyan}" opacity="0.45"/>`;
     }
-    return lotBox(x, y, w, h, PAL.pad, PAL.red) + marks + lotLabel(x, y, w, h, "PAD", detail);
+    return lotBox(x, y, w, h, PAL.pad, PAL.cyan) + marks + lotLabel(x, y, w, h, "PAD", detail);
   }
 
   function dirtPlot() {
     return `<svg viewBox="0 0 24 24" class="compound-svg" aria-hidden="true">
-      <rect x="4" y="4" width="16" height="16" fill="${PAL.dirt}" stroke="${PAL.steel}" stroke-opacity="0.45"/>
-      <path d="M8 8 L16 16 M16 8 L8 16" stroke="${PAL.steel}" stroke-opacity="0.35"/>
+      <rect x="4" y="4" width="16" height="16" rx="1.5" fill="${PAL.dirt}" stroke="${PAL.cyan}" stroke-opacity="0.45" stroke-dasharray="2 2"/>
     </svg>`;
   }
 
@@ -898,16 +888,15 @@
     const h = 88;
     const raising = jobsFor(city.id, rival.id).length > 0;
     let inner = "";
-    inner += `<rect x="3" y="3" width="${w - 6}" height="${h - 6}" fill="${PAL.ink}" stroke="${stroke}" stroke-width="2"/>`;
-    inner += rivets(3, 3, w - 6, h - 6);
+    inner += `<rect x="3" y="3" width="${w - 6}" height="${h - 6}" rx="2" fill="${PAL.charcoal}" stroke="${stroke}" stroke-width="1.6"/>`;
     inner += padDeck(8, 56, 104, 24, { live: hasCap(site), detail });
     inner += dcStall(8, 10, 48, 40, { live: site.dc > 0, raising: raisingType(city.id, "dc", rival.id), extra: Math.max(0, site.dc - 1), detail });
-    inner += lotBox(62, 10, 50, 40, PAL.charcoal, stroke);
+    inner += lotBox(62, 10, 50, 40, PAL.dirt, stroke);
     if (site.mcs) inner += `<rect x="68" y="16" width="38" height="10" fill="${PAL.amber}"/>`;
-    else inner += `<rect x="68" y="16" width="38" height="10" fill="${PAL.dirt}"/>`;
-    if (site.bess) inner += `<rect x="68" y="30" width="16" height="14" fill="${PAL.cyan}"/>`;
+    else inner += `<rect x="68" y="16" width="38" height="10" fill="${PAL.dirt}" stroke="${PAL.cyan}" stroke-dasharray="2 2"/>`;
+    if (site.bess) inner += `<rect x="68" y="30" width="16" height="14" fill="none" stroke="${PAL.cyan}"/>`;
     if (detail) {
-      inner += `<text x="60" y="82" text-anchor="middle" fill="${stroke}" font-size="6" font-family="Share Tech Mono, monospace">${rival.name} YARD</text>`;
+      inner += `<text x="60" y="82" text-anchor="middle" fill="${PAL.amber}" font-size="6" font-family="Share Tech Mono, monospace">${rival.name} YARD</text>`;
     }
     if (raising) inner += `<rect x="3" y="3" width="${w - 6}" height="${h - 6}" fill="none" stroke="${PAL.amber}" stroke-dasharray="4 3"/>`;
     return `<svg viewBox="0 0 ${w} ${h}" class="compound-svg" aria-hidden="true">${inner}</svg>`;
@@ -919,17 +908,16 @@
     const w = 200;
     const h = 150;
     const extraDc = Math.max(0, site.dc - 4);
+    const siteName = (CITY_BY_ID[city.id]?.name || "SITE").toUpperCase();
     let g = "";
-    g += `<rect x="2" y="2" width="${w - 4}" height="${h - 4}" fill="${PAL.ink}" stroke="${owned ? PAL.red : PAL.steel}" stroke-width="2.2"/>`;
-    g += rivets(2, 2, w - 4, h - 4);
-    g += `<rect x="10" y="7" width="178" height="8" fill="${PAL.charcoal}"/>`;
-    g += `<rect x="10" y="7" width="42" height="8" fill="${PAL.red}"/>`;
-    g += `<rect x="146" y="7" width="42" height="8" fill="${PAL.cyan}" opacity="0.85"/>`;
+    g += `<rect x="2" y="2" width="${w - 4}" height="${h - 4}" rx="3" fill="${PAL.cream}" stroke="${PAL.cyan}" stroke-width="1.6"/>`;
+    g += `<path d="M10 18 H190 M10 56 H190 M10 98 H190" stroke="${PAL.cyan}" stroke-opacity="0.18" stroke-width="0.8"/>`;
+    g += `<rect x="8" y="6" width="184" height="11" rx="1.2" fill="${PAL.charcoal}"/>`;
     if (owned) {
-      g += `<image href="${BOLT}" x="8" y="6" width="10" height="10"/>`;
+      g += `<image href="${BOLT}" x="10" y="6.4" width="10" height="10"/>`;
     }
     if (detail) {
-      g += `<text x="100" y="13.4" text-anchor="middle" fill="${PAL.cream}" font-size="5.6" font-family="Share Tech Mono, monospace">COMPOUND</text>`;
+      g += `<text x="28" y="14.4" fill="${PAL.amber}" font-size="6.2" font-family="Share Tech Mono, monospace">${siteName} SITE</text>`;
     }
 
     const dcLive = [site.dc >= 1, site.dc >= 2, site.dc >= 3, site.dc >= 4];
@@ -956,8 +944,8 @@
 
     const rival = strongestRival(city);
     if (rival && hasCap(city.sites[rival.id])) {
-      g += `<rect x="${w - 28}" y="${h - 20}" width="22" height="14" fill="${PAL.ink}" stroke="${rival.color}"/>`;
-      if (detail) g += `<text x="${w - 17}" y="${h - 10}" text-anchor="middle" fill="${rival.color}" font-size="5" font-family="Share Tech Mono, monospace">HST</text>`;
+      g += `<rect x="${w - 28}" y="${h - 18}" width="22" height="12" rx="1" fill="${PAL.charcoal}" stroke="${rival.color}"/>`;
+      if (detail) g += `<text x="${w - 17}" y="${h - 9.5}" text-anchor="middle" fill="${PAL.amber}" font-size="5" font-family="Share Tech Mono, monospace">HST</text>`;
     }
     return `<svg viewBox="0 0 ${w} ${h}" class="compound-svg" aria-hidden="true">${g}</svg>`;
   }
@@ -1105,7 +1093,7 @@
     const m = ((state.month - 1) % 12) + 1;
     $("stat-date").textContent = `Y${y} M${String(m).padStart(2, "0")}`;
     $("stat-cash").textContent = money(state.cash);
-    $("stat-cash").style.color = state.cash < 0 ? "#E63225" : "";
+    $("stat-cash").style.color = state.cash < 0 ? PAL.amber : "";
     $("stat-share").textContent = `${Math.round(continentalShare() * 100)}%`;
     $("stat-cities").textContent = `${presenceCount(YOU)}/16`;
     $("stat-crews").textContent = `${crewsBusy()}/${MAX_CREWS}`;
