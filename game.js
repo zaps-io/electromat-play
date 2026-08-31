@@ -1108,40 +1108,34 @@
     return wrapCompoundSvg(compoundParts(city));
   }
 
-  function yardScale(part, selectedHere, tier) {
+  function iconMarkup(city, selectedHere) {
+    const you = hasCap(city.sites[YOU]) || jobsFor(city.id).some((j) => j.faction === YOU && (j.type === "dc" || j.type === "mcs"));
+    const rival = strongestRival(city);
+    const them = !you && rival && hasCap(city.sites[rival.id]);
+    const site = you ? city.sites[YOU] : them ? city.sites[rival.id] : null;
+    const edge = you ? PAL.cyan : them ? rival.color : PAL.cyan;
+    const raising = jobsFor(city.id, you ? YOU : them ? rival.id : YOU).length > 0;
+    let g = "";
     if (selectedHere) {
-      if (part.kind === "zaps") return 0.86;
-      if (part.kind === "rival") return 0.64;
-      return 1.4;
+      g += `<ellipse cx="36" cy="40" rx="28" ry="8.5" fill="none" stroke="${PAL.cyan}" stroke-width="1.6"/>`;
     }
-    if (part.kind === "zaps") return 0.32 + Math.min(tier, 3) * 0.04;
-    if (part.kind === "rival") return 0.3;
-    return 0.92;
-  }
-
-  function renderYards() {
-    const svg = $("yard-layer");
-    if (!svg) return;
-    let marks = "";
-    for (const meta of CITIES) {
-      const city = state.cities[meta.id];
-      const part = compoundParts(city);
-      const youSite = city.sites[YOU];
-      const raising = jobsFor(meta.id).length > 0;
-      const sel = selected === meta.id;
-      const s = yardScale(part, sel, compoundTier(youSite));
-      const cls = [
-        "yard",
-        part.kind,
-        sel ? "selected" : "",
-        selected && !sel ? "tucked" : "",
-        raising ? "raising" : "",
-      ]
-        .filter(Boolean)
-        .join(" ");
-      marks += `<g class="${cls}" transform="translate(${meta.x} ${meta.y}) scale(${s}) translate(${-part.ax} ${-part.ay})">${part.inner}</g>`;
+    if (!site) {
+      g += padSlab(22, 38, 20, 11, false);
+      g += raising ? scaffold(26, 34, 10, 7, 8) : isoBox(28, 34, 5, 4, 3.5, false).g;
+      return `<svg viewBox="0 0 72 48" class="map-icon-svg" overflow="visible" aria-hidden="true">${g}</svg>`;
     }
-    svg.innerHTML = marks;
+    g += padSlab(16, 40, 30, 15, true);
+    g += isoBox(18, 31, 9, 6, 10, true, edge).g;
+    if (you && site.lounge > 0) {
+      const lounge = isoBox(38, 30, 12, 7, 6, true);
+      g += lounge.g;
+      g += `<rect x="${lounge.p.flT[0] + 2}" y="${lounge.p.flT[1] + 1.6}" width="8" height="3.2" fill="${PAL.amber}" opacity="0.95"/>`;
+    }
+    const n = Math.min(4, Math.max(1, site.dc || 1));
+    for (let i = 0; i < n; i += 1) g += dispenser1000(19 + i * 7.2, 38, true);
+    g += canopy(16, 40, 12 + n * 7.2, 11, 9, true);
+    if (raising) g += scaffold(22, 36, 18, 10, 8);
+    return `<svg viewBox="0 0 72 48" class="map-icon-svg" overflow="visible" aria-hidden="true">${g}</svg>`;
   }
 
   function renderCities() {
@@ -1163,6 +1157,10 @@
         selected = meta.id;
         renderAll();
       });
+      const icon = document.createElement("div");
+      icon.className = "map-icon";
+      icon.innerHTML = iconMarkup(city, selected === meta.id);
+      btn.append(icon);
       if (youSite.dc || youSite.mcs) {
         const kit = document.createElement("span");
         kit.className = "city-kit";
@@ -1171,12 +1169,6 @@
         if (youSite.mcs) bits.push(`${youSite.mcs} MCS`);
         kit.textContent = bits.join(" · ");
         btn.append(kit);
-      }
-      if (raising) {
-        const raise = document.createElement("span");
-        raise.className = "city-raise";
-        raise.textContent = "RAISING";
-        btn.append(raise);
       }
       const label = document.createElement("span");
       label.className = "city-label";
@@ -1189,8 +1181,7 @@
   function applyMapZoom() {
     const frame = $("map-frame");
     if (!frame) return;
-    frame.classList.toggle("focus-city", Boolean(selected));
-    frame.classList.remove("zoomed");
+    frame.classList.remove("zoomed", "focus-city");
     frame.style.transform = "";
     frame.style.transformOrigin = "";
   }
@@ -1290,7 +1281,6 @@
     allShares();
     renderHud();
     renderCorridors();
-    renderYards();
     renderCities();
     renderInspector();
     renderTray();

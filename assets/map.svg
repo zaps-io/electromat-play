@@ -22,7 +22,7 @@
   <!-- TX (west/north) -->
   <path d="M590 620 L720 430 L980 410 L1040 520 L900 680 L720 700 Z" fill="#22222a" stroke="#00D4F5" stroke-opacity="0.42" stroke-width="1.6"/>
 
-  <g fill="#E89A2E" fill-opacity="0.85" font-family="Share Tech Mono, monospace" font-size="16" letter-spacing="5">
+  <g fill="#F5F0E8" fill-opacity="0.42" font-family="Share Tech Mono, monospace" font-size="16" letter-spacing="5">
     <text x="90" y="400">CA</text>
     <text x="230" y="180">NV</text>
     <text x="360" y="170">UT</text>

@@ -280,8 +280,8 @@ button {
   display: grid;
   grid-template-rows: 1fr 88px;
   min-height: 0;
-  overflow: visible;
-  background: #141418;
+  overflow: hidden;
+  background: #1e1e24;
 }
 
 .map-stage {
@@ -302,7 +302,6 @@ button {
 
 .map-art,
 .corridor-layer,
-.yard-layer,
 .city-layer {
   position: absolute;
   inset: 0;
@@ -316,74 +315,61 @@ button {
 }
 
 .corridor-layer,
-.yard-layer,
 .city-layer {
   pointer-events: none;
-}
-
-.yard-layer .yard {
-  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.7));
-}
-
-.yard-layer .yard.zaps {
-  filter: drop-shadow(0 0 8px rgba(0, 212, 245, 0.22));
-}
-
-.yard-layer .yard.selected {
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.75));
-}
-
-.yard-layer .yard.tucked {
-  display: none;
-}
-
-.yard-layer .yard.raising {
-  animation: scaffold-pulse 1.1s ease-in-out infinite;
-}
-
-@keyframes scaffold-pulse {
-  0%,
-  100% {
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.72));
-  }
-  50% {
-    filter: drop-shadow(0 0 10px rgba(232, 154, 46, 0.85));
-  }
 }
 
 .city-node {
   pointer-events: auto;
   position: absolute;
-  transform: translate(-50%, 6%);
+  transform: translate(-50%, -42%);
   background: none;
   border: 0;
-  padding: 0.15rem 0.2rem;
+  outline: none;
+  padding: 0;
   color: inherit;
   z-index: 1;
   overflow: visible;
-  min-width: 72px;
+  min-width: 0;
 }
 
 .city-node.selected {
-  z-index: 6;
+  z-index: 4;
 }
 
+.map-icon {
+  display: block;
+  width: 56px;
+  height: auto;
+  margin: 0 auto;
+  background: none;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.city-node.dirt .map-icon {
+  width: 48px;
+}
+
+.city-node.selected .map-icon {
+  width: 64px;
+}
+
+.map-icon-svg,
 .compound-svg {
   display: block;
+  width: 100%;
+  height: auto;
   overflow: visible;
   background: none;
-}
-
-.map-frame.focus-city .city-node:not(.selected) {
-  opacity: 0.55;
 }
 
 .city-label {
   display: block;
-  margin-top: 4px;
+  margin-top: 1px;
   white-space: nowrap;
   font-family: "Share Tech Mono", monospace;
-  font-size: 0.78rem;
+  font-size: 0.62rem;
   letter-spacing: 0.08em;
   color: var(--cream);
   text-shadow: 0 1px 2px #000;
@@ -394,26 +380,17 @@ button {
 
 .city-node.selected .city-label {
   color: var(--amber);
-  font-size: 0.95rem;
+  font-size: 0.66rem;
 }
 
 .city-kit {
   display: block;
   font-family: "Share Tech Mono", monospace;
-  font-size: 0.7rem;
+  font-size: 0.52rem;
   letter-spacing: 0.06em;
   color: var(--amber);
   text-align: center;
   text-shadow: 0 1px 2px #000;
-}
-
-.city-raise {
-  display: block;
-  font-family: "Share Tech Mono", monospace;
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  color: var(--amber);
-  text-align: center;
 }
 
 .ticker {
