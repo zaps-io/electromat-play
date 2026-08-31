@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-icons-3 */
+/* empire-build: aoe-terrain-1 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -739,21 +739,8 @@
 
   function renderCorridors() {
     const svg = $("corridor-layer");
-    const seen = new Set();
-    let lines = "";
-    for (const c of CITIES) {
-      for (const n of c.neighbors) {
-        const key = [c.id, n].sort().join("-");
-        if (seen.has(key)) continue;
-        seen.add(key);
-        const b = CITY_BY_ID[n];
-        const aLive = hasCap(state.cities[c.id].sites[YOU]);
-        const bLive = hasCap(state.cities[n].sites[YOU]);
-        const col = aLive && bLive ? PAL.cyan : "#3a3a44";
-        lines += `<line x1="${c.x}" y1="${c.y}" x2="${b.x}" y2="${b.y}" stroke="${col}" stroke-width="${aLive && bLive ? 3 : 1.2}" stroke-opacity="0.85"/>`;
-      }
-    }
-    svg.innerHTML = lines;
+    if (!svg) return;
+    svg.innerHTML = "";
   }
 
   function occupantClass(city) {
@@ -1173,7 +1160,9 @@
       }
       const label = document.createElement("span");
       label.className = "city-label";
-      label.textContent = meta.name.toUpperCase();
+      label.textContent = meta.id === "phoenix" && youSite.dc
+        ? `${meta.name.toUpperCase()} ★`
+        : meta.name.toUpperCase();
       btn.append(label);
       layer.appendChild(btn);
     }
