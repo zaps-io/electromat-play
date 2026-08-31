@@ -853,33 +853,33 @@
   }
 
   function dispenser1000(x, y, live) {
-    let g = isoShadow(x - 1, y, 7, 5);
-    const box = isoBox(x, y, 5.2, 4.2, 17, live);
+    let g = isoShadow(x - 1, y, 8, 5);
+    const box = isoBox(x, y, 6, 4.4, 19, live);
     g += box.g;
     const { p } = box;
     const screen = live ? PAL.cyan : "#3a3a44";
-    g += `<rect x="${p.flT[0] + 1.1}" y="${p.flT[1] + 3.2}" width="3" height="5.4" fill="${screen}" opacity="${live ? 0.95 : 0.45}"/>`;
-    g += `<rect x="${p.fl[0] - 1.3}" y="${p.fl[1] - 8}" width="1.4" height="3.2" fill="${live ? PAL.cream : "#32323a"}" stroke="${PAL.cyan}" stroke-width="0.4"/>`;
-    g += `<rect x="${p.fr[0] - 0.2}" y="${p.fr[1] - 8}" width="1.4" height="3.2" fill="${live ? PAL.cream : "#32323a"}" stroke="${PAL.cyan}" stroke-width="0.4"/>`;
+    g += `<rect x="${p.flT[0] + 1.2}" y="${p.flT[1] + 3.4}" width="3.6" height="6.2" fill="${screen}" opacity="${live ? 1 : 0.45}"/>`;
+    g += `<rect x="${p.fl[0] - 1.6}" y="${p.fl[1] - 9}" width="1.7" height="3.6" fill="${live ? PAL.cream : "#32323a"}" stroke="${PAL.cyan}" stroke-width="0.45"/>`;
+    g += `<rect x="${p.fr[0] - 0.1}" y="${p.fr[1] - 9}" width="1.7" height="3.6" fill="${live ? PAL.cream : "#32323a"}" stroke="${PAL.cyan}" stroke-width="0.45"/>`;
     if (live) {
-      g += `<path d="M${p.fl[0] - 0.6} ${p.fl[1] - 6.4} Q${p.fl[0] - 5} ${p.fl[1] - 2} ${p.fl[0] - 3.2} ${p.fl[1] + 0.4}" fill="none" stroke="${PAL.cyan}" stroke-width="0.9"/>`;
-      g += `<path d="M${p.fr[0] + 0.6} ${p.fr[1] - 6.4} Q${p.fr[0] + 5.4} ${p.fr[1] - 1.6} ${p.fr[0] + 3.6} ${p.fr[1] + 0.4}" fill="none" stroke="${PAL.amber}" stroke-width="0.9"/>`;
-      g += `<rect x="${p.flT[0] + 3.6}" y="${p.flT[1] + 1.2}" width="1.1" height="1.1" fill="${PAL.cyan}"/>`;
+      g += `<path d="M${p.fl[0] - 0.7} ${p.fl[1] - 7.2} Q${p.fl[0] - 6} ${p.fl[1] - 2} ${p.fl[0] - 3.6} ${p.fl[1] + 0.6}" fill="none" stroke="${PAL.cyan}" stroke-width="1.15"/>`;
+      g += `<path d="M${p.fr[0] + 0.8} ${p.fr[1] - 7.2} Q${p.fr[0] + 6.4} ${p.fr[1] - 1.4} ${p.fr[0] + 4} ${p.fr[1] + 0.6}" fill="none" stroke="${PAL.amber}" stroke-width="1.15"/>`;
+      g += `<rect x="${p.flT[0] + 4.2}" y="${p.flT[1] + 1.3}" width="1.2" height="1.2" fill="${PAL.cyan}"/>`;
     }
     return g;
   }
 
   function powerCabinet1500(x, y, live) {
-    let g = isoShadow(x, y, 26, 18);
-    const box = isoBox(x, y, 24, 16, 26, live);
+    let g = isoShadow(x, y, 30, 20);
+    const box = isoBox(x, y, 28, 18, 30, live);
     g += box.g;
     const { p } = box;
-    for (let i = 0; i < 5; i += 1) {
-      g += `<rect x="${p.flT[0] + 2.2}" y="${p.flT[1] + 5 + i * 3.4}" width="${24 - 4.4}" height="1.7" fill="${live ? PAL.charcoal : PAL.steel}" opacity="${live ? 0.8 : 0.28}"/>`;
+    for (let i = 0; i < 6; i += 1) {
+      g += `<rect x="${p.flT[0] + 2.4}" y="${p.flT[1] + 5.4 + i * 3.6}" width="23.2" height="1.9" fill="${live ? PAL.charcoal : PAL.steel}" opacity="${live ? 0.82 : 0.28}"/>`;
     }
     if (live) {
-      g += `<rect x="${p.flT[0] + 2}" y="${p.flT[1] + 2}" width="20" height="1.8" fill="${PAL.cyan}"/>`;
-      g += `<rect x="${p.frT[0] + 2}" y="${p.frT[1] + 6}" width="1.6" height="8" fill="${PAL.amber}" opacity="0.85"/>`;
+      g += `<rect x="${p.flT[0] + 2}" y="${p.flT[1] + 2}" width="24" height="2.2" fill="${PAL.cyan}"/>`;
+      g += `<rect x="${p.frT[0] + 2.4}" y="${p.frT[1] + 7}" width="2" height="10" fill="${PAL.amber}" opacity="0.9"/>`;
     }
     return g;
   }
@@ -926,23 +926,30 @@
   }
 
   function loungePavilion(x, y, live, raising) {
-    let g = isoShadow(x - 2, y, 50, 26);
-    const body = isoBox(x, y, 46, 24, 12, live);
+    const bodyH = 15;
+    let g = isoShadow(x - 2, y, 54, 28);
+    if (live) {
+      g += `<ellipse cx="${x + 24}" cy="${y + 3}" rx="26" ry="6" fill="${PAL.amber}" opacity="0.32"/>`;
+    }
+    const body = isoBox(x, y, 48, 26, bodyH, live);
     g += body.g;
-    const roof = isoBox(x - 4, y + 1, 54, 28, 3, live);
-    g += roof.g;
     const { p } = body;
-    const portalW = 10;
+    const portalW = 11.5;
     for (let i = 0; i < 3; i += 1) {
-      const px = p.flT[0] + 5 + i * 13;
-      const py = p.flT[1] + 3.2;
-      g += `<rect x="${px}" y="${py}" width="${portalW}" height="7.4" fill="${live ? "#1a2428" : "#16161c"}"/>`;
+      const px = p.flT[0] + 4.5 + i * 14.2;
+      const py = p.flT[1] + 3.4;
+      g += `<rect x="${px}" y="${py}" width="${portalW}" height="9.2" fill="${live ? "#141c20" : "#16161c"}"/>`;
       if (live) {
-        g += `<rect x="${px + 1}" y="${py + 3.8}" width="${portalW - 2}" height="3.4" fill="${PAL.amber}" opacity="0.88"/>`;
-        g += `<rect x="${px + 1}" y="${py + 1}" width="${portalW - 2}" height="2.2" fill="#2a4046" opacity="0.7"/>`;
+        g += `<rect x="${px + 1}" y="${py + 1.2}" width="${portalW - 2}" height="3" fill="#2a4048" opacity="0.85"/>`;
+        g += `<rect x="${px + 1}" y="${py + 4.4}" width="${portalW - 2}" height="4.4" fill="${PAL.amber}" opacity="0.95"/>`;
       }
     }
-    if (raising) g += scaffold(x, y, 46, 24, 16);
+    const roof = isoBox(x - 5, y - bodyH, 58, 32, 3.4, live);
+    g += roof.g;
+    if (live) {
+      g += `<path d="M${roof.p.flT.join(" ")} L${roof.p.frT.join(" ")} L${roof.p.brT.join(" ")} L${roof.p.blT.join(" ")} Z" fill="none" stroke="${PAL.cyan}" stroke-width="1.15"/>`;
+    }
+    if (raising) g += scaffold(x, y, 48, 26, 18);
     return g;
   }
 
@@ -977,14 +984,15 @@
   }
 
   function marketKiosk(x, y, live, raising) {
-    let g = isoShadow(x, y, 28, 18);
-    const box = isoBox(x, y, 26, 16, 14, live);
+    const bodyH = 14;
+    let g = isoShadow(x, y, 30, 18);
+    const box = isoBox(x, y, 26, 16, bodyH, live);
     g += box.g;
-    const roof = isoBox(x - 2, y + 1, 30, 18, 2.4, live);
-    g += roof.g;
     const { p } = box;
-    g += `<rect x="${p.flT[0] + 4}" y="${p.flT[1] + 4}" width="18" height="6" fill="${live ? "#1a2428" : "#16161c"}"/>`;
-    if (live) g += `<rect x="${p.flT[0] + 6}" y="${p.flT[1] + 6.4}" width="14" height="2.2" fill="${PAL.amber}" opacity="0.8"/>`;
+    g += `<rect x="${p.flT[0] + 4}" y="${p.flT[1] + 4}" width="18" height="7" fill="${live ? "#141c20" : "#16161c"}"/>`;
+    if (live) g += `<rect x="${p.flT[0] + 6}" y="${p.flT[1] + 7}" width="14" height="2.6" fill="${PAL.amber}" opacity="0.85"/>`;
+    const roof = isoBox(x - 3, y - bodyH, 32, 20, 2.8, live);
+    g += roof.g;
     if (raising) g += scaffold(x, y, 26, 16, 16);
     return g;
   }
@@ -1054,15 +1062,15 @@
     }
 
     const stallCount = Math.min(dc, 4) * 4;
-    const stallY = 208;
-    g += stallLane(56, stallY + 6, Math.max(64, stallCount * 12 + 8), 18, Math.max(4, stallCount || 4), dc > 0);
+    const stallY = 210;
+    g += stallLane(54, stallY + 7, Math.max(72, stallCount * 14 + 10), 20, Math.max(4, stallCount || 4), dc > 0);
     for (let i = 0; i < stallCount; i += 1) {
-      g += dispenser1000(58 + i * 12.2, stallY, true);
+      g += dispenser1000(56 + i * 14.4, stallY, true);
     }
     if (dc > 0) {
-      g += canopy(50, stallY + 10, Math.max(72, stallCount * 12.4 + 10), 34, 28, true);
+      g += canopy(46, stallY + 12, Math.max(80, stallCount * 14.6 + 12), 38, 30, true);
     } else if (raisingDc) {
-      g += canopy(50, stallY + 10, 88, 34, 28, false);
+      g += canopy(46, stallY + 12, 96, 38, 30, false);
     }
 
     if (site.mcs > 0 || raisingType(city.id, "mcs")) {

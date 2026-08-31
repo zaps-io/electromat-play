@@ -105,14 +105,14 @@ button {
 
 .brand-lockup.compact {
   overflow: visible;
-  min-height: 52px;
-  padding: 4px 0;
+  min-height: 56px;
+  padding: 2px 0;
   align-items: center;
 }
 
 .brand-lockup.compact .wordmark.official {
-  height: 40px;
-  max-width: 148px;
+  height: 44px;
+  max-width: 168px;
   image-rendering: auto;
 }
 
