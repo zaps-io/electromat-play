@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: branded-compounds-4 */
+/* empire-build: branded-compounds-5 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -27,6 +27,7 @@
     tucson: "assets/sprites/tucson.png",
     hq: "assets/sprites/phoenix-hq.png",
     voltspan: "assets/sprites/voltspan.png",
+    rival: "assets/sprites/rival-depot.png",
   };
 
   const BUILD = {
@@ -1129,8 +1130,14 @@
     return `<svg viewBox="0 0 ${part.w} ${part.h}" class="compound-svg" overflow="visible" aria-hidden="true">${part.inner}</svg>`;
   }
 
-  function compoundMarkup(city) {
-    return wrapCompoundSvg(compoundParts(city));
+  function compoundMarkup(city, meta) {
+    const kind = mapSpriteKind(city, meta || CITY_BY_ID[city.id]);
+    const src = MAP_SPRITES[kind] || MAP_SPRITES.flag;
+    return `<img class="insp-sprite" src="${src}" alt="" data-kind="${kind}" draggable="false">`;
+  }
+
+  function otherRivalLive(city) {
+    return Object.keys(RIVALS).some((id) => id !== "voltspan" && city.sites[id] && hasCap(city.sites[id]));
   }
 
   function mapSpriteKind(city, meta) {
@@ -1145,6 +1152,7 @@
       return "dirt";
     }
     if (voltspanLive) return "voltspan";
+    if (otherRivalLive(city)) return "rival";
     if (raising) return "dirt";
     return "flag";
   }
@@ -1217,7 +1225,7 @@
       ? `Your price ${city.price[YOU].toFixed(2)}/kWh. Share ${Math.round((city.share[YOU] || 0) * 100)}%. Grid ${you.bess ? "STABLE" : "STRAINED"}. Crews ${crewsBusy()}/${MAX_CREWS}.`
       : `Unbuilt dirt. Land multiplier ${meta.land.toFixed(2)}. Neighbors: ${meta.neighbors.map((id) => CITY_BY_ID[id].name).join(", ")}. Drop a pad to raise a compound.`;
 
-    $("insp-compound").innerHTML = compoundMarkup(city, true);
+    $("insp-compound").innerHTML = compoundMarkup(city, meta);
 
     const mine = jobsFor(selected);
     const qel = $("insp-queue");

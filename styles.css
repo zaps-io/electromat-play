@@ -1,4 +1,4 @@
-/* empire-build: branded-compounds-4 */
+/* empire-build: branded-compounds-5 */
 :root {
   --red: #e63225;
   --charcoal: #1e1e24;
@@ -454,12 +454,20 @@ button {
   padding: 0.4rem;
 }
 
-.insp-compound svg {
+.insp-compound svg,
+.insp-sprite {
   display: block;
   width: 100%;
   height: auto;
   overflow: visible;
   background: none;
+}
+
+.insp-sprite {
+  max-width: 280px;
+  margin: 0 auto;
+  image-rendering: auto;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
 }
 
 .insp-queue {
