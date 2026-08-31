@@ -302,7 +302,7 @@ button {
 }
 
 .map-frame.zoomed {
-  transform: scale(1.65);
+  transform: scale(1.95);
 }
 
 .map-art,
@@ -326,7 +326,7 @@ button {
 .city-node {
   pointer-events: auto;
   position: absolute;
-  transform: translate(-50%, -62%);
+  transform: translate(-50%, -70%);
   background: none;
   border: 0;
   padding: 0;
@@ -336,31 +336,31 @@ button {
 
 .city-node .compound {
   display: block;
-  width: 168px;
-  height: 126px;
+  width: 186px;
+  height: 124px;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.72));
 }
 
 .city-node.tier-2 .compound {
-  width: 196px;
-  height: 148px;
+  width: 220px;
+  height: 147px;
 }
 
 .city-node.tier-3 .compound {
-  width: 228px;
-  height: 172px;
+  width: 252px;
+  height: 168px;
 }
 
 .city-node.rival:not(.zaps) .compound,
 .city-node.hostile:not(.zaps) .compound {
-  width: 128px;
-  height: 96px;
+  width: 148px;
+  height: 100px;
   filter: drop-shadow(0 2px 5px rgba(0, 212, 245, 0.28));
 }
 
 .city-node.dirt .compound {
-  width: 42px;
-  height: 42px;
+  width: 70px;
+  height: 48px;
   filter: none;
 }
 
@@ -372,10 +372,10 @@ button {
 .city-node.selected.tier-1 .compound,
 .city-node.selected.tier-2 .compound,
 .city-node.selected.tier-3 .compound {
-  width: 280px;
-  height: 210px;
+  width: 420px;
+  height: 280px;
   outline: 1.5px solid var(--cyan);
-  outline-offset: 7px;
+  outline-offset: 8px;
 }
 
 .city-node.raising .compound {
@@ -481,9 +481,9 @@ button {
 
 .insp-compound {
   margin: 0.55rem 0 0.7rem;
-  background: #16161c;
+  background: #141418;
   border: 1px solid var(--line);
-  padding: 0.55rem;
+  padding: 0.4rem;
 }
 
 .insp-compound svg {

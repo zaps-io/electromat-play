@@ -777,200 +777,309 @@
     return best;
   }
 
-  function lotLabel(x, y, w, h, text, detail) {
-    if (!detail) return "";
-    return `<text x="${x + w / 2}" y="${y + h - 2.6}" text-anchor="middle" fill="${PAL.amber}" font-size="5.6" font-family="Share Tech Mono, monospace">${text}</text>`;
+  /* 3/4-overhead RTS kit. Buildings, not labeled lots. */
+  const ISO = { sx: 0.56, sy: 0.4 };
+
+  function isoPts(x, y, w, d, h) {
+    const dx = d * ISO.sx;
+    const dy = d * ISO.sy;
+    return {
+      dx,
+      dy,
+      fl: [x, y],
+      fr: [x + w, y],
+      br: [x + w + dx, y - dy],
+      bl: [x + dx, y - dy],
+      flT: [x, y - h],
+      frT: [x + w, y - h],
+      brT: [x + w + dx, y - h - dy],
+      blT: [x + dx, y - h - dy],
+    };
   }
 
-  function yardSlab(x, y, w, h, live) {
-    const fill = live ? PAL.cream : "#2a2a32";
-    const stroke = live ? PAL.cyan : "rgba(0,212,245,0.45)";
-    return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${fill}" stroke="${stroke}" stroke-width="1.1"/>`;
+  function poly(pts, fill, stroke, sw) {
+    return `<path d="M${pts.map((p) => p.join(" ")).join(" L")} Z" fill="${fill}" stroke="${stroke || "none"}" stroke-width="${sw || 0.55}" stroke-linejoin="round"/>`;
   }
 
-  function stallMarks(x, y, w, h, n, live) {
-    let g = "";
-    const gap = w / n;
-    for (let i = 0; i < n; i += 1) {
-      const sx = x + 1.6 + i * gap;
-      g += `<rect x="${sx}" y="${y + 1.4}" width="${gap - 3.2}" height="${h - 2.8}" fill="${live ? PAL.cyan : PAL.charcoal}" fill-opacity="${live ? 0.22 : 0.35}" stroke="${PAL.cyan}" stroke-opacity="${live ? 0.85 : 0.4}" stroke-width="0.7"/>`;
+  function kitTone(live, edge) {
+    if (live) {
+      return { top: PAL.cream, front: "#d4cec2", side: "#b4aea2", edge: edge || PAL.cyan };
     }
-    return g;
+    return { top: "#3a3a44", front: "#2c2c34", side: "#22222a", edge: "rgba(0,212,245,0.45)" };
   }
 
-  function creamCabinet(x, y, w, h, live) {
-    const body = live ? PAL.cream : "#32323a";
-    const vent = live ? PAL.charcoal : PAL.steel;
-    let g = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1.2" fill="${body}" stroke="${PAL.cyan}" stroke-width="1"/>`;
-    g += `<rect x="${x}" y="${y}" width="${w}" height="${h * 0.18}" fill="${live ? "#e7e1d6" : "#3a3a44"}"/>`;
-    const rows = Math.max(2, Math.floor(h / 7));
-    for (let i = 0; i < rows; i += 1) {
-      g += `<rect x="${x + 1.6}" y="${y + h * 0.28 + i * 4.2}" width="${w - 3.2}" height="1.5" fill="${vent}" opacity="${live ? 0.85 : 0.35}"/>`;
-    }
-    if (live) g += `<rect x="${x + w - 3.2}" y="${y + 1.4}" width="1.6" height="1.6" fill="${PAL.cyan}"/>`;
-    return g;
+  function isoBox(x, y, w, d, h, live, edge) {
+    const p = isoPts(x, y, w, d, h);
+    const c = kitTone(live, edge);
+    let g = poly([p.fr, p.frT, p.brT, p.br], c.side, c.edge, 0.55);
+    g += poly([p.fl, p.fr, p.frT, p.flT], c.front, c.edge, 0.55);
+    g += poly([p.flT, p.frT, p.brT, p.blT], c.top, c.edge, 0.7);
+    return { g, p, c };
   }
 
-  function chargerPost(x, y, live) {
-    if (!live) return `<rect x="${x}" y="${y}" width="3.2" height="10" fill="#32323a" stroke="${PAL.cyan}" stroke-opacity="0.4"/>`;
+  function isoShadow(x, y, w, d) {
+    const p = isoPts(x, y + 1.2, w, d, 0);
+    return `<path d="M${[p.fl, p.fr, p.br, p.bl].map((pt) => pt.join(" ")).join(" L")} Z" fill="#0c0c10" opacity="0.45"/>`;
+  }
+
+  function scaffold(x, y, w, d, h) {
+    const p = isoPts(x, y, w, d, h);
     return (
-      `<rect x="${x}" y="${y}" width="3.4" height="11" fill="${PAL.cream}" stroke="${PAL.cyan}"/>` +
-      `<rect x="${x + 0.7}" y="${y + 2}" width="2" height="4.2" fill="${PAL.cyan}"/>` +
-      `<rect x="${x + 3.2}" y="${y + 6}" width="4.5" height="1.2" fill="${PAL.amber}"/>`
+      `<path d="M${p.fl.join(" ")} L${p.flT.join(" ")} L${p.frT.join(" ")} L${p.fr.join(" ")}" fill="none" stroke="${PAL.amber}" stroke-width="1.1"/>` +
+      `<path d="M${p.fr.join(" ")} L${p.frT.join(" ")} L${p.brT.join(" ")}" fill="none" stroke="${PAL.amber}" stroke-width="0.9"/>` +
+      `<path d="M${p.fl[0]} ${p.fl[1] - h * 0.5} L${p.fr[0]} ${p.fr[1] - h * 0.5}" fill="none" stroke="${PAL.amber}" stroke-width="0.8"/>` +
+      `<path d="M${p.fl[0] + 2} ${p.fl[1]} L${(p.flT[0] + p.frT[0]) / 2} ${p.flT[1] - 4} L${p.fr[0] - 2} ${p.fr[1]}" fill="none" stroke="${PAL.amber}" stroke-width="1"/>`
     );
   }
 
-  function dcStall(x, y, w, h, { live, raising, extra, detail }) {
-    const building = live || raising;
-    let g = yardSlab(x, y, w, h, building);
-    g += stallMarks(x + 2, y + h * 0.58, w - 4, h * 0.28, 2, live);
-    const cabW = (w - 10) / 2;
-    g += creamCabinet(x + 3, y + 4, cabW, h * 0.42, live);
-    g += creamCabinet(x + 6 + cabW, y + 4, cabW, h * 0.42, live);
-    g += chargerPost(x + 5, y + h * 0.48, live);
-    g += chargerPost(x + w - 14, y + h * 0.48, live);
-    if (raising) {
-      g += `<path d="M${x + 5} ${y + h - 8} L${x + w / 2} ${y + 6} L${x + w - 5} ${y + h - 8}" fill="none" stroke="${PAL.amber}" stroke-width="1.3"/>`;
-    }
-    if (extra > 0) {
-      g += `<text x="${x + w - 5}" y="${y + 8}" text-anchor="end" fill="${PAL.amber}" font-size="6" font-family="Share Tech Mono, monospace">+${extra}</text>`;
-    }
-    return g + lotLabel(x, y, w, h, raising ? "RAISE DC" : "DC", detail);
+  function padSlab(x, y, w, d, live) {
+    const p = isoPts(x, y, w, d, 0);
+    const fill = live ? "#cfc8ba" : "#2a2a32";
+    const edge = live ? PAL.cyan : "rgba(0,212,245,0.4)";
+    let g = poly([p.fl, p.fr, p.br, p.bl], fill, edge, 1.1);
+    const inset = isoPts(x + 6, y - 3, w - 14, d - 10, 0);
+    g += poly([inset.fl, inset.fr, inset.br, inset.bl], live ? "#e8e2d6" : "#32323a", PAL.cyan, 0.45);
+    return g;
   }
 
-  function mcsBay(x, y, w, h, { live, raising, detail }) {
-    const building = live || raising;
-    let g = yardSlab(x, y, w, h, building);
-    g += `<path d="M${x + 4} ${y + h * 0.42} H${x + w - 4} L${x + w - 10} ${y + 5} H${x + 10} Z" fill="${live ? PAL.cream : "#32323a"}" stroke="${PAL.cyan}" stroke-width="1.2"/>`;
-    g += `<rect x="${x + 8}" y="${y + 7}" width="${w - 16}" height="3.4" fill="${live ? PAL.cyan : PAL.charcoal}" opacity="${live ? 0.7 : 0.45}"/>`;
-    g += `<rect x="${x + 10}" y="${y + h * 0.48}" width="5" height="${h * 0.32}" fill="${live ? PAL.cream : "#32323a"}" stroke="${PAL.cyan}"/>`;
-    g += `<rect x="${x + w - 15}" y="${y + h * 0.48}" width="5" height="${h * 0.32}" fill="${live ? PAL.cream : "#32323a"}" stroke="${PAL.cyan}"/>`;
-    g += stallMarks(x + 18, y + h * 0.52, w - 36, h * 0.28, 3, live);
-    if (raising) g += `<rect x="${x + 3}" y="${y + 3}" width="${w - 6}" height="${h - 6}" fill="none" stroke="${PAL.amber}" stroke-dasharray="3 2"/>`;
-    return g + lotLabel(x, y, w, h, raising ? "RAISE MCS" : "MCS", detail);
+  function stallLane(x, y, w, d, n, live) {
+    let g = "";
+    const step = w / n;
+    for (let i = 0; i < n; i += 1) {
+      const p = isoPts(x + i * step + 1.2, y, step - 2.4, d, 0);
+      g += poly([p.fl, p.fr, p.br, p.bl], live ? "rgba(0,212,245,0.16)" : "rgba(30,30,36,0.5)", PAL.cyan, 0.45);
+    }
+    return g;
   }
 
-  function bessStack(x, y, w, h, { live, raising, detail }) {
-    const building = live || raising;
-    let g = yardSlab(x, y, w, h, building);
-    const stack = (sx, sy, sw, sh) => creamCabinet(sx, sy, sw, sh, live);
-    g += stack(x + 3, y + 10, (w - 8) / 2, h * 0.62);
-    g += stack(x + 5 + (w - 8) / 2, y + 6, (w - 8) / 2, h * 0.7);
+  function dispenser1000(x, y, live) {
+    let g = isoShadow(x - 1, y, 7, 5);
+    const box = isoBox(x, y, 5.2, 4.2, 17, live);
+    g += box.g;
+    const { p } = box;
+    const screen = live ? PAL.cyan : "#3a3a44";
+    g += `<rect x="${p.flT[0] + 1.1}" y="${p.flT[1] + 3.2}" width="3" height="5.4" fill="${screen}" opacity="${live ? 0.95 : 0.45}"/>`;
+    g += `<rect x="${p.fl[0] - 1.3}" y="${p.fl[1] - 8}" width="1.4" height="3.2" fill="${live ? PAL.cream : "#32323a"}" stroke="${PAL.cyan}" stroke-width="0.4"/>`;
+    g += `<rect x="${p.fr[0] - 0.2}" y="${p.fr[1] - 8}" width="1.4" height="3.2" fill="${live ? PAL.cream : "#32323a"}" stroke="${PAL.cyan}" stroke-width="0.4"/>`;
     if (live) {
-      g += `<rect x="${x + 5}" y="${y + 14}" width="${(w - 12) / 2 - 2}" height="2" fill="${PAL.cyan}"/>`;
-      g += `<rect x="${x + 7 + (w - 8) / 2}" y="${y + 10}" width="${(w - 12) / 2 - 2}" height="2" fill="${PAL.amber}"/>`;
+      g += `<path d="M${p.fl[0] - 0.6} ${p.fl[1] - 6.4} Q${p.fl[0] - 5} ${p.fl[1] - 2} ${p.fl[0] - 3.2} ${p.fl[1] + 0.4}" fill="none" stroke="${PAL.cyan}" stroke-width="0.9"/>`;
+      g += `<path d="M${p.fr[0] + 0.6} ${p.fr[1] - 6.4} Q${p.fr[0] + 5.4} ${p.fr[1] - 1.6} ${p.fr[0] + 3.6} ${p.fr[1] + 0.4}" fill="none" stroke="${PAL.amber}" stroke-width="0.9"/>`;
+      g += `<rect x="${p.flT[0] + 3.6}" y="${p.flT[1] + 1.2}" width="1.1" height="1.1" fill="${PAL.cyan}"/>`;
     }
-    if (raising) g += `<rect x="${x + 2}" y="${y + 2}" width="${w - 4}" height="${h - 4}" fill="none" stroke="${PAL.amber}" stroke-dasharray="3 2"/>`;
-    return g + lotLabel(x, y, w, h, raising ? "RAISE BESS" : "BESS", detail);
+    return g;
   }
 
-  function loungeHall(x, y, w, h, { live, raising, detail }) {
-    const building = live || raising;
-    let g = yardSlab(x, y, w, h, building);
-    g += `<path d="M${x + 2} ${y + h * 0.4} H${x + w - 2} L${x + w - 6} ${y + 6} H${x + 6} Z" fill="${live ? PAL.cream : "#32323a"}" stroke="${PAL.cyan}"/>`;
-    g += `<rect x="${x + 5}" y="${y + h * 0.4}" width="${w - 10}" height="${h * 0.36}" fill="${live ? PAL.cream : "#32323a"}" stroke="${PAL.cyan}"/>`;
-    g += `<rect x="${x + 8}" y="${y + h * 0.46}" width="${w - 16}" height="${h * 0.14}" fill="${live ? PAL.cyan : PAL.charcoal}" opacity="${live ? 0.7 : 0.4}"/>`;
-    g += `<rect x="${x + 8}" y="${y + h * 0.66}" width="6" height="5" fill="${PAL.charcoal}"/>`;
+  function powerCabinet1500(x, y, live) {
+    let g = isoShadow(x, y, 26, 18);
+    const box = isoBox(x, y, 24, 16, 26, live);
+    g += box.g;
+    const { p } = box;
+    for (let i = 0; i < 5; i += 1) {
+      g += `<rect x="${p.flT[0] + 2.2}" y="${p.flT[1] + 5 + i * 3.4}" width="${24 - 4.4}" height="1.7" fill="${live ? PAL.charcoal : PAL.steel}" opacity="${live ? 0.8 : 0.28}"/>`;
+    }
     if (live) {
-      g += `<rect x="${x + w - 16}" y="${y + h * 0.64}" width="8" height="3.2" fill="${PAL.amber}"/>`;
-      g += `<rect x="${x + 16}" y="${y + h * 0.64}" width="6" height="3.2" fill="${PAL.steel}"/>`;
+      g += `<rect x="${p.flT[0] + 2}" y="${p.flT[1] + 2}" width="20" height="1.8" fill="${PAL.cyan}"/>`;
+      g += `<rect x="${p.frT[0] + 2}" y="${p.frT[1] + 6}" width="1.6" height="8" fill="${PAL.amber}" opacity="0.85"/>`;
     }
-    if (raising) g += `<rect x="${x + 2}" y="${y + 2}" width="${w - 4}" height="${h - 4}" fill="none" stroke="${PAL.amber}" stroke-dasharray="3 2"/>`;
-    return g + lotLabel(x, y, w, h, raising ? "RAISE LNGE" : "LOUNGE", detail);
+    return g;
   }
 
-  function marketHall(x, y, w, h, { live, raising, detail }) {
-    const building = live || raising;
-    let g = yardSlab(x, y, w, h, building);
-    g += `<path d="M${x + 3} ${y + 16} H${x + w - 3} L${x + w - 9} ${y + 5} H${x + 9} Z" fill="${live ? PAL.cream : "#32323a"}" stroke="${PAL.cyan}"/>`;
-    g += `<rect x="${x + 6}" y="${y + 16}" width="${w - 12}" height="${h * 0.48}" fill="${live ? PAL.cream : "#32323a"}" stroke="${PAL.cyan}"/>`;
-    g += `<rect x="${x + 9}" y="${y + 20}" width="10" height="10" fill="${live ? PAL.charcoal : "#1a1a20"}"/>`;
-    g += `<rect x="${x + w - 20}" y="${y + 21}" width="10" height="8" fill="${live ? PAL.cyan : PAL.charcoal}" opacity="${live ? 0.75 : 0.45}"/>`;
-    if (live) g += `<rect x="${x + 22}" y="${y + 34}" width="${w - 36}" height="3" fill="${PAL.amber}"/>`;
-    if (raising) g += `<rect x="${x + 2}" y="${y + 2}" width="${w - 4}" height="${h - 4}" fill="none" stroke="${PAL.amber}" stroke-dasharray="3 2"/>`;
-    return g + lotLabel(x, y, w, h, raising ? "RAISE MKT" : "MARKET", detail);
+  function dccCombiner(x, y, live) {
+    let g = isoShadow(x, y, 16, 12);
+    const box = isoBox(x, y, 14, 11, 16, live);
+    g += box.g;
+    const { p } = box;
+    g += `<rect x="${p.flT[0] + 3}" y="${p.flT[1] + 4.5}" width="8" height="7" fill="${live ? PAL.amber : "#3a3a44"}" opacity="${live ? 0.92 : 0.4}"/>`;
+    g += `<rect x="${p.flT[0] + 4.2}" y="${p.flT[1] + 6}" width="5.6" height="1.1" fill="${PAL.charcoal}" opacity="0.55"/>`;
+    g += `<rect x="${p.flT[0] + 4.2}" y="${p.flT[1] + 8.2}" width="5.6" height="1.1" fill="${PAL.charcoal}" opacity="0.55"/>`;
+    return g;
   }
 
-  function padDeck(x, y, w, h, { live, detail }) {
-    let g = yardSlab(x, y, w, h, live);
-    const lanes = detail ? 6 : 4;
-    for (let i = 0; i < lanes; i += 1) {
-      const mx = x + 5 + i * ((w - 10) / lanes);
-      g += `<rect x="${mx}" y="${y + 5}" width="2.4" height="${h - 12}" fill="${PAL.cyan}" opacity="${live ? 0.55 : 0.22}"/>`;
+  function rectifierCab(x, y, live) {
+    let g = isoShadow(x, y, 12, 9);
+    const box = isoBox(x, y, 11, 8, 13, live);
+    g += box.g;
+    const { p } = box;
+    g += `<rect x="${p.flT[0] + 2}" y="${p.flT[1] + 3}" width="7" height="6.5" fill="${live ? "#2a2a32" : "#1a1a20"}"/>`;
+    if (live) g += `<rect x="${p.flT[0] + 8.4}" y="${p.flT[1] + 1.6}" width="1.4" height="1.4" fill="${PAL.cyan}"/>`;
+    return g;
+  }
+
+  function bessFarm(x, y, live, raising) {
+    let g = "";
+    const blocks = [
+      [x, y, 18, 13, 11],
+      [x + 22, y - 4, 18, 13, 12],
+      [x + 8, y + 10, 16, 11, 10],
+    ];
+    blocks.forEach(([bx, by, w, d, h], i) => {
+      g += isoShadow(bx, by, w, d);
+      const box = isoBox(bx, by, w, d, h, live);
+      g += box.g;
+      if (live) {
+        g += `<rect x="${box.p.flT[0] + 2}" y="${box.p.flT[1] + 3}" width="${w - 4}" height="2" fill="${i === 1 ? PAL.amber : PAL.cyan}"/>`;
+      }
+    });
+    g += isoBox(x + 40, y + 8, 9, 7, 10, live).g;
+    if (raising) g += scaffold(x, y, 48, 24, 16);
+    return g;
+  }
+
+  function loungePavilion(x, y, live, raising) {
+    let g = isoShadow(x - 2, y, 50, 26);
+    const body = isoBox(x, y, 46, 24, 12, live);
+    g += body.g;
+    const roof = isoBox(x - 4, y + 1, 54, 28, 3, live);
+    g += roof.g;
+    const { p } = body;
+    const portalW = 10;
+    for (let i = 0; i < 3; i += 1) {
+      const px = p.flT[0] + 5 + i * 13;
+      const py = p.flT[1] + 3.2;
+      g += `<rect x="${px}" y="${py}" width="${portalW}" height="7.4" fill="${live ? "#1a2428" : "#16161c"}"/>`;
+      if (live) {
+        g += `<rect x="${px + 1}" y="${py + 3.8}" width="${portalW - 2}" height="3.4" fill="${PAL.amber}" opacity="0.88"/>`;
+        g += `<rect x="${px + 1}" y="${py + 1}" width="${portalW - 2}" height="2.2" fill="#2a4046" opacity="0.7"/>`;
+      }
     }
-    g += `<rect x="${x + 4}" y="${y + 4}" width="${w - 8}" height="2" fill="${live ? PAL.cream : "#32323a"}" stroke="${PAL.cyan}" stroke-opacity="0.5"/>`;
-    return g + lotLabel(x, y, w, h, "PAD", detail);
+    if (raising) g += scaffold(x, y, 46, 24, 16);
+    return g;
+  }
+
+  function canopy(x, y, w, d, lift, live, columns) {
+    let g = "";
+    const colH = lift - 2;
+    const spots = columns || [0.08, 0.36, 0.64, 0.92];
+    spots.forEach((t) => {
+      g += isoBox(x + w * t, y - 1, 2.2, 2, colH, live).g;
+    });
+    const roof = isoBox(x - 3, y - lift, w + 6, d, 2.6, live);
+    g += roof.g;
+    const { p } = roof;
+    const rows = 3;
+    const cols = Math.max(4, Math.round(w / 18));
+    for (let r = 1; r < rows; r += 1) {
+      const t = r / rows;
+      const a = [p.flT[0] + (p.blT[0] - p.flT[0]) * t, p.flT[1] + (p.blT[1] - p.flT[1]) * t];
+      const b = [p.frT[0] + (p.brT[0] - p.frT[0]) * t, p.frT[1] + (p.brT[1] - p.frT[1]) * t];
+      g += `<path d="M${a.join(" ")} L${b.join(" ")}" fill="none" stroke="${live ? "#e7e1d6" : "#3a3a44"}" stroke-width="0.55"/>`;
+    }
+    for (let c = 1; c < cols; c += 1) {
+      const t = c / cols;
+      const a = [p.flT[0] + (p.frT[0] - p.flT[0]) * t, p.flT[1] + (p.frT[1] - p.flT[1]) * t];
+      const b = [p.blT[0] + (p.brT[0] - p.blT[0]) * t, p.blT[1] + (p.brT[1] - p.blT[1]) * t];
+      g += `<path d="M${a.join(" ")} L${b.join(" ")}" fill="none" stroke="${live ? "#e7e1d6" : "#3a3a44"}" stroke-width="0.55"/>`;
+    }
+    if (live) {
+      g += `<path d="M${p.flT.join(" ")} L${p.frT.join(" ")} L${p.brT.join(" ")} L${p.blT.join(" ")} Z" fill="none" stroke="${PAL.cyan}" stroke-width="1.35"/>`;
+    }
+    return g;
+  }
+
+  function marketKiosk(x, y, live, raising) {
+    let g = isoShadow(x, y, 28, 18);
+    const box = isoBox(x, y, 26, 16, 14, live);
+    g += box.g;
+    const roof = isoBox(x - 2, y + 1, 30, 18, 2.4, live);
+    g += roof.g;
+    const { p } = box;
+    g += `<rect x="${p.flT[0] + 4}" y="${p.flT[1] + 4}" width="18" height="6" fill="${live ? "#1a2428" : "#16161c"}"/>`;
+    if (live) g += `<rect x="${p.flT[0] + 6}" y="${p.flT[1] + 6.4}" width="14" height="2.2" fill="${PAL.amber}" opacity="0.8"/>`;
+    if (raising) g += scaffold(x, y, 26, 16, 16);
+    return g;
   }
 
   function dirtPlot() {
-    return `<svg viewBox="0 0 24 24" class="compound-svg" aria-hidden="true">
-      <rect x="3" y="3" width="18" height="18" rx="1.5" fill="#2a2a32" stroke="${PAL.cyan}" stroke-opacity="0.5" stroke-dasharray="2 2"/>
-      <path d="M8 16 L12 8 L16 16" fill="none" stroke="${PAL.cyan}" stroke-opacity="0.4"/>
-    </svg>`;
+    return `<svg viewBox="0 0 64 44" class="compound-svg" aria-hidden="true">${padSlab(10, 36, 36, 22, false)}${scaffold(22, 30, 14, 10, 12)}</svg>`;
   }
 
-  function rivalYard(city, detail) {
+  function rivalYard(city) {
     const rival = strongestRival(city);
     if (!rival) return dirtPlot();
     const site = city.sites[rival.id];
-    const stroke = rival.color;
-    const w = 132;
-    const h = 96;
+    const edge = rival.color;
     const raising = jobsFor(city.id, rival.id).length > 0;
-    let inner = "";
-    inner += `<rect x="2" y="2" width="${w - 4}" height="${h - 4}" rx="2" fill="${PAL.charcoal}" stroke="${stroke}" stroke-width="1.6"/>`;
-    inner += padDeck(8, 62, 116, 26, { live: hasCap(site), detail });
-    inner += dcStall(8, 10, 56, 46, { live: site.dc > 0, raising: raisingType(city.id, "dc", rival.id), extra: Math.max(0, site.dc - 1), detail });
-    inner += mcsBay(70, 10, 54, 46, { live: site.mcs > 0, raising: raisingType(city.id, "mcs", rival.id), detail });
-    if (detail) {
-      inner += `<text x="66" y="90" text-anchor="middle" fill="${PAL.amber}" font-size="6" font-family="Share Tech Mono, monospace">${rival.name} YARD</text>`;
+    const w = 280;
+    const h = 190;
+    let g = `<rect width="${w}" height="${h}" fill="#141418"/>`;
+    g += padSlab(28, 168, 180, 110, hasCap(site));
+    const n = Math.max(1, Math.min(site.dc, 3));
+    for (let i = 0; i < n; i += 1) {
+      const box = isoBox(48 + i * 32, 118, 20, 14, 20, site.dc > 0, edge);
+      g += box.g;
     }
-    if (raising) inner += `<rect x="2" y="2" width="${w - 4}" height="${h - 4}" fill="none" stroke="${PAL.amber}" stroke-dasharray="4 3"/>`;
-    return `<svg viewBox="0 0 ${w} ${h}" class="compound-svg" aria-hidden="true">${inner}</svg>`;
+    if (site.dc > 0) {
+      for (let i = 0; i < n * 3; i += 1) g += dispenser1000(50 + i * 14, 148, true);
+      g += canopy(44, 156, n * 42, 28, 24, true);
+    }
+    if (raising) g += scaffold(70, 130, 40, 24, 20);
+    return `<svg viewBox="0 0 ${w} ${h}" class="compound-svg" aria-hidden="true">${g}</svg>`;
   }
 
-  function zapsCompound(city, detail) {
+  function zapsCompound(city) {
     const site = city.sites[YOU];
     const owned = hasCap(site) || jobsFor(city.id).some((j) => j.type === "dc" || j.type === "mcs");
-    const w = 240;
-    const h = 176;
-    const extraDc = Math.max(0, site.dc - 4);
-    const siteName = (CITY_BY_ID[city.id]?.name || "SITE").toUpperCase();
-    let g = "";
-    g += `<rect x="1" y="1" width="${w - 2}" height="${h - 2}" rx="3" fill="#2a2a32" stroke="${PAL.cyan}" stroke-width="1.5"/>`;
-    g += `<rect x="6" y="20" width="${w - 12}" height="${h - 26}" fill="${PAL.cream}" opacity="0.08"/>`;
-    g += `<rect x="6" y="5" width="${w - 12}" height="13" rx="1.2" fill="${PAL.charcoal}"/>`;
-    if (owned) g += `<image href="${BOLT}" x="9" y="6.2" width="10" height="10"/>`;
-    if (detail) {
-      g += `<text x="24" y="14.2" fill="${PAL.amber}" font-size="6.4" font-family="Share Tech Mono, monospace">${siteName} SITE</text>`;
+    const w = 420;
+    const h = 280;
+    const dc = site.dc;
+    const raisingDc = raisingType(city.id, "dc");
+    let g = `<rect width="${w}" height="${h}" fill="#141418"/>`;
+    g += padSlab(36, 248, 280, 168, owned);
+
+    if (owned) {
+      g += rectifierCab(52, 108, true);
+      g += rectifierCab(72, 100, dc >= 2);
+      g += dccCombiner(214, 132, true);
     }
 
-    const dcLive = [site.dc >= 1, site.dc >= 2, site.dc >= 3, site.dc >= 4];
-    const slots = [
-      [8, 22, 54, 50],
-      [66, 22, 54, 50],
-      [124, 22, 54, 50],
-      [182, 22, 50, 50],
+    if (site.bess > 0 || raisingType(city.id, "bess")) {
+      g += bessFarm(128, 96, site.bess > 0, raisingType(city.id, "bess") && site.bess < 1);
+    }
+    if (site.lounge > 0 || raisingType(city.id, "lounge")) {
+      g += loungePavilion(268, 118, site.lounge > 0, raisingType(city.id, "lounge") && site.lounge < 1);
+    }
+
+    const cabSlots = [
+      [68, 150],
+      [128, 146],
+      [68, 186],
+      [128, 182],
     ];
-    slots.forEach((box, i) => {
-      g += dcStall(...box, {
-        live: dcLive[i],
-        raising: raisingType(city.id, "dc") && !dcLive[i] && (i === site.dc || (site.dc >= 4 && i === 3)),
-        extra: i === 3 ? extraDc : 0,
-        detail,
-      });
+    cabSlots.forEach((pos, i) => {
+      if (dc > i) g += powerCabinet1500(pos[0], pos[1], true);
+      else if (raisingDc && i === dc) g += scaffold(pos[0], pos[1], 24, 16, 26) + isoBox(pos[0], pos[1], 24, 16, 6, false).g;
     });
+    if (dc > 4) {
+      g += `<text x="168" y="168" fill="${PAL.amber}" font-size="8" font-family="Share Tech Mono, monospace">+${dc - 4}</text>`;
+    }
 
-    g += mcsBay(8, 76, 108, 46, { live: site.mcs > 0, raising: raisingType(city.id, "mcs"), detail });
-    g += bessStack(122, 76, 50, 46, { live: site.bess > 0, raising: raisingType(city.id, "bess"), detail });
-    g += loungeHall(178, 76, 54, 46, { live: site.lounge > 0, raising: raisingType(city.id, "lounge"), detail });
-    g += marketHall(8, 126, 74, 42, { live: site.market > 0, raising: raisingType(city.id, "market"), detail });
-    g += padDeck(88, 126, 144, 42, { live: owned, detail });
+    const stallCount = Math.min(dc, 4) * 4;
+    const stallY = 208;
+    g += stallLane(56, stallY + 6, Math.max(64, stallCount * 12 + 8), 18, Math.max(4, stallCount || 4), dc > 0);
+    for (let i = 0; i < stallCount; i += 1) {
+      g += dispenser1000(58 + i * 12.2, stallY, true);
+    }
+    if (dc > 0) {
+      g += canopy(50, stallY + 10, Math.max(72, stallCount * 12.4 + 10), 34, 28, true);
+    } else if (raisingDc) {
+      g += canopy(50, stallY + 10, 88, 34, 28, false);
+    }
 
-    const rival = strongestRival(city);
-    if (rival && hasCap(city.sites[rival.id])) {
-      g += `<rect x="${w - 30}" y="${h - 16}" width="22" height="10" rx="1" fill="${PAL.charcoal}" stroke="${rival.color}"/>`;
-      if (detail) g += `<text x="${w - 19}" y="${h - 8.4}" text-anchor="middle" fill="${PAL.amber}" font-size="5" font-family="Share Tech Mono, monospace">HST</text>`;
+    if (site.mcs > 0 || raisingType(city.id, "mcs")) {
+      const live = site.mcs > 0;
+      g += stallLane(48, 246, 90, 22, 3, live);
+      g += isoBox(52, 236, 8, 6, 14, live).g;
+      g += isoBox(118, 236, 8, 6, 14, live).g;
+      g += canopy(42, 250, 100, 40, 32, live, [0.08, 0.5, 0.92]);
+      if (!live) g += scaffold(50, 246, 90, 36, 22);
+    }
+
+    if (site.market > 0 || raisingType(city.id, "market")) {
+      g += marketKiosk(292, 230, site.market > 0, raisingType(city.id, "market") && site.market < 1);
+    }
+
+    if (owned) {
+      g += `<image href="${BOLT}" x="40" y="44" width="12" height="12"/>`;
     }
     return `<svg viewBox="0 0 ${w} ${h}" class="compound-svg" aria-hidden="true">${g}</svg>`;
   }
