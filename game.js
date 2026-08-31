@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: aoe-terrain-1 */
+/* empire-build: branded-compounds-1 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -785,6 +785,15 @@
     };
   }
 
+  const SURF = {
+    alum: { top: "#d8dbdf", front: "#b4b8be", side: "#8a9096", edge: "#5c6268" },
+    cream: { top: "#F5F0E8", front: "#ddd6c8", side: "#b8b09e", edge: "#8a8478" },
+    charcoal: { top: "#3c3c44", front: "#2a2a32", side: "#1c1c22", edge: "#0e0e12" },
+    steel: { top: "#4a5258", front: "#32383e", side: "#242a30", edge: PAL.cyan },
+    dirt: { top: "#c8a66c", front: "#a88850", side: "#8a6a3c", edge: "#6a502c" },
+    concrete: { top: "#d4d0c8", front: "#b8b4ac", side: "#9c9890", edge: "#7a7670" },
+  };
+
   function poly(pts, fill, stroke, sw) {
     return `<path d="M${pts.map((p) => p.join(" ")).join(" L")} Z" fill="${fill}" stroke="${stroke || "none"}" stroke-width="${sw || 0.55}" stroke-linejoin="round"/>`;
   }
@@ -796,9 +805,9 @@
     return { top: "#3a3a44", front: "#2c2c34", side: "#22222a", edge: "rgba(0,212,245,0.45)" };
   }
 
-  function isoBox(x, y, w, d, h, live, edge) {
+  function isoBox(x, y, w, d, h, live, edge, tone) {
     const p = isoPts(x, y, w, d, h);
-    const c = kitTone(live, edge);
+    const c = tone || kitTone(live, edge);
     let g = poly([p.fr, p.frT, p.brT, p.br], c.side, c.edge, 0.55);
     g += poly([p.fl, p.fr, p.frT, p.flT], c.front, c.edge, 0.55);
     g += poly([p.flT, p.frT, p.brT, p.blT], c.top, c.edge, 0.7);
@@ -820,41 +829,83 @@
     );
   }
 
-  function padSlab(x, y, w, d, live) {
-    const p = isoPts(x, y, w, d, 0);
-    const fill = live ? "#cfc8ba" : "#2a2a32";
-    const edge = live ? PAL.cyan : "rgba(0,212,245,0.4)";
-    let g = poly([p.fl, p.fr, p.br, p.bl], fill, edge, 1.1);
-    const inset = isoPts(x + 6, y - 3, w - 14, d - 10, 0);
-    g += poly([inset.fl, inset.fr, inset.br, inset.bl], live ? "#e8e2d6" : "#32323a", PAL.cyan, 0.45);
+  function dirtPad(x, y, w, d) {
+    const slab = isoBox(x, y, w, d, Math.max(3, d * 0.12), true, null, SURF.dirt);
+    let g = isoShadow(x - 1, y + 1, w + 2, d + 1);
+    g += slab.g;
+    const { p } = slab;
+    const cracks = [
+      [0.18, 0.35, 0.42, 0.62],
+      [0.55, 0.22, 0.78, 0.48],
+      [0.3, 0.7, 0.62, 0.82],
+    ];
+    cracks.forEach(([ax, ay, bx, by]) => {
+      const a = [
+        p.fl[0] + (p.fr[0] - p.fl[0]) * ax + (p.bl[0] - p.fl[0]) * ay,
+        p.fl[1] + (p.fr[1] - p.fl[1]) * ax + (p.bl[1] - p.fl[1]) * ay,
+      ];
+      const b = [
+        p.fl[0] + (p.fr[0] - p.fl[0]) * bx + (p.bl[0] - p.fl[0]) * by,
+        p.fl[1] + (p.fr[1] - p.fl[1]) * bx + (p.bl[1] - p.fl[1]) * by,
+      ];
+      g += `<path d="M${a.join(" ")} L${b.join(" ")}" fill="none" stroke="#8a6a3c" stroke-width="0.7" opacity="0.55"/>`;
+    });
+    g += `<ellipse cx="${p.fl[0] + w * 0.22}" cy="${p.fl[1] - 1.2}" rx="2.1" ry="1.1" fill="#6a7a48" opacity="0.75"/>`;
+    g += `<ellipse cx="${p.fr[0] - w * 0.18}" cy="${p.fr[1] - 2}" rx="1.6" ry="0.9" fill="#5a6a40" opacity="0.7"/>`;
+    g += `<ellipse cx="${p.bl[0] + 4}" cy="${p.bl[1] + 0.6}" rx="1.4" ry="0.8" fill="#7a6240" opacity="0.8"/>`;
     return g;
   }
 
-  function stallLane(x, y, w, d, n, live) {
-    let g = "";
-    const step = w / n;
-    for (let i = 0; i < n; i += 1) {
-      const p = isoPts(x + i * step + 1.2, y, step - 2.4, d, 0);
-      g += poly([p.fl, p.fr, p.br, p.bl], live ? "rgba(0,212,245,0.16)" : "rgba(30,30,36,0.5)", PAL.cyan, 0.45);
+  function concretePad(x, y, w, d) {
+    const box = isoBox(x, y, w, d, 1.4, true, null, SURF.concrete);
+    return isoShadow(x, y, w, d) + box.g;
+  }
+
+  function slimZeus(x, y, s, labeled) {
+    const w = 5.2 * s;
+    const d = 3.8 * s;
+    const h = 16.5 * s;
+    let g = isoShadow(x - 0.6 * s, y, w + 1.2 * s, d);
+    const body = isoBox(x, y, w, d, h, true, null, SURF.alum);
+    g += body.g;
+    const { p } = body;
+    const faceW = Math.max(1.6, w - 1.6 * s);
+    const faceH = Math.max(4, h * 0.62);
+    g += `<rect x="${p.flT[0] + 0.8 * s}" y="${p.flT[1] + 2.2 * s}" width="${faceW}" height="${faceH}" fill="#2a2a32"/>`;
+    const amberH = Math.max(1.1, 2.1 * s);
+    g += `<rect x="${p.flT[0] + 1.1 * s}" y="${p.flT[1] + 3.1 * s}" width="${Math.max(1.2, faceW - 0.6 * s)}" height="${amberH}" fill="${PAL.amber}"/>`;
+    if (labeled && s >= 0.95) {
+      g += `<text x="${p.flT[0] + 1.25 * s}" y="${p.flT[1] + 4.7 * s}" fill="${PAL.charcoal}" font-size="${Math.max(2.1, 2.4 * s)}" font-family="Share Tech Mono, monospace">PLUG IN</text>`;
+    }
+    const base = isoPts(x - 0.4 * s, y + 0.4 * s, w + 0.8 * s, d + 0.4 * s, 0);
+    g += `<path d="M${[base.fl, base.fr, base.br, base.bl].map((pt) => pt.join(" ")).join(" L")} Z" fill="none" stroke="${PAL.cyan}" stroke-width="${Math.max(0.7, 0.9 * s)}"/>`;
+    const holsterY = p.fl[1] - h * 0.42;
+    g += `<rect x="${p.fl[0] - 1.3 * s}" y="${holsterY}" width="${1.2 * s}" height="${2.4 * s}" fill="#2a2a32" stroke="#8a9096" stroke-width="0.35"/>`;
+    g += `<rect x="${p.fr[0] + 0.1 * s}" y="${holsterY}" width="${1.2 * s}" height="${2.4 * s}" fill="#2a2a32" stroke="#8a9096" stroke-width="0.35"/>`;
+    g += `<path d="M${p.fl[0] - 0.6 * s} ${holsterY + 2.2 * s} Q${p.fl[0] - 4.2 * s} ${p.fl[1] - 2 * s} ${p.fl[0] - 1.4 * s} ${p.fl[1] + 0.4 * s}" fill="none" stroke="#1a1a1e" stroke-width="${Math.max(0.9, 1.15 * s)}"/>`;
+    g += `<path d="M${p.fr[0] + 0.7 * s} ${holsterY + 2.2 * s} Q${p.fr[0] + 4.4 * s} ${p.fr[1] - 1.6 * s} ${p.fr[0] + 1.8 * s} ${p.fr[1] + 0.4 * s}" fill="none" stroke="#1a1a1e" stroke-width="${Math.max(0.9, 1.15 * s)}"/>`;
+    return g;
+  }
+
+  function charcoalCabinet(x, y, s, warn) {
+    const w = 14 * s;
+    const d = 8 * s;
+    const h = 12 * s;
+    let g = isoShadow(x, y, w, d);
+    const box = isoBox(x, y, w, d, h, true, null, SURF.charcoal);
+    g += box.g;
+    const { p } = box;
+    for (let i = 0; i < 4; i += 1) {
+      g += `<rect x="${p.flT[0] + 1.2 * s}" y="${p.flT[1] + 2 * s + i * 2.1 * s}" width="${w - 2.4 * s}" height="${1.2 * s}" fill="#1a1a20" opacity="0.7"/>`;
+    }
+    if (warn) {
+      g += `<rect x="${p.flT[0] + w * 0.35}" y="${p.flT[1] + 1.1 * s}" width="${2.4 * s}" height="${2.4 * s}" fill="${PAL.amber}"/>`;
     }
     return g;
   }
 
   function dispenser1000(x, y, live) {
-    let g = isoShadow(x - 1, y, 8, 5);
-    const box = isoBox(x, y, 6, 4.4, 19, live);
-    g += box.g;
-    const { p } = box;
-    const screen = live ? PAL.cyan : "#3a3a44";
-    g += `<rect x="${p.flT[0] + 1.2}" y="${p.flT[1] + 3.4}" width="3.6" height="6.2" fill="${screen}" opacity="${live ? 1 : 0.45}"/>`;
-    g += `<rect x="${p.fl[0] - 1.6}" y="${p.fl[1] - 9}" width="1.7" height="3.6" fill="${live ? PAL.cream : "#32323a"}" stroke="${PAL.cyan}" stroke-width="0.45"/>`;
-    g += `<rect x="${p.fr[0] - 0.1}" y="${p.fr[1] - 9}" width="1.7" height="3.6" fill="${live ? PAL.cream : "#32323a"}" stroke="${PAL.cyan}" stroke-width="0.45"/>`;
-    if (live) {
-      g += `<path d="M${p.fl[0] - 0.7} ${p.fl[1] - 7.2} Q${p.fl[0] - 6} ${p.fl[1] - 2} ${p.fl[0] - 3.6} ${p.fl[1] + 0.6}" fill="none" stroke="${PAL.cyan}" stroke-width="1.15"/>`;
-      g += `<path d="M${p.fr[0] + 0.8} ${p.fr[1] - 7.2} Q${p.fr[0] + 6.4} ${p.fr[1] - 1.4} ${p.fr[0] + 4} ${p.fr[1] + 0.6}" fill="none" stroke="${PAL.amber}" stroke-width="1.15"/>`;
-      g += `<rect x="${p.flT[0] + 4.2}" y="${p.flT[1] + 1.3}" width="1.2" height="1.2" fill="${PAL.cyan}"/>`;
-    }
-    return g;
+    return slimZeus(x, y, live ? 1 : 0.85, live);
   }
 
   function powerCabinet1500(x, y, live) {
@@ -914,30 +965,27 @@
   }
 
   function loungePavilion(x, y, live, raising) {
-    const bodyH = 15;
-    let g = isoShadow(x - 2, y, 54, 28);
-    if (live) {
-      g += `<ellipse cx="${x + 24}" cy="${y + 3}" rx="26" ry="6" fill="${PAL.amber}" opacity="0.32"/>`;
-    }
-    const body = isoBox(x, y, 48, 26, bodyH, live);
+    const bodyH = 14;
+    let g = isoShadow(x - 2, y, 42, 22);
+    const patio = isoBox(x - 2, y + 6, 20, 10, 1.2, live, null, SURF.concrete);
+    g += patio.g;
+    g += isoBox(x + 1, y + 8, 6, 3.2, 1.6, live, null, SURF.cream).g;
+    g += isoBox(x + 10, y + 8, 6, 3.2, 1.6, live, null, SURF.cream).g;
+    const body = isoBox(x, y, 36, 20, bodyH, live, null, live ? SURF.cream : SURF.charcoal);
     g += body.g;
     const { p } = body;
-    const portalW = 11.5;
-    for (let i = 0; i < 3; i += 1) {
-      const px = p.flT[0] + 4.5 + i * 14.2;
-      const py = p.flT[1] + 3.4;
-      g += `<rect x="${px}" y="${py}" width="${portalW}" height="9.2" fill="${live ? "#141c20" : "#16161c"}"/>`;
+    for (let i = 0; i < 2; i += 1) {
+      const px = p.flT[0] + 4 + i * 14;
+      const py = p.flT[1] + 3.2;
+      g += `<rect x="${px}" y="${py}" width="11" height="8.4" fill="${live ? "#1a2830" : "#16161c"}"/>`;
       if (live) {
-        g += `<rect x="${px + 1}" y="${py + 1.2}" width="${portalW - 2}" height="3" fill="#2a4048" opacity="0.85"/>`;
-        g += `<rect x="${px + 1}" y="${py + 4.4}" width="${portalW - 2}" height="4.4" fill="${PAL.amber}" opacity="0.95"/>`;
+        g += `<rect x="${px + 1}" y="${py + 1}" width="9" height="3.2" fill="#2a4048" opacity="0.9"/>`;
+        g += `<rect x="${px + 1}" y="${py + 4.6}" width="9" height="2.8" fill="${PAL.cream}" opacity="0.35"/>`;
       }
     }
-    const roof = isoBox(x - 5, y - bodyH, 58, 32, 3.4, live);
+    const roof = isoBox(x - 3, y - bodyH, 42, 24, 2.8, live, null, live ? SURF.cream : SURF.charcoal);
     g += roof.g;
-    if (live) {
-      g += `<path d="M${roof.p.flT.join(" ")} L${roof.p.frT.join(" ")} L${roof.p.brT.join(" ")} L${roof.p.blT.join(" ")} Z" fill="none" stroke="${PAL.cyan}" stroke-width="1.15"/>`;
-    }
-    if (raising) g += scaffold(x, y, 48, 26, 18);
+    if (raising) g += scaffold(x, y, 36, 20, 16);
     return g;
   }
 
@@ -945,28 +993,15 @@
     let g = "";
     const colH = lift - 2;
     const spots = columns || [0.08, 0.36, 0.64, 0.92];
+    const post = live ? SURF.alum : SURF.charcoal;
     spots.forEach((t) => {
-      g += isoBox(x + w * t, y - 1, 2.2, 2, colH, live).g;
+      g += isoBox(x + w * t, y - 1, 2.2, 2, colH, live, null, post).g;
     });
-    const roof = isoBox(x - 3, y - lift, w + 6, d, 2.6, live);
+    const roof = isoBox(x - 3, y - lift, w + 6, d, 2.6, live, null, live ? SURF.cream : SURF.charcoal);
     g += roof.g;
     const { p } = roof;
-    const rows = 3;
-    const cols = Math.max(4, Math.round(w / 18));
-    for (let r = 1; r < rows; r += 1) {
-      const t = r / rows;
-      const a = [p.flT[0] + (p.blT[0] - p.flT[0]) * t, p.flT[1] + (p.blT[1] - p.flT[1]) * t];
-      const b = [p.frT[0] + (p.brT[0] - p.frT[0]) * t, p.frT[1] + (p.brT[1] - p.frT[1]) * t];
-      g += `<path d="M${a.join(" ")} L${b.join(" ")}" fill="none" stroke="${live ? "#e7e1d6" : "#3a3a44"}" stroke-width="0.55"/>`;
-    }
-    for (let c = 1; c < cols; c += 1) {
-      const t = c / cols;
-      const a = [p.flT[0] + (p.frT[0] - p.flT[0]) * t, p.flT[1] + (p.frT[1] - p.flT[1]) * t];
-      const b = [p.blT[0] + (p.brT[0] - p.blT[0]) * t, p.blT[1] + (p.brT[1] - p.blT[1]) * t];
-      g += `<path d="M${a.join(" ")} L${b.join(" ")}" fill="none" stroke="${live ? "#e7e1d6" : "#3a3a44"}" stroke-width="0.55"/>`;
-    }
     if (live) {
-      g += `<path d="M${p.flT.join(" ")} L${p.frT.join(" ")} L${p.brT.join(" ")} L${p.blT.join(" ")} Z" fill="none" stroke="${PAL.cyan}" stroke-width="1.35"/>`;
+      g += `<path d="M${p.flT.join(" ")} L${p.frT.join(" ")} L${p.brT.join(" ")} L${p.blT.join(" ")} Z" fill="none" stroke="${PAL.cyan}" stroke-width="1.45"/>`;
     }
     return g;
   }
@@ -985,35 +1020,57 @@
     return g;
   }
 
+  function surveyFlag(x, y, s) {
+    let g = dirtPad(x, y, 36 * s, 22 * s);
+    const poleX = x + 16 * s;
+    const poleY = y - 2 * s;
+    g += `<rect x="${poleX}" y="${poleY - 22 * s}" width="${0.9 * s}" height="${24 * s}" fill="#8a9096"/>`;
+    g += `<path d="M${poleX + 0.9 * s} ${poleY - 21 * s} L${poleX + 14 * s} ${poleY - 16 * s} L${poleX + 0.9 * s} ${poleY - 11 * s} Z" fill="${PAL.cream}" stroke="#d4cec2" stroke-width="0.4"/>`;
+    g += `<circle cx="${poleX + 0.45 * s}" cy="${poleY - 22.6 * s}" r="${1.15 * s}" fill="${PAL.cyan}"/>`;
+    g += `<path d="M${poleX - 3 * s} ${poleY + 2 * s} L${poleX} ${poleY} L${poleX + 3.2 * s} ${poleY + 2 * s}" fill="none" stroke="#8a9096" stroke-width="${0.7 * s}"/>`;
+    return g;
+  }
+
   function dirtParts() {
-    return {
-      kind: "dirt",
-      ax: 28,
-      ay: 36,
-      w: 64,
-      h: 44,
-      inner: `${padSlab(10, 36, 36, 22, false)}${scaffold(22, 30, 14, 10, 12)}`,
-    };
+    return { kind: "dirt", ax: 40, ay: 48, w: 90, h: 58, inner: dirtPad(8, 46, 58, 34) };
+  }
+
+  function flagParts() {
+    return { kind: "flag", ax: 28, ay: 40, w: 72, h: 52, inner: surveyFlag(6, 40, 1.15) };
+  }
+
+  function voltspanYard(x, y, s) {
+    let g = concretePad(x, y, 70 * s, 40 * s);
+    const stripe = isoPts(x + 2 * s, y + 2 * s, 66 * s, 8 * s, 0);
+    g += poly([stripe.fl, stripe.fr, stripe.br, stripe.bl], "#1e1e24", "none", 0);
+    for (let i = 0; i < 7; i += 1) {
+      const t0 = i / 7;
+      const t1 = (i + 0.45) / 7;
+      const a = [stripe.fl[0] + (stripe.fr[0] - stripe.fl[0]) * t0, stripe.fl[1] + (stripe.fr[1] - stripe.fl[1]) * t0];
+      const b = [stripe.fl[0] + (stripe.fr[0] - stripe.fl[0]) * t1, stripe.fl[1] + (stripe.fr[1] - stripe.fl[1]) * t1];
+      const c = [stripe.bl[0] + (stripe.br[0] - stripe.bl[0]) * t1, stripe.bl[1] + (stripe.br[1] - stripe.bl[1]) * t1];
+      const d = [stripe.bl[0] + (stripe.br[0] - stripe.bl[0]) * t0, stripe.bl[1] + (stripe.br[1] - stripe.bl[1]) * t0];
+      g += poly([a, b, c, d], PAL.amber, "none", 0);
+    }
+    const hall = isoBox(x + 14 * s, y - 6 * s, 36 * s, 22 * s, 20 * s, true, PAL.cyan, SURF.steel);
+    g += hall.g;
+    const { p } = hall;
+    g += `<rect x="${p.flT[0] + 3 * s}" y="${p.flT[1] + 6 * s}" width="${12 * s}" height="${10 * s}" fill="#1a1a20" stroke="${PAL.cyan}" stroke-width="0.7"/>`;
+    g += `<rect x="${p.flT[0] + 18 * s}" y="${p.flT[1] + 6 * s}" width="${12 * s}" height="${10 * s}" fill="#1a1a20" stroke="${PAL.cyan}" stroke-width="0.7"/>`;
+    g += isoBox(x + 52 * s, y - 2 * s, 10 * s, 10 * s, 14 * s, true, PAL.cyan, SURF.steel).g;
+    g += isoBox(x + 4 * s, y + 4 * s, 10 * s, 7 * s, 7 * s, true, null, SURF.charcoal).g;
+    g += isoBox(x + 22 * s, y - 26 * s, 6 * s, 5 * s, 3 * s, true, null, SURF.charcoal).g;
+    g += isoBox(x + 32 * s, y - 26 * s, 6 * s, 5 * s, 3 * s, true, null, SURF.charcoal).g;
+    return g;
   }
 
   function rivalParts(city) {
     const rival = strongestRival(city);
-    if (!rival) return dirtParts();
-    const site = city.sites[rival.id];
-    const edge = rival.color;
+    if (!rival) return flagParts();
     const raising = jobsFor(city.id, rival.id).length > 0;
-    let g = padSlab(36, 176, 170, 100, hasCap(site));
-    const n = Math.max(1, Math.min(site.dc, 3));
-    for (let i = 0; i < n; i += 1) {
-      const box = isoBox(56 + i * 30, 128, 20, 14, 20, site.dc > 0, edge);
-      g += box.g;
-    }
-    if (site.dc > 0) {
-      for (let i = 0; i < n * 3; i += 1) g += dispenser1000(58 + i * 14, 158, true);
-      g += canopy(50, 166, n * 42, 28, 24, true);
-    }
-    if (raising) g += scaffold(78, 140, 40, 24, 20);
-    return { kind: "rival", ax: 121, ay: 176, w: 300, h: 200, inner: g };
+    let g = voltspanYard(24, 150, 2.1);
+    if (raising) g += scaffold(60, 120, 50, 28, 22);
+    return { kind: "rival", ax: 100, ay: 150, w: 220, h: 180, inner: g };
   }
 
   function zapsParts(city) {
@@ -1021,71 +1078,43 @@
     const owned = hasCap(site) || jobsFor(city.id).some((j) => j.type === "dc" || j.type === "mcs");
     const dc = site.dc;
     const raisingDc = raisingType(city.id, "dc");
-    let g = padSlab(88, 300, 240, 150, owned);
-
-    if (owned) {
-      g += rectifierCab(110, 236, true);
-      g += rectifierCab(130, 228, dc >= 2);
-      g += dccCombiner(248, 244, true);
+    let g = dirtPad(40, 250, 220, 120);
+    if (!owned) {
+      if (raisingDc) g += scaffold(90, 200, 40, 24, 20);
+      return { kind: "zaps", ax: 150, ay: 250, w: 320, h: 280, inner: g };
     }
-
+    g += concretePad(58, 238, 150, 42);
+    const n = Math.min(4, Math.max(1, dc));
+    for (let i = 0; i < n; i += 1) g += slimZeus(66 + i * 22, 232, 1.05, true);
+    if (dc > 0 || raisingDc) g += canopy(54, 236, 20 + n * 22, 28, 24, dc > 0, n >= 3 ? [0.08, 0.36, 0.64, 0.92] : [0.18, 0.82]);
+    g += charcoalCabinet(70, 188, 1.15, true);
+    if (dc >= 2) g += charcoalCabinet(102, 182, 1.05, true);
     if (site.bess > 0 || raisingType(city.id, "bess")) {
-      g += bessFarm(168, 222, site.bess > 0, raisingType(city.id, "bess") && site.bess < 1);
+      g += bessFarm(130, 176, site.bess > 0, raisingType(city.id, "bess") && site.bess < 1);
     }
     if (site.lounge > 0 || raisingType(city.id, "lounge")) {
-      g += loungePavilion(250, 238, site.lounge > 0, raisingType(city.id, "lounge") && site.lounge < 1);
+      g += loungePavilion(196, 200, site.lounge > 0, raisingType(city.id, "lounge") && site.lounge < 1);
     }
-
-    const cabSlots = [
-      [118, 258],
-      [168, 254],
-      [118, 284],
-      [168, 280],
-    ];
-    cabSlots.forEach((pos, i) => {
-      if (dc > i) g += powerCabinet1500(pos[0], pos[1], true);
-      else if (raisingDc && i === dc) g += scaffold(pos[0], pos[1], 24, 16, 26) + isoBox(pos[0], pos[1], 24, 16, 6, false).g;
-    });
-    if (dc > 4) {
-      g += `<text x="196" y="246" fill="${PAL.amber}" font-size="8" font-family="Share Tech Mono, monospace">+${dc - 4}</text>`;
-    }
-
-    const stallCount = Math.min(dc, 4) * 4;
-    const stallY = 288;
-    g += stallLane(100, stallY + 6, Math.max(72, stallCount * 13.2 + 10), 16, Math.max(4, stallCount || 4), dc > 0);
-    for (let i = 0; i < stallCount; i += 1) {
-      g += dispenser1000(102 + i * 13.2, stallY, true);
-    }
-    if (dc > 0) {
-      g += canopy(92, stallY + 10, Math.max(80, stallCount * 13.4 + 12), 34, 26, true);
-    } else if (raisingDc) {
-      g += canopy(92, stallY + 10, 96, 34, 26, false);
-    }
-
     if (site.mcs > 0 || raisingType(city.id, "mcs")) {
       const live = site.mcs > 0;
-      g += stallLane(96, 308, 80, 18, 3, live);
-      g += isoBox(100, 300, 8, 6, 14, live).g;
-      g += isoBox(154, 300, 8, 6, 14, live).g;
-      g += canopy(88, 310, 90, 32, 28, live, [0.08, 0.5, 0.92]);
-      if (!live) g += scaffold(96, 308, 80, 28, 18);
+      g += slimZeus(66, 258, 1.15, live);
+      g += slimZeus(92, 258, 1.15, live);
+      g += canopy(58, 262, 56, 22, 22, live, [0.12, 0.88]);
+      if (!live) g += scaffold(60, 250, 50, 20, 16);
     }
-
     if (site.market > 0 || raisingType(city.id, "market")) {
-      g += marketKiosk(268, 292, site.market > 0, raisingType(city.id, "market") && site.market < 1);
+      g += marketKiosk(210, 236, site.market > 0, raisingType(city.id, "market") && site.market < 1);
     }
-
-    if (owned) {
-      g += `<image href="${BOLT}" x="100" y="214" width="11" height="11"/>`;
-    }
-    return { kind: "zaps", ax: 208, ay: 300, w: 540, h: 340, inner: g };
+    if (raisingDc && dc < 1) g += scaffold(80, 210, 36, 20, 16);
+    return { kind: "zaps", ax: 150, ay: 250, w: 360, h: 290, inner: g };
   }
 
   function compoundParts(city) {
     const you = hasCap(city.sites[YOU]) || jobsFor(city.id).some((j) => j.faction === YOU && (j.type === "dc" || j.type === "mcs"));
     if (you) return zapsParts(city);
     if (activeRivals().some((r) => hasCap(city.sites[r.id]))) return rivalParts(city);
-    return dirtParts();
+    if (jobsFor(city.id).length) return dirtParts();
+    return flagParts();
   }
 
   function wrapCompoundSvg(part) {
@@ -1096,34 +1125,58 @@
     return wrapCompoundSvg(compoundParts(city));
   }
 
-  function iconMarkup(city, selectedHere) {
+  function mapSpriteKind(city, meta) {
     const you = hasCap(city.sites[YOU]) || jobsFor(city.id).some((j) => j.faction === YOU && (j.type === "dc" || j.type === "mcs"));
     const rival = strongestRival(city);
     const them = !you && rival && hasCap(city.sites[rival.id]);
-    const site = you ? city.sites[YOU] : them ? city.sites[rival.id] : null;
-    const edge = you ? PAL.cyan : them ? rival.color : PAL.cyan;
-    const raising = jobsFor(city.id, you ? YOU : them ? rival.id : YOU).length > 0;
+    const raising = jobsFor(city.id).length > 0;
+    if (you) {
+      const site = city.sites[YOU];
+      if (meta.id === "phoenix" || (site.lounge > 0 && site.dc >= 2)) return "hq";
+      if (meta.id === "vegas" || site.dc <= 1) return "vegas";
+      return "tucson";
+    }
+    if (them) return "voltspan";
+    if (raising) return "dirt";
+    return "flag";
+  }
+
+  function iconMarkup(city, selectedHere, meta) {
+    const kind = mapSpriteKind(city, meta);
+    const raising = jobsFor(meta.id).length > 0;
     let g = "";
     if (selectedHere) {
-      g += `<ellipse cx="36" cy="40" rx="28" ry="8.5" fill="none" stroke="${PAL.cyan}" stroke-width="1.6"/>`;
+      g += `<ellipse cx="64" cy="80" rx="40" ry="11" fill="none" stroke="${PAL.cyan}" stroke-width="1.8"/>`;
     }
-    if (!site) {
-      g += padSlab(22, 38, 20, 11, false);
-      g += raising ? scaffold(26, 34, 10, 7, 8) : isoBox(28, 34, 5, 4, 3.5, false).g;
-      return `<svg viewBox="0 0 72 48" class="map-icon-svg" overflow="visible" aria-hidden="true">${g}</svg>`;
+    if (kind === "flag") {
+      g += surveyFlag(28, 72, 1.35);
+    } else if (kind === "dirt") {
+      g += dirtPad(22, 74, 58, 32);
+      if (raising) g += scaffold(40, 60, 18, 10, 10);
+    } else if (kind === "vegas") {
+      g += dirtPad(20, 76, 62, 34);
+      g += concretePad(34, 68, 22, 12);
+      g += slimZeus(40, 66, 0.72, false);
+      g += canopy(32, 68, 26, 14, 13, true, [0.18, 0.82]);
+    } else if (kind === "tucson") {
+      g += dirtPad(14, 78, 78, 36);
+      g += concretePad(26, 70, 36, 14);
+      g += slimZeus(30, 68, 0.68, false);
+      g += slimZeus(44, 68, 0.68, false);
+      g += charcoalCabinet(28, 52, 0.55, true);
+      g += charcoalCabinet(48, 50, 0.55, true);
+    } else if (kind === "hq") {
+      g += dirtPad(8, 80, 96, 40);
+      g += concretePad(16, 70, 52, 16);
+      g += concretePad(70, 66, 28, 16);
+      for (let i = 0; i < 4; i += 1) g += slimZeus(18 + i * 11, 68, 0.58, false);
+      g += canopy(14, 70, 54, 16, 14, true);
+      g += charcoalCabinet(20, 50, 0.52, false);
+      g += loungePavilion(72, 62, true, false);
+    } else {
+      g += voltspanYard(18, 72, 1.05);
     }
-    g += padSlab(16, 40, 30, 15, true);
-    g += isoBox(18, 31, 9, 6, 10, true, edge).g;
-    if (you && site.lounge > 0) {
-      const lounge = isoBox(38, 30, 12, 7, 6, true);
-      g += lounge.g;
-      g += `<rect x="${lounge.p.flT[0] + 2}" y="${lounge.p.flT[1] + 1.6}" width="8" height="3.2" fill="${PAL.amber}" opacity="0.95"/>`;
-    }
-    const n = Math.min(4, Math.max(1, site.dc || 1));
-    for (let i = 0; i < n; i += 1) g += dispenser1000(19 + i * 7.2, 38, true);
-    g += canopy(16, 40, 12 + n * 7.2, 11, 9, true);
-    if (raising) g += scaffold(22, 36, 18, 10, 8);
-    return `<svg viewBox="0 0 72 48" class="map-icon-svg" overflow="visible" aria-hidden="true">${g}</svg>`;
+    return `<svg viewBox="0 0 128 88" class="map-icon-svg" overflow="visible" aria-hidden="true">${g}</svg>`;
   }
 
   function renderCities() {
@@ -1147,7 +1200,7 @@
       });
       const icon = document.createElement("div");
       icon.className = "map-icon";
-      icon.innerHTML = iconMarkup(city, selected === meta.id);
+      icon.innerHTML = iconMarkup(city, selected === meta.id, meta);
       btn.append(icon);
       if (youSite.dc || youSite.mcs) {
         const kit = document.createElement("span");

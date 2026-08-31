@@ -1,4 +1,4 @@
-/* empire-build: aoe-terrain-1 */
+/* empire-build: branded-compounds-1 */
 :root {
   --red: #e63225;
   --charcoal: #1e1e24;
@@ -345,7 +345,7 @@ button {
 
 .map-icon {
   display: block;
-  width: 56px;
+  width: 86px;
   height: auto;
   margin: 0 auto;
   background: none;
@@ -354,11 +354,15 @@ button {
 }
 
 .city-node.dirt .map-icon {
-  width: 48px;
+  width: 72px;
+}
+
+.city-node.zaps .map-icon {
+  width: 92px;
 }
 
 .city-node.selected .map-icon {
-  width: 64px;
+  width: 104px;
   filter: drop-shadow(0 0 6px rgba(0, 212, 245, 0.55));
 }
 
