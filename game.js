@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: branded-compounds-6 */
+/* empire-build: branded-compounds-7 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -753,12 +753,41 @@
   }
 
   function occupantClass(city) {
-    const you = hasCap(city.sites[YOU]);
-    const them = activeRivals().some((r) => hasCap(city.sites[r.id]));
-    if (you && them) return "contested zaps";
-    if (you) return "zaps";
-    if (them) return "rival hostile";
+    const kind = mapSpriteKind(city, CITY_BY_ID[city.id]);
+    if (kind === "hq" || kind === "tucson" || kind === "vegas") {
+      const them = activeRivals().some((r) => hasCap(city.sites[r.id]));
+      return them ? "contested zaps" : "zaps";
+    }
+    if (kind === "voltspan" || kind === "rival") return "rival hostile";
     return "dirt";
+  }
+
+  function inspectorPhase(kind) {
+    if (kind === "hq") return "ZAPS HQ";
+    if (kind === "tucson" || kind === "vegas") return "ZAPS YARD";
+    if (kind === "voltspan") return "VOLTSPAN COMPOUND";
+    if (kind === "rival") return "RIVAL DEPOT";
+    if (kind === "dirt") return "RAISING";
+    return "UNBUILT";
+  }
+
+  function inspectorBlurb(city, meta, kind) {
+    const you = city.sites[YOU];
+    const neighbors = meta.neighbors.map((id) => CITY_BY_ID[id].name).join(", ");
+    const land = meta.land.toFixed(2);
+    if (kind === "hq" || kind === "tucson" || kind === "vegas") {
+      return `Your price ${city.price[YOU].toFixed(2)}/kWh. Share ${Math.round((city.share[YOU] || 0) * 100)}%. Grid ${you.bess ? "STABLE" : "STRAINED"}. Crews ${crewsBusy()}/${MAX_CREWS}.`;
+    }
+    if (kind === "voltspan") {
+      return `Voltspan compound. Land multiplier ${land}. Neighbors: ${neighbors}.`;
+    }
+    if (kind === "rival") {
+      return `Rival depot. Land multiplier ${land}. Neighbors: ${neighbors}.`;
+    }
+    if (kind === "dirt") {
+      return `Raising. Land multiplier ${land}. Neighbors: ${neighbors}.`;
+    }
+    return `Unbuilt dirt. Land multiplier ${land}. Neighbors: ${neighbors}. Drop a pad to raise a compound.`;
   }
 
   function strongestRival(city) {
@@ -1219,11 +1248,10 @@
     recomputeShare(city);
     $("insp-kicker").textContent = `${meta.state} // BASE`;
     $("insp-name").textContent = meta.name;
-    $("insp-phase").textContent = campaignPhase();
+    const kind = mapSpriteKind(city, meta);
+    $("insp-phase").textContent = inspectorPhase(kind);
     const you = city.sites[YOU];
-    $("insp-blurb").textContent = you.dc || you.mcs
-      ? `Your price ${city.price[YOU].toFixed(2)}/kWh. Share ${Math.round((city.share[YOU] || 0) * 100)}%. Grid ${you.bess ? "STABLE" : "STRAINED"}. Crews ${crewsBusy()}/${MAX_CREWS}.`
-      : `Unbuilt dirt. Land multiplier ${meta.land.toFixed(2)}. Neighbors: ${meta.neighbors.map((id) => CITY_BY_ID[id].name).join(", ")}. Drop a pad to raise a compound.`;
+    $("insp-blurb").textContent = inspectorBlurb(city, meta, kind);
 
     $("insp-compound").innerHTML = compoundMarkup(city, meta);
 
