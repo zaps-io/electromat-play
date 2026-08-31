@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: branded-compounds-1 */
+/* empire-build: branded-compounds-2 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -1166,13 +1166,13 @@
       g += charcoalCabinet(28, 52, 0.55, true);
       g += charcoalCabinet(48, 50, 0.55, true);
     } else if (kind === "hq") {
-      g += dirtPad(8, 80, 96, 40);
-      g += concretePad(16, 70, 52, 16);
-      g += concretePad(70, 66, 28, 16);
-      for (let i = 0; i < 4; i += 1) g += slimZeus(18 + i * 11, 68, 0.58, false);
-      g += canopy(14, 70, 54, 16, 14, true);
-      g += charcoalCabinet(20, 50, 0.52, false);
-      g += loungePavilion(72, 62, true, false);
+      g += dirtPad(24, 76, 68, 28);
+      g += concretePad(28, 68, 38, 12);
+      g += concretePad(68, 64, 22, 12);
+      for (let i = 0; i < 4; i += 1) g += slimZeus(30 + i * 8.6, 66, 0.48, false);
+      g += canopy(26, 68, 42, 13, 12, true);
+      g += charcoalCabinet(30, 50, 0.42, false);
+      g += loungePavilion(68, 60, true, false);
     } else {
       g += voltspanYard(18, 72, 1.05);
     }

@@ -1,4 +1,4 @@
-/* empire-build: branded-compounds-1 */
+/* empire-build: branded-compounds-2 */
 :root {
   --red: #e63225;
   --charcoal: #1e1e24;
@@ -345,7 +345,7 @@ button {
 
 .map-icon {
   display: block;
-  width: 86px;
+  width: 74px;
   height: auto;
   margin: 0 auto;
   background: none;
@@ -354,15 +354,15 @@ button {
 }
 
 .city-node.dirt .map-icon {
-  width: 72px;
+  width: 62px;
 }
 
 .city-node.zaps .map-icon {
-  width: 92px;
+  width: 80px;
 }
 
 .city-node.selected .map-icon {
-  width: 104px;
+  width: 88px;
   filter: drop-shadow(0 0 6px rgba(0, 212, 245, 0.55));
 }
 
