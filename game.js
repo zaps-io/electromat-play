@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: branded-compounds-5 */
+/* empire-build: branded-compounds-6 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -1151,8 +1151,8 @@
       if (meta.id === "tucson") return "tucson";
       return "dirt";
     }
-    if (voltspanLive) return "voltspan";
-    if (otherRivalLive(city)) return "rival";
+    if (voltspanLive && !otherRivalLive(city)) return "voltspan";
+    if (voltspanLive || otherRivalLive(city)) return "rival";
     if (raising) return "dirt";
     return "flag";
   }
