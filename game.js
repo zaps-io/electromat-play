@@ -18,7 +18,7 @@
     panel: "#26262e",
     lot: "#F5F0E8",
   };
-  const BOLT = "assets/brand/zaps-wordmark-only-red.svg";
+  const BOLT = "assets/brand/bolt-red.svg";
 
   const BUILD = {
     dc: {
@@ -777,105 +777,135 @@
     return best;
   }
 
-  function lotBox(x, y, w, h, fill, stroke, dash = false) {
-    return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1.4" fill="${fill}" stroke="${stroke}" stroke-width="1.15"${
-      dash ? ' stroke-dasharray="3 2"' : ""
-    }/>`;
-  }
-
   function lotLabel(x, y, w, h, text, detail) {
     if (!detail) return "";
-    return `<text x="${x + w / 2}" y="${y + h - 3.4}" text-anchor="middle" fill="${PAL.amber}" font-size="8.4" font-family="Share Tech Mono, monospace">${text}</text>`;
+    return `<text x="${x + w / 2}" y="${y + h - 2.6}" text-anchor="middle" fill="${PAL.amber}" font-size="5.6" font-family="Share Tech Mono, monospace">${text}</text>`;
+  }
+
+  function yardSlab(x, y, w, h, live) {
+    const fill = live ? PAL.cream : "#2a2a32";
+    const stroke = live ? PAL.cyan : "rgba(0,212,245,0.45)";
+    return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${fill}" stroke="${stroke}" stroke-width="1.1"/>`;
+  }
+
+  function stallMarks(x, y, w, h, n, live) {
+    let g = "";
+    const gap = w / n;
+    for (let i = 0; i < n; i += 1) {
+      const sx = x + 1.6 + i * gap;
+      g += `<rect x="${sx}" y="${y + 1.4}" width="${gap - 3.2}" height="${h - 2.8}" fill="${live ? PAL.cyan : PAL.charcoal}" fill-opacity="${live ? 0.22 : 0.35}" stroke="${PAL.cyan}" stroke-opacity="${live ? 0.85 : 0.4}" stroke-width="0.7"/>`;
+    }
+    return g;
+  }
+
+  function creamCabinet(x, y, w, h, live) {
+    const body = live ? PAL.cream : "#32323a";
+    const vent = live ? PAL.charcoal : PAL.steel;
+    let g = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1.2" fill="${body}" stroke="${PAL.cyan}" stroke-width="1"/>`;
+    g += `<rect x="${x}" y="${y}" width="${w}" height="${h * 0.18}" fill="${live ? "#e7e1d6" : "#3a3a44"}"/>`;
+    const rows = Math.max(2, Math.floor(h / 7));
+    for (let i = 0; i < rows; i += 1) {
+      g += `<rect x="${x + 1.6}" y="${y + h * 0.28 + i * 4.2}" width="${w - 3.2}" height="1.5" fill="${vent}" opacity="${live ? 0.85 : 0.35}"/>`;
+    }
+    if (live) g += `<rect x="${x + w - 3.2}" y="${y + 1.4}" width="1.6" height="1.6" fill="${PAL.cyan}"/>`;
+    return g;
+  }
+
+  function chargerPost(x, y, live) {
+    if (!live) return `<rect x="${x}" y="${y}" width="3.2" height="10" fill="#32323a" stroke="${PAL.cyan}" stroke-opacity="0.4"/>`;
+    return (
+      `<rect x="${x}" y="${y}" width="3.4" height="11" fill="${PAL.cream}" stroke="${PAL.cyan}"/>` +
+      `<rect x="${x + 0.7}" y="${y + 2}" width="2" height="4.2" fill="${PAL.cyan}"/>` +
+      `<rect x="${x + 3.2}" y="${y + 6}" width="4.5" height="1.2" fill="${PAL.amber}"/>`
+    );
   }
 
   function dcStall(x, y, w, h, { live, raising, extra, detail }) {
+    const building = live || raising;
+    let g = yardSlab(x, y, w, h, building);
+    g += stallMarks(x + 2, y + h * 0.58, w - 4, h * 0.28, 2, live);
+    const cabW = (w - 10) / 2;
+    g += creamCabinet(x + 3, y + 4, cabW, h * 0.42, live);
+    g += creamCabinet(x + 6 + cabW, y + 4, cabW, h * 0.42, live);
+    g += chargerPost(x + 5, y + h * 0.48, live);
+    g += chargerPost(x + w - 14, y + h * 0.48, live);
     if (raising) {
-      return (
-        lotBox(x, y, w, h, PAL.dirt, PAL.amber, true) +
-        `<path d="M${x + 6} ${y + h - 8} L${x + w / 2} ${y + 7} L${x + w - 6} ${y + h - 8}" fill="none" stroke="${PAL.amber}" stroke-width="1.4"/>` +
-        lotLabel(x, y, w, h, "RAISE DC", detail)
-      );
+      g += `<path d="M${x + 5} ${y + h - 8} L${x + w / 2} ${y + 6} L${x + w - 5} ${y + h - 8}" fill="none" stroke="${PAL.amber}" stroke-width="1.3"/>`;
     }
-    if (!live) {
-      return lotBox(x, y, w, h, PAL.dirt, PAL.cyan, true) + lotLabel(x, y, w, h, "DC LOT", detail);
+    if (extra > 0) {
+      g += `<text x="${x + w - 5}" y="${y + 8}" text-anchor="end" fill="${PAL.amber}" font-size="6" font-family="Share Tech Mono, monospace">+${extra}</text>`;
     }
-    const plus = extra > 0
-      ? `<text x="${x + w - 7}" y="${y + 10}" fill="${PAL.amber}" font-size="9" font-family="Share Tech Mono, monospace">+${extra}</text>`
-      : "";
-    return (
-      lotBox(x, y, w, h, PAL.lot, PAL.cyan) +
-      `<path d="M${x + 4} ${y + h * 0.42} H${x + w - 4} L${x + w - 8} ${y + 5} H${x + 8} Z" fill="none" stroke="${PAL.cyan}" stroke-width="1.4"/>` +
-      `<rect x="${x + 8}" y="${y + 8}" width="${w - 16}" height="${h * 0.16}" fill="${PAL.charcoal}"/>` +
-      `<rect x="${x + 7}" y="${y + h - 13}" width="${(w - 18) / 2}" height="4" fill="${PAL.amber}"/>` +
-      `<rect x="${x + w / 2 + 2}" y="${y + h - 13}" width="${(w - 18) / 2}" height="4" fill="${PAL.amber}"/>` +
-      plus +
-      lotLabel(x, y, w, h, "DC", detail)
-    );
+    return g + lotLabel(x, y, w, h, raising ? "RAISE DC" : "DC", detail);
   }
 
   function mcsBay(x, y, w, h, { live, raising, detail }) {
-    if (raising) {
-      return lotBox(x, y, w, h, PAL.dirt, PAL.amber, true) + lotLabel(x, y, w, h, "RAISE MCS", detail);
-    }
-    if (!live) return lotBox(x, y, w, h, PAL.dirt, PAL.cyan, true) + lotLabel(x, y, w, h, "MCS BAY", detail);
-    return (
-      lotBox(x, y, w, h, PAL.lot, PAL.cyan) +
-      `<path d="M${x + 8} ${y + 6} H${x + w - 8} L${x + w - 14} ${y + h - 14} H${x + 14} Z" fill="none" stroke="${PAL.cyan}" stroke-width="1.5"/>` +
-      `<rect x="${x + 12}" y="${y + h - 16}" width="${w - 24}" height="5" fill="${PAL.amber}"/>` +
-      lotLabel(x, y, w, h, "MCS", detail)
-    );
+    const building = live || raising;
+    let g = yardSlab(x, y, w, h, building);
+    g += `<path d="M${x + 4} ${y + h * 0.42} H${x + w - 4} L${x + w - 10} ${y + 5} H${x + 10} Z" fill="${live ? PAL.cream : "#32323a"}" stroke="${PAL.cyan}" stroke-width="1.2"/>`;
+    g += `<rect x="${x + 8}" y="${y + 7}" width="${w - 16}" height="3.4" fill="${live ? PAL.cyan : PAL.charcoal}" opacity="${live ? 0.7 : 0.45}"/>`;
+    g += `<rect x="${x + 10}" y="${y + h * 0.48}" width="5" height="${h * 0.32}" fill="${live ? PAL.cream : "#32323a"}" stroke="${PAL.cyan}"/>`;
+    g += `<rect x="${x + w - 15}" y="${y + h * 0.48}" width="5" height="${h * 0.32}" fill="${live ? PAL.cream : "#32323a"}" stroke="${PAL.cyan}"/>`;
+    g += stallMarks(x + 18, y + h * 0.52, w - 36, h * 0.28, 3, live);
+    if (raising) g += `<rect x="${x + 3}" y="${y + 3}" width="${w - 6}" height="${h - 6}" fill="none" stroke="${PAL.amber}" stroke-dasharray="3 2"/>`;
+    return g + lotLabel(x, y, w, h, raising ? "RAISE MCS" : "MCS", detail);
   }
 
   function bessStack(x, y, w, h, { live, raising, detail }) {
-    if (raising) return lotBox(x, y, w, h, PAL.dirt, PAL.amber, true) + lotLabel(x, y, w, h, "RAISE BESS", detail);
-    if (!live) return lotBox(x, y, w, h, PAL.dirt, PAL.cyan, true) + lotLabel(x, y, w, h, "BESS", detail);
-    return (
-      lotBox(x, y, w, h, PAL.lot, PAL.cyan) +
-      `<rect x="${x + 6}" y="${y + 6}" width="${w - 12}" height="5" fill="none" stroke="${PAL.cyan}"/>` +
-      `<rect x="${x + 6}" y="${y + 14}" width="${w - 12}" height="5" fill="none" stroke="${PAL.cyan}"/>` +
-      `<rect x="${x + 6}" y="${y + 22}" width="${w - 12}" height="5" fill="${PAL.amber}"/>` +
-      lotLabel(x, y, w, h, "BESS", detail)
-    );
+    const building = live || raising;
+    let g = yardSlab(x, y, w, h, building);
+    const stack = (sx, sy, sw, sh) => creamCabinet(sx, sy, sw, sh, live);
+    g += stack(x + 3, y + 10, (w - 8) / 2, h * 0.62);
+    g += stack(x + 5 + (w - 8) / 2, y + 6, (w - 8) / 2, h * 0.7);
+    if (live) {
+      g += `<rect x="${x + 5}" y="${y + 14}" width="${(w - 12) / 2 - 2}" height="2" fill="${PAL.cyan}"/>`;
+      g += `<rect x="${x + 7 + (w - 8) / 2}" y="${y + 10}" width="${(w - 12) / 2 - 2}" height="2" fill="${PAL.amber}"/>`;
+    }
+    if (raising) g += `<rect x="${x + 2}" y="${y + 2}" width="${w - 4}" height="${h - 4}" fill="none" stroke="${PAL.amber}" stroke-dasharray="3 2"/>`;
+    return g + lotLabel(x, y, w, h, raising ? "RAISE BESS" : "BESS", detail);
   }
 
   function loungeHall(x, y, w, h, { live, raising, detail }) {
-    if (raising) return lotBox(x, y, w, h, PAL.dirt, PAL.amber, true) + lotLabel(x, y, w, h, "RAISE LNGE", detail);
-    if (!live) return lotBox(x, y, w, h, PAL.dirt, PAL.cyan, true) + lotLabel(x, y, w, h, "LOUNGE", detail);
-    return (
-      lotBox(x, y, w, h, PAL.lot, PAL.cyan) +
-      `<path d="M${x + 5} ${y + 14} H${x + w - 5}" stroke="${PAL.cyan}" stroke-width="1.4"/>` +
-      `<rect x="${x + 8}" y="${y + 16}" width="8" height="10" fill="${PAL.charcoal}"/>` +
-      `<rect x="${x + w - 18}" y="${y + 17}" width="10" height="6" fill="${PAL.amber}"/>` +
-      lotLabel(x, y, w, h, "LOUNGE", detail)
-    );
+    const building = live || raising;
+    let g = yardSlab(x, y, w, h, building);
+    g += `<path d="M${x + 2} ${y + h * 0.4} H${x + w - 2} L${x + w - 6} ${y + 6} H${x + 6} Z" fill="${live ? PAL.cream : "#32323a"}" stroke="${PAL.cyan}"/>`;
+    g += `<rect x="${x + 5}" y="${y + h * 0.4}" width="${w - 10}" height="${h * 0.36}" fill="${live ? PAL.cream : "#32323a"}" stroke="${PAL.cyan}"/>`;
+    g += `<rect x="${x + 8}" y="${y + h * 0.46}" width="${w - 16}" height="${h * 0.14}" fill="${live ? PAL.cyan : PAL.charcoal}" opacity="${live ? 0.7 : 0.4}"/>`;
+    g += `<rect x="${x + 8}" y="${y + h * 0.66}" width="6" height="5" fill="${PAL.charcoal}"/>`;
+    if (live) {
+      g += `<rect x="${x + w - 16}" y="${y + h * 0.64}" width="8" height="3.2" fill="${PAL.amber}"/>`;
+      g += `<rect x="${x + 16}" y="${y + h * 0.64}" width="6" height="3.2" fill="${PAL.steel}"/>`;
+    }
+    if (raising) g += `<rect x="${x + 2}" y="${y + 2}" width="${w - 4}" height="${h - 4}" fill="none" stroke="${PAL.amber}" stroke-dasharray="3 2"/>`;
+    return g + lotLabel(x, y, w, h, raising ? "RAISE LNGE" : "LOUNGE", detail);
   }
 
   function marketHall(x, y, w, h, { live, raising, detail }) {
-    if (raising) return lotBox(x, y, w, h, PAL.dirt, PAL.amber, true) + lotLabel(x, y, w, h, "RAISE MKT", detail);
-    if (!live) return lotBox(x, y, w, h, PAL.dirt, PAL.cyan, true) + lotLabel(x, y, w, h, "MARKET", detail);
-    return (
-      lotBox(x, y, w, h, PAL.lot, PAL.cyan) +
-      `<path d="M${x + 4} ${y + 14} H${x + w - 4} L${x + w - 9} ${y + 6} H${x + 9} Z" fill="none" stroke="${PAL.cyan}" stroke-width="1.4"/>` +
-      `<rect x="${x + 9}" y="${y + 16}" width="10" height="8" fill="${PAL.amber}"/>` +
-      `<rect x="${x + w - 19}" y="${y + 16}" width="10" height="8" fill="none" stroke="${PAL.cyan}"/>` +
-      lotLabel(x, y, w, h, "MARKET", detail)
-    );
+    const building = live || raising;
+    let g = yardSlab(x, y, w, h, building);
+    g += `<path d="M${x + 3} ${y + 16} H${x + w - 3} L${x + w - 9} ${y + 5} H${x + 9} Z" fill="${live ? PAL.cream : "#32323a"}" stroke="${PAL.cyan}"/>`;
+    g += `<rect x="${x + 6}" y="${y + 16}" width="${w - 12}" height="${h * 0.48}" fill="${live ? PAL.cream : "#32323a"}" stroke="${PAL.cyan}"/>`;
+    g += `<rect x="${x + 9}" y="${y + 20}" width="10" height="10" fill="${live ? PAL.charcoal : "#1a1a20"}"/>`;
+    g += `<rect x="${x + w - 20}" y="${y + 21}" width="10" height="8" fill="${live ? PAL.cyan : PAL.charcoal}" opacity="${live ? 0.75 : 0.45}"/>`;
+    if (live) g += `<rect x="${x + 22}" y="${y + 34}" width="${w - 36}" height="3" fill="${PAL.amber}"/>`;
+    if (raising) g += `<rect x="${x + 2}" y="${y + 2}" width="${w - 4}" height="${h - 4}" fill="none" stroke="${PAL.amber}" stroke-dasharray="3 2"/>`;
+    return g + lotLabel(x, y, w, h, raising ? "RAISE MKT" : "MARKET", detail);
   }
 
   function padDeck(x, y, w, h, { live, detail }) {
-    if (!live) return lotBox(x, y, w, h, PAL.dirt, PAL.cyan, true) + lotLabel(x, y, w, h, "PAD", detail);
-    let marks = "";
-    const lanes = detail ? 5 : 3;
+    let g = yardSlab(x, y, w, h, live);
+    const lanes = detail ? 6 : 4;
     for (let i = 0; i < lanes; i += 1) {
-      const mx = x + 6 + i * ((w - 12) / lanes);
-      marks += `<rect x="${mx}" y="${y + 6}" width="2.2" height="${h - 14}" fill="${PAL.cyan}" opacity="0.45"/>`;
+      const mx = x + 5 + i * ((w - 10) / lanes);
+      g += `<rect x="${mx}" y="${y + 5}" width="2.4" height="${h - 12}" fill="${PAL.cyan}" opacity="${live ? 0.55 : 0.22}"/>`;
     }
-    return lotBox(x, y, w, h, PAL.pad, PAL.cyan) + marks + lotLabel(x, y, w, h, "PAD", detail);
+    g += `<rect x="${x + 4}" y="${y + 4}" width="${w - 8}" height="2" fill="${live ? PAL.cream : "#32323a"}" stroke="${PAL.cyan}" stroke-opacity="0.5"/>`;
+    return g + lotLabel(x, y, w, h, "PAD", detail);
   }
 
   function dirtPlot() {
     return `<svg viewBox="0 0 24 24" class="compound-svg" aria-hidden="true">
-      <rect x="4" y="4" width="16" height="16" rx="1.5" fill="${PAL.dirt}" stroke="${PAL.cyan}" stroke-opacity="0.45" stroke-dasharray="2 2"/>
+      <rect x="3" y="3" width="18" height="18" rx="1.5" fill="#2a2a32" stroke="${PAL.cyan}" stroke-opacity="0.5" stroke-dasharray="2 2"/>
+      <path d="M8 16 L12 8 L16 16" fill="none" stroke="${PAL.cyan}" stroke-opacity="0.4"/>
     </svg>`;
   }
 
@@ -884,48 +914,43 @@
     if (!rival) return dirtPlot();
     const site = city.sites[rival.id];
     const stroke = rival.color;
-    const w = 120;
-    const h = 88;
+    const w = 132;
+    const h = 96;
     const raising = jobsFor(city.id, rival.id).length > 0;
     let inner = "";
-    inner += `<rect x="3" y="3" width="${w - 6}" height="${h - 6}" rx="2" fill="${PAL.charcoal}" stroke="${stroke}" stroke-width="1.6"/>`;
-    inner += padDeck(8, 56, 104, 24, { live: hasCap(site), detail });
-    inner += dcStall(8, 10, 48, 40, { live: site.dc > 0, raising: raisingType(city.id, "dc", rival.id), extra: Math.max(0, site.dc - 1), detail });
-    inner += lotBox(62, 10, 50, 40, PAL.dirt, stroke);
-    if (site.mcs) inner += `<rect x="68" y="16" width="38" height="10" fill="${PAL.amber}"/>`;
-    else inner += `<rect x="68" y="16" width="38" height="10" fill="${PAL.dirt}" stroke="${PAL.cyan}" stroke-dasharray="2 2"/>`;
-    if (site.bess) inner += `<rect x="68" y="30" width="16" height="14" fill="none" stroke="${PAL.cyan}"/>`;
+    inner += `<rect x="2" y="2" width="${w - 4}" height="${h - 4}" rx="2" fill="${PAL.charcoal}" stroke="${stroke}" stroke-width="1.6"/>`;
+    inner += padDeck(8, 62, 116, 26, { live: hasCap(site), detail });
+    inner += dcStall(8, 10, 56, 46, { live: site.dc > 0, raising: raisingType(city.id, "dc", rival.id), extra: Math.max(0, site.dc - 1), detail });
+    inner += mcsBay(70, 10, 54, 46, { live: site.mcs > 0, raising: raisingType(city.id, "mcs", rival.id), detail });
     if (detail) {
-      inner += `<text x="60" y="82" text-anchor="middle" fill="${PAL.amber}" font-size="6" font-family="Share Tech Mono, monospace">${rival.name} YARD</text>`;
+      inner += `<text x="66" y="90" text-anchor="middle" fill="${PAL.amber}" font-size="6" font-family="Share Tech Mono, monospace">${rival.name} YARD</text>`;
     }
-    if (raising) inner += `<rect x="3" y="3" width="${w - 6}" height="${h - 6}" fill="none" stroke="${PAL.amber}" stroke-dasharray="4 3"/>`;
+    if (raising) inner += `<rect x="2" y="2" width="${w - 4}" height="${h - 4}" fill="none" stroke="${PAL.amber}" stroke-dasharray="4 3"/>`;
     return `<svg viewBox="0 0 ${w} ${h}" class="compound-svg" aria-hidden="true">${inner}</svg>`;
   }
 
   function zapsCompound(city, detail) {
     const site = city.sites[YOU];
     const owned = hasCap(site) || jobsFor(city.id).some((j) => j.type === "dc" || j.type === "mcs");
-    const w = 200;
-    const h = 150;
+    const w = 240;
+    const h = 176;
     const extraDc = Math.max(0, site.dc - 4);
     const siteName = (CITY_BY_ID[city.id]?.name || "SITE").toUpperCase();
     let g = "";
-    g += `<rect x="2" y="2" width="${w - 4}" height="${h - 4}" rx="3" fill="${PAL.cream}" stroke="${PAL.cyan}" stroke-width="1.6"/>`;
-    g += `<path d="M10 18 H190 M10 56 H190 M10 98 H190" stroke="${PAL.cyan}" stroke-opacity="0.18" stroke-width="0.8"/>`;
-    g += `<rect x="8" y="6" width="184" height="11" rx="1.2" fill="${PAL.charcoal}"/>`;
-    if (owned) {
-      g += `<image href="${BOLT}" x="10" y="6.4" width="10" height="10"/>`;
-    }
+    g += `<rect x="1" y="1" width="${w - 2}" height="${h - 2}" rx="3" fill="#2a2a32" stroke="${PAL.cyan}" stroke-width="1.5"/>`;
+    g += `<rect x="6" y="20" width="${w - 12}" height="${h - 26}" fill="${PAL.cream}" opacity="0.08"/>`;
+    g += `<rect x="6" y="5" width="${w - 12}" height="13" rx="1.2" fill="${PAL.charcoal}"/>`;
+    if (owned) g += `<image href="${BOLT}" x="9" y="6.2" width="10" height="10"/>`;
     if (detail) {
-      g += `<text x="28" y="14.4" fill="${PAL.amber}" font-size="6.2" font-family="Share Tech Mono, monospace">${siteName} SITE</text>`;
+      g += `<text x="24" y="14.2" fill="${PAL.amber}" font-size="6.4" font-family="Share Tech Mono, monospace">${siteName} SITE</text>`;
     }
 
     const dcLive = [site.dc >= 1, site.dc >= 2, site.dc >= 3, site.dc >= 4];
     const slots = [
-      [10, 20, 44, 34],
-      [56, 20, 44, 34],
-      [102, 20, 44, 34],
-      [148, 20, 44, 34],
+      [8, 22, 54, 50],
+      [66, 22, 54, 50],
+      [124, 22, 54, 50],
+      [182, 22, 50, 50],
     ];
     slots.forEach((box, i) => {
       g += dcStall(...box, {
@@ -936,16 +961,16 @@
       });
     });
 
-    g += mcsBay(10, 58, 92, 38, { live: site.mcs > 0, raising: raisingType(city.id, "mcs"), detail });
-    g += bessStack(106, 58, 40, 38, { live: site.bess > 0, raising: raisingType(city.id, "bess"), detail });
-    g += loungeHall(150, 58, 40, 38, { live: site.lounge > 0, raising: raisingType(city.id, "lounge"), detail });
-    g += marketHall(10, 100, 62, 40, { live: site.market > 0, raising: raisingType(city.id, "market"), detail });
-    g += padDeck(76, 100, 114, 40, { live: owned, detail });
+    g += mcsBay(8, 76, 108, 46, { live: site.mcs > 0, raising: raisingType(city.id, "mcs"), detail });
+    g += bessStack(122, 76, 50, 46, { live: site.bess > 0, raising: raisingType(city.id, "bess"), detail });
+    g += loungeHall(178, 76, 54, 46, { live: site.lounge > 0, raising: raisingType(city.id, "lounge"), detail });
+    g += marketHall(8, 126, 74, 42, { live: site.market > 0, raising: raisingType(city.id, "market"), detail });
+    g += padDeck(88, 126, 144, 42, { live: owned, detail });
 
     const rival = strongestRival(city);
     if (rival && hasCap(city.sites[rival.id])) {
-      g += `<rect x="${w - 28}" y="${h - 18}" width="22" height="12" rx="1" fill="${PAL.charcoal}" stroke="${rival.color}"/>`;
-      if (detail) g += `<text x="${w - 17}" y="${h - 9.5}" text-anchor="middle" fill="${PAL.amber}" font-size="5" font-family="Share Tech Mono, monospace">HST</text>`;
+      g += `<rect x="${w - 30}" y="${h - 16}" width="22" height="10" rx="1" fill="${PAL.charcoal}" stroke="${rival.color}"/>`;
+      if (detail) g += `<text x="${w - 19}" y="${h - 8.4}" text-anchor="middle" fill="${PAL.amber}" font-size="5" font-family="Share Tech Mono, monospace">HST</text>`;
     }
     return `<svg viewBox="0 0 ${w} ${h}" class="compound-svg" aria-hidden="true">${g}</svg>`;
   }

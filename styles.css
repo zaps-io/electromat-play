@@ -7,7 +7,7 @@
   --steel: #b8bcc0;
   --ink: #121217;
   --panel: #26262e;
-  --line: rgba(0, 212, 245, 0.22);
+  --line: rgba(0, 212, 245, 0.28);
   --glow: 0 0 24px rgba(230, 50, 37, 0.28);
   font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
 }
@@ -38,51 +38,25 @@ button {
   display: none !important;
 }
 
-#crt-vignette {
-  pointer-events: none;
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  background:
-    repeating-linear-gradient(
-      to bottom,
-      rgba(0, 0, 0, 0.08) 0,
-      rgba(0, 0, 0, 0.08) 1px,
-      transparent 1px,
-      transparent 3px
-    ),
-    radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.42) 100%);
-}
-
 .screen {
   position: relative;
   height: 100dvh;
   width: 100%;
 }
 
-/* TITLE */
+/* TITLE — clean cassette-futurism, no CRT wash */
 #title-screen {
   display: grid;
   place-items: center;
-  background: var(--charcoal);
-  overflow: hidden;
-}
-
-.title-crt {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0.9;
+  background:
+    radial-gradient(ellipse at 50% 28%, #2a2a33 0%, var(--charcoal) 58%, #141418 100%);
 }
 
 .title-inner {
   position: relative;
-  z-index: 2;
   text-align: center;
-  padding: 2rem;
-  max-width: 720px;
+  padding: 2.4rem 2rem 2rem;
+  max-width: 760px;
 }
 
 .kicker {
@@ -90,7 +64,7 @@ button {
   letter-spacing: 0.28em;
   font-size: 0.72rem;
   color: var(--cyan);
-  margin: 0 0 1.2rem;
+  margin: 0 0 1.4rem;
 }
 
 .brand-lockup {
@@ -98,22 +72,27 @@ button {
   align-items: center;
   justify-content: center;
   gap: 0.85rem;
+  overflow: visible;
 }
 
 .brand-lockup.stacked {
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.55rem;
 }
 
-.brand-lockup .wordmark {
-  height: 64px;
-  width: auto;
-}
-
+.brand-lockup .wordmark,
 .brand-lockup .wordmark.official {
-  height: 72px;
-  mix-blend-mode: screen;
-  image-rendering: pixelated;
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(72vw, 520px);
+  image-rendering: auto;
+  filter: none;
+}
+
+.brand-lockup.stacked .wordmark.official {
+  height: 118px;
+  max-width: min(78vw, 560px);
 }
 
 .empire-word {
@@ -124,20 +103,29 @@ button {
   color: var(--cream);
 }
 
+.brand-lockup.compact {
+  overflow: visible;
+  min-height: 52px;
+  padding: 4px 0;
+  align-items: center;
+}
+
 .brand-lockup.compact .wordmark.official {
-  height: 28px;
-  mix-blend-mode: screen;
+  height: 40px;
+  max-width: 148px;
+  image-rendering: auto;
 }
 
 .brand-lockup.compact .empire-word {
-  font-size: 1.45rem;
+  font-size: 1.55rem;
   letter-spacing: 0.14em;
+  line-height: 1;
 }
 
 .title-rule {
   width: min(22vw, 168px);
   height: 2px;
-  margin: 1.1rem auto 0.85rem;
+  margin: 1.15rem auto 0.9rem;
   background: var(--cyan);
 }
 
@@ -233,14 +221,15 @@ button {
   grid-template-columns: auto 1fr auto;
   gap: 1rem;
   align-items: center;
-  padding: 0.55rem 0.9rem;
+  padding: 0.7rem 1rem 0.65rem;
   background: var(--charcoal);
   border-bottom: 1px solid var(--line);
+  overflow: visible;
 }
 
 .hud-stats {
   display: flex;
-  gap: 1.1rem;
+  gap: 1.15rem;
   justify-content: center;
   flex-wrap: wrap;
 }
@@ -283,7 +272,7 @@ button {
 
 .board-body {
   display: grid;
-  grid-template-columns: 1fr 380px;
+  grid-template-columns: 1fr 400px;
   min-height: 0;
 }
 
@@ -299,7 +288,7 @@ button {
   min-height: 0;
   display: grid;
   place-items: center;
-  padding: 0.4rem;
+  padding: 0.5rem;
   container-type: size;
   overflow: hidden;
 }
@@ -313,7 +302,7 @@ button {
 }
 
 .map-frame.zoomed {
-  transform: scale(1.7);
+  transform: scale(1.65);
 }
 
 .map-art,
@@ -329,10 +318,7 @@ button {
   object-fit: fill;
 }
 
-.corridor-layer {
-  pointer-events: none;
-}
-
+.corridor-layer,
 .city-layer {
   pointer-events: none;
 }
@@ -350,31 +336,31 @@ button {
 
 .city-node .compound {
   display: block;
-  width: 150px;
-  height: 112px;
-  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.72));
+  width: 168px;
+  height: 126px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.72));
 }
 
 .city-node.tier-2 .compound {
-  width: 176px;
-  height: 132px;
+  width: 196px;
+  height: 148px;
 }
 
 .city-node.tier-3 .compound {
-  width: 204px;
-  height: 154px;
+  width: 228px;
+  height: 172px;
 }
 
 .city-node.rival:not(.zaps) .compound,
 .city-node.hostile:not(.zaps) .compound {
-  width: 112px;
-  height: 84px;
+  width: 128px;
+  height: 96px;
   filter: drop-shadow(0 2px 5px rgba(0, 212, 245, 0.28));
 }
 
 .city-node.dirt .compound {
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  height: 42px;
   filter: none;
 }
 
@@ -382,19 +368,14 @@ button {
   z-index: 6;
 }
 
-.city-node.selected .compound {
-  width: 248px;
-  height: 186px;
-  outline: 1.5px solid var(--cyan);
-  outline-offset: 6px;
-  box-shadow: 0 0 0 1px rgba(245, 240, 232, 0.35);
-}
-
+.city-node.selected .compound,
 .city-node.selected.tier-1 .compound,
 .city-node.selected.tier-2 .compound,
 .city-node.selected.tier-3 .compound {
-  width: 248px;
-  height: 186px;
+  width: 280px;
+  height: 210px;
+  outline: 1.5px solid var(--cyan);
+  outline-offset: 7px;
 }
 
 .city-node.raising .compound {
@@ -404,7 +385,7 @@ button {
 @keyframes scaffold-pulse {
   0%,
   100% {
-    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.72));
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.72));
   }
   50% {
     filter: drop-shadow(0 0 10px rgba(232, 154, 46, 0.85));
@@ -412,7 +393,7 @@ button {
 }
 
 .city-node.zaps .compound {
-  filter: drop-shadow(0 0 8px rgba(0, 212, 245, 0.28));
+  filter: drop-shadow(0 0 8px rgba(0, 212, 245, 0.22));
 }
 
 .map-frame.zoomed .city-node:not(.selected) {
@@ -471,10 +452,7 @@ button {
   color: var(--cyan);
 }
 
-.ticker .bad {
-  color: var(--amber);
-}
-
+.ticker .bad,
 .ticker .deal {
   color: var(--amber);
 }
@@ -503,9 +481,9 @@ button {
 
 .insp-compound {
   margin: 0.55rem 0 0.7rem;
-  background: #1a1a20;
+  background: #16161c;
   border: 1px solid var(--line);
-  padding: 0.4rem;
+  padding: 0.55rem;
 }
 
 .insp-compound svg {
@@ -566,7 +544,7 @@ button {
 
 .toasts {
   position: fixed;
-  top: 64px;
+  top: 72px;
   right: 16px;
   z-index: 35;
   display: flex;
@@ -596,7 +574,7 @@ button {
 
 .deal-sheet {
   position: fixed;
-  top: 64px;
+  top: 72px;
   right: 16px;
   z-index: 36;
   width: min(340px, 92vw);
@@ -702,8 +680,8 @@ button {
 }
 
 .deploy img {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
 }
 
 .deploy small {
@@ -773,6 +751,10 @@ button {
 
   .empire-word {
     font-size: 3.2rem;
+  }
+
+  .brand-lockup.stacked .wordmark.official {
+    height: 84px;
   }
 
   .hud {
