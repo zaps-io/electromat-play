@@ -997,18 +997,23 @@
     return g;
   }
 
-  function dirtPlot() {
-    return `<svg viewBox="0 0 64 44" class="compound-svg" aria-hidden="true">${padSlab(10, 36, 36, 22, false)}${scaffold(22, 30, 14, 10, 12)}</svg>`;
+  function dirtParts() {
+    return {
+      kind: "dirt",
+      ax: 28,
+      ay: 36,
+      w: 64,
+      h: 44,
+      inner: `${padSlab(10, 36, 36, 22, false)}${scaffold(22, 30, 14, 10, 12)}`,
+    };
   }
 
-  function rivalYard(city) {
+  function rivalParts(city) {
     const rival = strongestRival(city);
-    if (!rival) return dirtPlot();
+    if (!rival) return dirtParts();
     const site = city.sites[rival.id];
     const edge = rival.color;
     const raising = jobsFor(city.id, rival.id).length > 0;
-    const w = 300;
-    const h = 200;
     let g = padSlab(36, 176, 170, 100, hasCap(site));
     const n = Math.max(1, Math.min(site.dc, 3));
     for (let i = 0; i < n; i += 1) {
@@ -1020,14 +1025,12 @@
       g += canopy(50, 166, n * 42, 28, 24, true);
     }
     if (raising) g += scaffold(78, 140, 40, 24, 20);
-    return `<svg viewBox="0 0 ${w} ${h}" class="compound-svg" aria-hidden="true">${g}</svg>`;
+    return { kind: "rival", ax: 121, ay: 176, w: 300, h: 200, inner: g };
   }
 
-  function zapsCompound(city) {
+  function zapsParts(city) {
     const site = city.sites[YOU];
     const owned = hasCap(site) || jobsFor(city.id).some((j) => j.type === "dc" || j.type === "mcs");
-    const w = 540;
-    const h = 340;
     const dc = site.dc;
     const raisingDc = raisingType(city.id, "dc");
     let g = padSlab(88, 300, 240, 150, owned);
@@ -1087,14 +1090,58 @@
     if (owned) {
       g += `<image href="${BOLT}" x="100" y="214" width="11" height="11"/>`;
     }
-    return `<svg viewBox="0 0 ${w} ${h}" class="compound-svg" overflow="visible" aria-hidden="true">${g}</svg>`;
+    return { kind: "zaps", ax: 208, ay: 300, w: 540, h: 340, inner: g };
   }
 
-  function compoundMarkup(city, detail) {
+  function compoundParts(city) {
     const you = hasCap(city.sites[YOU]) || jobsFor(city.id).some((j) => j.faction === YOU && (j.type === "dc" || j.type === "mcs"));
-    if (you) return zapsCompound(city, detail);
-    if (activeRivals().some((r) => hasCap(city.sites[r.id]))) return rivalYard(city, detail);
-    return dirtPlot();
+    if (you) return zapsParts(city);
+    if (activeRivals().some((r) => hasCap(city.sites[r.id]))) return rivalParts(city);
+    return dirtParts();
+  }
+
+  function wrapCompoundSvg(part) {
+    return `<svg viewBox="0 0 ${part.w} ${part.h}" class="compound-svg" overflow="visible" aria-hidden="true">${part.inner}</svg>`;
+  }
+
+  function compoundMarkup(city) {
+    return wrapCompoundSvg(compoundParts(city));
+  }
+
+  function yardScale(part, selectedHere, tier) {
+    if (selectedHere) {
+      if (part.kind === "zaps") return 0.86;
+      if (part.kind === "rival") return 0.64;
+      return 1.4;
+    }
+    if (part.kind === "zaps") return 0.32 + Math.min(tier, 3) * 0.04;
+    if (part.kind === "rival") return 0.3;
+    return 0.92;
+  }
+
+  function renderYards() {
+    const svg = $("yard-layer");
+    if (!svg) return;
+    let marks = "";
+    for (const meta of CITIES) {
+      const city = state.cities[meta.id];
+      const part = compoundParts(city);
+      const youSite = city.sites[YOU];
+      const raising = jobsFor(meta.id).length > 0;
+      const sel = selected === meta.id;
+      const s = yardScale(part, sel, compoundTier(youSite));
+      const cls = [
+        "yard",
+        part.kind,
+        sel ? "selected" : "",
+        selected && !sel ? "tucked" : "",
+        raising ? "raising" : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+      marks += `<g class="${cls}" transform="translate(${meta.x} ${meta.y}) scale(${s}) translate(${-part.ax} ${-part.ay})">${part.inner}</g>`;
+    }
+    svg.innerHTML = marks;
   }
 
   function renderCities() {
@@ -1116,13 +1163,6 @@
         selected = meta.id;
         renderAll();
       });
-      const compound = document.createElement("div");
-      compound.className = "compound";
-      compound.innerHTML = compoundMarkup(city, true);
-      const label = document.createElement("span");
-      label.className = "city-label";
-      label.textContent = meta.name.toUpperCase();
-      btn.append(compound);
       if (youSite.dc || youSite.mcs) {
         const kit = document.createElement("span");
         kit.className = "city-kit";
@@ -1138,6 +1178,9 @@
         raise.textContent = "RAISING";
         btn.append(raise);
       }
+      const label = document.createElement("span");
+      label.className = "city-label";
+      label.textContent = meta.name.toUpperCase();
       btn.append(label);
       layer.appendChild(btn);
     }
@@ -1145,10 +1188,11 @@
 
   function applyMapZoom() {
     const frame = $("map-frame");
-    if (!frame || !selected) return;
-    const meta = CITY_BY_ID[selected];
-    frame.style.transformOrigin = `${(meta.x / 1200) * 100}% ${(meta.y / 800) * 100}%`;
-    frame.classList.add("zoomed");
+    if (!frame) return;
+    frame.classList.toggle("focus-city", Boolean(selected));
+    frame.classList.remove("zoomed");
+    frame.style.transform = "";
+    frame.style.transformOrigin = "";
   }
 
   function renderInspector() {
@@ -1246,6 +1290,7 @@
     allShares();
     renderHud();
     renderCorridors();
+    renderYards();
     renderCities();
     renderInspector();
     renderTray();
