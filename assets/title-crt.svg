@@ -11,9 +11,9 @@
     </linearGradient>
   </defs>
   <rect width="1600" height="900" fill="url(#bezel)"/>
-  <rect x="48" y="36" width="1504" height="828" rx="28" fill="#0c0c10" stroke="#E63225" stroke-opacity="0.35" stroke-width="3"/>
+  <rect x="48" y="36" width="1504" height="828" rx="28" fill="#0c0c10" stroke="#00D4F5" stroke-opacity="0.45" stroke-width="2"/>
   <rect x="78" y="64" width="1444" height="772" rx="16" fill="url(#tube)"/>
-  <g opacity="0.18" fill="none" stroke="#00D4F5" stroke-width="1">
+  <g opacity="0.22" fill="none" stroke="#00D4F5" stroke-width="1">
     <path d="M120 820 H1480"/>
     <path d="M140 780 L240 200 H1360 L1460 780"/>
   </g>
