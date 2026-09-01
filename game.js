@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: branded-compounds-9 */
+/* empire-build: branded-compounds-10 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -28,6 +28,38 @@
     hq: "assets/sprites/phoenix-hq.png",
     voltspan: "assets/sprites/voltspan.png",
     rival: "assets/sprites/rival-depot.png",
+  };
+  const KIT_V = "branded-compounds-10";
+  const KIT_SPRITES = {
+    dc: `assets/sprites/kit-dc.png?v=${KIT_V}`,
+    mcs: `assets/sprites/kit-mcs.png?v=${KIT_V}`,
+    bess: `assets/sprites/kit-bess.png?v=${KIT_V}`,
+    lounge: `assets/sprites/kit-lounge.png?v=${KIT_V}`,
+    market: `assets/sprites/kit-market.png?v=${KIT_V}`,
+  };
+  const KIT_LAYOUT = {
+    dc: [
+      { left: "30%", top: "38%", width: "12%", z: 4 },
+      { left: "38%", top: "32%", width: "12%", z: 5 },
+      { left: "46%", top: "26%", width: "12%", z: 6 },
+      { left: "54%", top: "20%", width: "12%", z: 7 },
+    ],
+    mcs: [
+      { left: "14%", top: "46%", width: "26%", z: 8 },
+      { left: "26%", top: "40%", width: "26%", z: 9 },
+    ],
+    bess: [{ left: "48%", top: "10%", width: "22%", z: 3 }],
+    lounge: [{ left: "58%", top: "28%", width: "28%", z: 6 }],
+    market: [{ left: "60%", top: "50%", width: "24%", z: 10 }],
+  };
+  const SITE_TYPE_NAME = {
+    hq: "PHOENIX HQ",
+    tucson: "TUCSON YARD",
+    vegas: "VEGAS STALL",
+    dirt: "DIRT PAD",
+    flag: "SURVEY FLAG",
+    voltspan: "VOLTSPAN",
+    rival: "RIVAL DEPOT",
   };
 
   const BUILD = {
@@ -1246,21 +1278,53 @@
     const cam = $("map-cam");
     if (!cam) return;
     cam.style.transform = `translate(${mapCam.x}px, ${mapCam.y}px) scale(${mapCam.scale})`;
-    const exitBtn = $("btn-exit-site");
-    const sheet = $("site-sheet");
-    if (exitBtn) exitBtn.classList.toggle("hidden", !siteView);
-    if (sheet) {
-      sheet.classList.toggle("hidden", !siteView);
-      if (siteView && state) {
-        const meta = CITY_BY_ID[siteView];
-        const city = state.cities[siteView];
-        const kind = mapSpriteKind(city, meta);
-        $("site-sheet-kicker").textContent = `${meta.name.toUpperCase()} // SITE`;
-        $("site-sheet-art").src = MAP_SPRITES[kind] || MAP_SPRITES.flag;
-        $("site-sheet-art").dataset.kind = kind;
-      }
-    }
+    $("btn-exit-site")?.classList.toggle("hidden", !siteView);
     $("map-stage")?.classList.toggle("site-open", Boolean(siteView));
+  }
+
+  function overlayBaseKind(kind) {
+    if (kind === "voltspan" || kind === "rival" || kind === "flag") return kind;
+    return "dirt";
+  }
+
+  function kitLayer(type, live, raising) {
+    const slots = KIT_LAYOUT[type] || [];
+    const src = KIT_SPRITES[type];
+    if (!src || !slots.length) return "";
+    const n = Math.min(slots.length, Math.max(0, live) + (raising ? 1 : 0));
+    let html = "";
+    for (let i = 0; i < n; i += 1) {
+      const slot = slots[i];
+      const ghost = raising && i >= live;
+      html += `<img class="site-kit kit-${type}${ghost ? " raising" : ""}" src="${src}" alt="" draggable="false" style="left:${slot.left};top:${slot.top};width:${slot.width};z-index:${slot.z}">`;
+    }
+    return html;
+  }
+
+  function renderSiteYard() {
+    const overlay = $("site-overlay");
+    if (!overlay) return;
+    overlay.classList.toggle("hidden", !siteView);
+    if (!siteView || !state) return;
+    const meta = CITY_BY_ID[siteView];
+    const city = state.cities[siteView];
+    const kind = mapSpriteKind(city, meta);
+    const baseKind = overlayBaseKind(kind);
+    $("site-overlay-kicker").textContent = `${meta.name.toUpperCase()} // SITE`;
+    $("site-overlay-type").textContent = SITE_TYPE_NAME[kind] || "SITE";
+    const stack = $("site-stack");
+    if (!stack) return;
+    const base = MAP_SPRITES[baseKind] || MAP_SPRITES.dirt;
+    let html = `<img class="site-base" src="${base}?v=${KIT_V}" alt="" draggable="false" data-kind="${baseKind}">`;
+    if (kind !== "voltspan" && kind !== "rival") {
+      const site = city.sites[YOU];
+      html += kitLayer("bess", site.bess, raisingType(city.id, "bess") && site.bess < 1);
+      html += kitLayer("lounge", site.lounge, raisingType(city.id, "lounge") && site.lounge < 1);
+      html += kitLayer("dc", site.dc, raisingType(city.id, "dc"));
+      html += kitLayer("mcs", site.mcs, raisingType(city.id, "mcs"));
+      html += kitLayer("market", site.market, raisingType(city.id, "market") && site.market < 1);
+    }
+    stack.innerHTML = html;
   }
 
   function clampCam() {
@@ -1295,19 +1359,6 @@
     if (!siteView) interconnectCam = { ...mapCam };
     selected = id;
     siteView = id;
-    const stage = $("map-stage");
-    const meta = CITY_BY_ID[id];
-    if (stage) {
-      const sw = stage.clientWidth;
-      const sh = stage.clientHeight;
-      const scale = 2.7;
-      const px = (meta.x / 1200) * sw;
-      const py = (meta.y / 800) * sh;
-      mapCam.scale = scale;
-      mapCam.x = sw / 2 - px * scale;
-      mapCam.y = sh / 2 - py * scale;
-      clampCam();
-    }
     renderAll();
   }
 
@@ -1324,7 +1375,7 @@
     stage.dataset.bound = "1";
     stage.addEventListener("pointerdown", (e) => {
       if (e.button !== 0) return;
-      if (e.target.closest(".map-tools") || e.target.closest(".site-sheet")) return;
+      if (e.target.closest(".map-tools") || e.target.closest(".site-overlay")) return;
       mapDrag = { id: e.pointerId, x: e.clientX, y: e.clientY, ox: mapCam.x, oy: mapCam.y, moved: false };
       stage.setPointerCapture(e.pointerId);
       stage.classList.add("panning");
@@ -1366,7 +1417,7 @@
       zoomAt(r.width / 2, r.height / 2, mapCam.scale / 1.2);
     });
     $("btn-exit-site")?.addEventListener("click", exitSite);
-    $("btn-exit-site-sheet")?.addEventListener("click", exitSite);
+    $("btn-exit-site-overlay")?.addEventListener("click", exitSite);
   }
 
   function renderInspector() {
@@ -1468,6 +1519,7 @@
     renderTray();
     renderTicker();
     applyMapCam();
+    renderSiteYard();
   }
 
   function hasSave() {

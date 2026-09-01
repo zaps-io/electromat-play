@@ -15,8 +15,8 @@
       href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Share+Tech+Mono&display=swap"
       rel="stylesheet"
     />
-    <meta name="empire-build" content="branded-compounds-9" />
-    <link rel="stylesheet" href="styles.css?v=branded-compounds-9" />
+    <meta name="empire-build" content="branded-compounds-10" />
+    <link rel="stylesheet" href="styles.css?v=branded-compounds-10" />
   </head>
   <body>
     <section id="title-screen" class="screen" data-screen="title">
@@ -123,7 +123,7 @@
           <div class="map-stage" id="map-stage">
             <div class="map-cam" id="map-cam">
               <div class="map-frame" id="map-frame">
-                <img class="map-art map-paint" src="assets/map.svg?v=branded-compounds-9" alt="Southwest charging continent" />
+                <img class="map-art map-paint" src="assets/map.svg?v=branded-compounds-10" alt="Southwest charging continent" />
                 <svg class="corridor-layer" id="corridor-layer" viewBox="0 0 1200 800" overflow="visible" aria-hidden="true"></svg>
                 <div id="city-layer" class="city-layer"></div>
               </div>
@@ -133,10 +133,28 @@
               <button type="button" id="btn-zoom-out" title="Zoom out">−</button>
               <button type="button" id="btn-exit-site" class="hidden">EXIT</button>
             </div>
-            <div id="site-sheet" class="site-sheet hidden">
-              <p class="kicker" id="site-sheet-kicker">SITE</p>
-              <img id="site-sheet-art" class="site-sheet-art" alt="" draggable="false" />
-              <button type="button" id="btn-exit-site-sheet">EXIT</button>
+            <div id="site-overlay" class="site-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="site-overlay-kicker">
+              <div class="site-overlay-hd">
+                <div class="site-overlay-brand">
+                  <img
+                    class="wordmark official"
+                    src="assets/brand/zaps-wordmark-only-red.svg"
+                    alt="Zaps"
+                  />
+                  <div>
+                    <p class="kicker" id="site-overlay-kicker">SITE</p>
+                    <p class="site-type" id="site-overlay-type">DIRT PAD</p>
+                  </div>
+                </div>
+                <button type="button" id="btn-exit-site-overlay">EXIT</button>
+              </div>
+              <div class="site-yard" id="site-yard">
+                <div class="site-stack" id="site-stack"></div>
+              </div>
+              <p class="site-overlay-note">
+                Deploy from the tray. Each kit piece lands on this pad. ESC or EXIT
+                returns to the Western Interconnect.
+              </p>
             </div>
           </div>
           <aside class="ticker" id="ticker" aria-live="polite"></aside>
@@ -173,6 +191,6 @@
       <div class="modal-card" id="modal-card"></div>
     </div>
 
-    <script src="game.js?v=branded-compounds-9"></script>
+    <script src="game.js?v=branded-compounds-10"></script>
   </body>
 </html>

@@ -1,4 +1,4 @@
-/* empire-build: branded-compounds-9 */
+/* empire-build: branded-compounds-10 */
 :root {
   --red: #e63225;
   --charcoal: #1e1e24;
@@ -443,38 +443,108 @@ button {
   border-color: var(--amber);
 }
 
-.site-sheet {
+.site-overlay {
   position: absolute;
-  left: 12px;
-  bottom: 12px;
-  z-index: 8;
-  width: min(280px, 42%);
-  background: rgba(18, 18, 23, 0.92);
-  border: 1px solid var(--line);
-  padding: 0.65rem 0.75rem 0.75rem;
+  inset: 0;
+  z-index: 24;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(ellipse at 50% 38%, #2a2a33 0%, #141418 68%, #0c0c10 100%);
 }
 
-.site-sheet .kicker {
-  margin: 0 0 0.4rem;
+.site-overlay-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 1rem 0.65rem;
+  border-bottom: 1px solid var(--line);
+  background: rgba(18, 18, 23, 0.72);
 }
 
-.site-sheet-art {
-  display: block;
-  width: 100%;
-  height: auto;
-  image-rendering: auto;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+.site-overlay-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
 }
 
-.site-sheet button {
-  margin-top: 0.55rem;
-  width: 100%;
+.site-overlay-brand .wordmark.official {
+  height: 28px;
+  width: auto;
+}
+
+.site-overlay-hd .kicker {
+  margin: 0 0 0.15rem;
+}
+
+.site-type {
+  margin: 0;
+  font-family: Anton, sans-serif;
+  letter-spacing: 0.08em;
+  font-size: 1.15rem;
+  color: var(--cream);
+}
+
+#btn-exit-site-overlay {
   background: var(--red);
   color: var(--cream);
   border: 0;
-  padding: 0.5rem 0.7rem;
+  padding: 0.55rem 1.35rem;
   font-family: Anton, sans-serif;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+.site-yard {
+  flex: 1;
+  position: relative;
+  min-height: 0;
+}
+
+.site-stack {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(86%, 760px);
+  aspect-ratio: 256 / 200;
+}
+
+.site-base {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.45));
+  pointer-events: none;
+}
+
+.site-kit {
+  position: absolute;
+  height: auto;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.5));
+}
+
+.site-kit.raising {
+  opacity: 0.55;
+  filter: drop-shadow(0 0 10px rgba(0, 212, 245, 0.55));
+}
+
+.site-overlay-note {
+  margin: 0;
+  padding: 0.45rem 1rem 0.6rem;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--steel);
+  border-top: 1px solid var(--line);
 }
 
 .city-node.selected .city-label {
