@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: branded-compounds-7 */
+/* empire-build: branded-compounds-8 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -82,17 +82,17 @@
   };
 
   const CITIES = [
-    { id: "sacramento", name: "Sacramento", state: "CA", x: 130, y: 230, demand: 90, truck: 25, land: 1.15, neighbors: ["reno", "la"] },
-    { id: "reno", name: "Reno", state: "NV", x: 230, y: 175, demand: 55, truck: 30, land: 0.9, neighbors: ["sacramento", "vegas", "slc"] },
+    { id: "sacramento", name: "Sacramento", state: "CA", x: 235, y: 225, demand: 90, truck: 25, land: 1.15, neighbors: ["reno", "la"] },
+    { id: "reno", name: "Reno", state: "NV", x: 285, y: 175, demand: 55, truck: 30, land: 0.9, neighbors: ["sacramento", "vegas", "slc"] },
     { id: "slc", name: "Salt Lake City", state: "UT", x: 400, y: 130, demand: 95, truck: 40, land: 1.05, neighbors: ["reno", "stgeorge", "grandjunction", "denver"] },
     { id: "grandjunction", name: "Grand Junction", state: "CO", x: 520, y: 210, demand: 40, truck: 35, land: 0.82, neighbors: ["denver", "flagstaff", "santafe", "slc"] },
     { id: "denver", name: "Denver", state: "CO", x: 640, y: 155, demand: 120, truck: 35, land: 1.2, neighbors: ["santafe", "grandjunction", "slc"] },
-    { id: "la", name: "Los Angeles", state: "CA", x: 155, y: 430, demand: 210, truck: 55, land: 1.7, neighbors: ["vegas", "sandiego", "sacramento"] },
+    { id: "la", name: "Los Angeles", state: "CA", x: 225, y: 455, demand: 210, truck: 55, land: 1.7, neighbors: ["vegas", "sandiego", "sacramento"] },
     { id: "vegas", name: "Las Vegas", state: "NV", x: 300, y: 330, demand: 140, truck: 50, land: 1.35, neighbors: ["phoenix", "la", "stgeorge", "reno"] },
     { id: "stgeorge", name: "St. George", state: "UT", x: 360, y: 285, demand: 45, truck: 28, land: 0.85, neighbors: ["vegas", "flagstaff", "slc"] },
     { id: "flagstaff", name: "Flagstaff", state: "AZ", x: 400, y: 370, demand: 50, truck: 22, land: 0.88, neighbors: ["phoenix", "stgeorge", "grandjunction"] },
     { id: "phoenix", name: "Phoenix", state: "AZ", x: 420, y: 455, demand: 150, truck: 45, land: 1.0, neighbors: ["tucson", "flagstaff", "vegas", "albuquerque"] },
-    { id: "sandiego", name: "San Diego", state: "CA", x: 175, y: 535, demand: 130, truck: 30, land: 1.4, neighbors: ["la", "tucson"] },
+    { id: "sandiego", name: "San Diego", state: "CA", x: 245, y: 555, demand: 130, truck: 30, land: 1.4, neighbors: ["la", "tucson"] },
     { id: "tucson", name: "Tucson", state: "AZ", x: 455, y: 545, demand: 80, truck: 30, land: 0.92, neighbors: ["phoenix", "elpaso", "sandiego"] },
     { id: "santafe", name: "Santa Fe", state: "NM", x: 600, y: 330, demand: 48, truck: 18, land: 0.95, neighbors: ["albuquerque", "denver", "grandjunction"] },
     { id: "albuquerque", name: "Albuquerque", state: "NM", x: 580, y: 420, demand: 85, truck: 40, land: 0.98, neighbors: ["phoenix", "santafe", "elpaso", "dallas"] },
@@ -189,6 +189,11 @@
   let selected = "phoenix";
   let timer = null;
   let lastNet = 0;
+  let mapCam = { scale: 1, x: 0, y: 0 };
+  let interconnectCam = { scale: 1, x: 0, y: 0 };
+  let siteView = null;
+  let mapDrag = null;
+  let lastPan = false;
 
   function emptySite() {
     return { dc: 0, mcs: 0, bess: 0, lounge: 0, market: 0 };
@@ -672,6 +677,7 @@
     hydrate(raw);
     log("Campaign loaded.", "good");
     showBoard();
+    bindMapControls();
     renderAll();
   }
 
@@ -683,6 +689,7 @@
     lastNet = 0;
     setSpeed(1);
     showBoard();
+    bindMapControls();
     renderAll();
   }
 
@@ -1203,13 +1210,14 @@
       const occ = occupantClass(city);
       const raising = jobsFor(meta.id).length > 0;
       const tier = compoundTier(youSite);
-      btn.className = `city-node ${occ} ${selected === meta.id ? "selected" : ""} ${raising ? "raising" : ""} tier-${tier}`;
+      btn.className = `city-node ${occ} ${selected === meta.id ? "selected" : ""} ${raising ? "raising" : ""} ${siteView === meta.id ? "site-focus" : ""} tier-${tier}`;
       btn.style.left = `${(meta.x / 1200) * 100}%`;
       btn.style.top = `${(meta.y / 800) * 100}%`;
       btn.title = `${meta.name}, ${meta.state}`;
-      btn.addEventListener("click", () => {
-        selected = meta.id;
-        renderAll();
+      btn.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        if (lastPan) return;
+        enterSite(meta.id);
       });
       const icon = document.createElement("div");
       icon.className = "map-icon";
@@ -1234,12 +1242,136 @@
     }
   }
 
-  function applyMapZoom() {
-    const frame = $("map-frame");
-    if (!frame) return;
-    frame.classList.remove("zoomed", "focus-city");
-    frame.style.transform = "";
-    frame.style.transformOrigin = "";
+  function applyMapCam() {
+    const cam = $("map-cam");
+    if (!cam) return;
+    cam.style.transform = `translate(${mapCam.x}px, ${mapCam.y}px) scale(${mapCam.scale})`;
+    const exitBtn = $("btn-exit-site");
+    const sheet = $("site-sheet");
+    if (exitBtn) exitBtn.classList.toggle("hidden", !siteView);
+    if (sheet) {
+      sheet.classList.toggle("hidden", !siteView);
+      if (siteView && state) {
+        const meta = CITY_BY_ID[siteView];
+        const city = state.cities[siteView];
+        const kind = mapSpriteKind(city, meta);
+        $("site-sheet-kicker").textContent = `${meta.name.toUpperCase()} // SITE`;
+        $("site-sheet-art").src = MAP_SPRITES[kind] || MAP_SPRITES.flag;
+        $("site-sheet-art").dataset.kind = kind;
+      }
+    }
+    $("map-stage")?.classList.toggle("site-open", Boolean(siteView));
+  }
+
+  function clampCam() {
+    const stage = $("map-stage");
+    if (!stage) return;
+    const sw = stage.clientWidth;
+    const sh = stage.clientHeight;
+    const s = mapCam.scale;
+    mapCam.scale = Math.min(3.4, Math.max(1, s));
+    const maxX = sw * 0.15;
+    const maxY = sh * 0.15;
+    const minX = sw - sw * mapCam.scale - maxX;
+    const minY = sh - sh * mapCam.scale - maxY;
+    if (mapCam.scale <= 1.02) {
+      mapCam.x = 0;
+      mapCam.y = 0;
+      mapCam.scale = 1;
+      return;
+    }
+    mapCam.x = Math.min(maxX, Math.max(minX, mapCam.x));
+    mapCam.y = Math.min(maxY, Math.max(minY, mapCam.y));
+  }
+
+  function zoomAt(cx, cy, nextScale) {
+    const prev = mapCam.scale;
+    mapCam.scale = nextScale;
+    clampCam();
+    const k = mapCam.scale / prev;
+    mapCam.x = cx - (cx - mapCam.x) * k;
+    mapCam.y = cy - (cy - mapCam.y) * k;
+    clampCam();
+    applyMapCam();
+  }
+
+  function enterSite(id) {
+    if (!CITY_BY_ID[id] || !state) return;
+    if (!siteView) interconnectCam = { ...mapCam };
+    selected = id;
+    siteView = id;
+    const stage = $("map-stage");
+    const meta = CITY_BY_ID[id];
+    if (stage) {
+      const sw = stage.clientWidth;
+      const sh = stage.clientHeight;
+      const scale = 2.7;
+      const px = (meta.x / 1200) * sw;
+      const py = (meta.y / 800) * sh;
+      mapCam.scale = scale;
+      mapCam.x = sw / 2 - px * scale;
+      mapCam.y = sh / 2 - py * scale;
+      clampCam();
+    }
+    renderAll();
+  }
+
+  function exitSite() {
+    siteView = null;
+    mapCam = { ...interconnectCam };
+    clampCam();
+    renderAll();
+  }
+
+  function bindMapControls() {
+    const stage = $("map-stage");
+    if (!stage || stage.dataset.bound) return;
+    stage.dataset.bound = "1";
+    stage.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0) return;
+      if (e.target.closest(".map-tools") || e.target.closest(".site-sheet")) return;
+      mapDrag = { id: e.pointerId, x: e.clientX, y: e.clientY, ox: mapCam.x, oy: mapCam.y, moved: false };
+      stage.setPointerCapture(e.pointerId);
+      stage.classList.add("panning");
+    });
+    stage.addEventListener("pointermove", (e) => {
+      if (!mapDrag || mapDrag.id !== e.pointerId) return;
+      const dx = e.clientX - mapDrag.x;
+      const dy = e.clientY - mapDrag.y;
+      if (Math.abs(dx) + Math.abs(dy) > 6) mapDrag.moved = true;
+      if (!mapDrag.moved) return;
+      mapCam.x = mapDrag.ox + dx;
+      mapCam.y = mapDrag.oy + dy;
+      clampCam();
+      applyMapCam();
+    });
+    const endDrag = (e) => {
+      if (!mapDrag || mapDrag.id !== e.pointerId) return;
+      lastPan = mapDrag.moved;
+      mapDrag = null;
+      stage.classList.remove("panning");
+      if (lastPan) e.preventDefault();
+    };
+    stage.addEventListener("pointerup", endDrag);
+    stage.addEventListener("pointercancel", endDrag);
+    stage.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const rect = stage.getBoundingClientRect();
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+      const next = mapCam.scale * (e.deltaY < 0 ? 1.12 : 1 / 1.12);
+      zoomAt(cx, cy, next);
+    }, { passive: false });
+    $("btn-zoom-in")?.addEventListener("click", () => {
+      const r = stage.getBoundingClientRect();
+      zoomAt(r.width / 2, r.height / 2, mapCam.scale * 1.2);
+    });
+    $("btn-zoom-out")?.addEventListener("click", () => {
+      const r = stage.getBoundingClientRect();
+      zoomAt(r.width / 2, r.height / 2, mapCam.scale / 1.2);
+    });
+    $("btn-exit-site")?.addEventListener("click", exitSite);
+    $("btn-exit-site-sheet")?.addEventListener("click", exitSite);
   }
 
   function renderInspector() {
@@ -1340,7 +1472,7 @@
     renderInspector();
     renderTray();
     renderTicker();
-    applyMapZoom();
+    applyMapCam();
   }
 
   function hasSave() {
@@ -1383,6 +1515,7 @@
     $("btn-enter").addEventListener("click", () => {
       if (!state) state = freshState();
       showBoard();
+      bindMapControls();
       renderAll();
     });
     $("btn-save").addEventListener("click", saveManual);
@@ -1411,6 +1544,10 @@
       if (e.key === "2") setSpeed(2);
       if (e.key === "4") setSpeed(4);
       if (e.key === "Escape") {
+        if (siteView) {
+          exitSite();
+          return;
+        }
         hideModal();
         $("deal-sheet").classList.add("hidden");
       }
@@ -1424,6 +1561,7 @@
       const pick = params.get("select");
       if (pick && CITY_BY_ID[pick]) selected = pick;
       showBoard();
+      bindMapControls();
       setSpeed(0);
       renderAll();
     }

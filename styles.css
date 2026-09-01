@@ -1,4 +1,4 @@
-/* empire-build: branded-compounds-7 */
+/* empire-build: branded-compounds-8 */
 :root {
   --red: #e63225;
   --charcoal: #1e1e24;
@@ -288,10 +288,20 @@ button {
 .map-stage {
   position: relative;
   min-height: 0;
-  display: grid;
-  place-items: center;
-  padding: 0.5rem 0.75rem;
-  overflow: visible;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+}
+
+.map-stage.panning {
+  cursor: grabbing;
+}
+
+.map-cam {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+  will-change: transform;
 }
 
 .map-frame {
@@ -328,7 +338,9 @@ button {
 .city-node {
   pointer-events: auto;
   position: absolute;
-  transform: translate(-50%, -42%);
+  width: 22px;
+  height: 22px;
+  transform: translate(-50%, -50%);
   background: none;
   border: 0;
   outline: none;
@@ -340,29 +352,34 @@ button {
 }
 
 .city-node.selected {
-  z-index: 4;
+  z-index: 5;
 }
 
 .map-icon {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
   display: block;
-  width: 104px;
+  width: 58px;
   height: auto;
-  margin: 0 auto;
+  margin: 0;
   background: none;
   overflow: visible;
   pointer-events: none;
 }
 
 .city-node.dirt .map-icon {
-  width: 84px;
+  width: 48px;
 }
 
 .city-node.zaps .map-icon {
-  width: 112px;
+  width: 64px;
 }
 
-.city-node.selected .map-icon {
-  width: 120px;
+.city-node.selected .map-icon,
+.city-node.site-focus .map-icon {
+  width: 78px;
   filter: drop-shadow(0 0 8px rgba(0, 212, 245, 0.55));
 }
 
@@ -384,8 +401,12 @@ button {
 }
 
 .city-label {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
   display: block;
-  margin-top: 1px;
+  margin-top: 2px;
   white-space: nowrap;
   font-family: "Share Tech Mono", monospace;
   font-size: 0.62rem;
@@ -395,6 +416,65 @@ button {
   pointer-events: none;
   text-align: center;
   font-weight: 600;
+}
+
+.map-tools {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.map-tools button {
+  min-width: 40px;
+  background: #2c2c34;
+  color: var(--cream);
+  border: 1px solid var(--line);
+  padding: 0.35rem 0.5rem;
+  font-family: Anton, sans-serif;
+  letter-spacing: 0.06em;
+}
+
+#btn-exit-site {
+  color: var(--amber);
+  border-color: var(--amber);
+}
+
+.site-sheet {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 8;
+  width: min(280px, 42%);
+  background: rgba(18, 18, 23, 0.92);
+  border: 1px solid var(--line);
+  padding: 0.65rem 0.75rem 0.75rem;
+}
+
+.site-sheet .kicker {
+  margin: 0 0 0.4rem;
+}
+
+.site-sheet-art {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: auto;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.site-sheet button {
+  margin-top: 0.55rem;
+  width: 100%;
+  background: var(--red);
+  color: var(--cream);
+  border: 0;
+  padding: 0.5rem 0.7rem;
+  font-family: Anton, sans-serif;
+  letter-spacing: 0.1em;
 }
 
 .city-node.selected .city-label {

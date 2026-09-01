@@ -15,8 +15,8 @@
       href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Share+Tech+Mono&display=swap"
       rel="stylesheet"
     />
-    <meta name="empire-build" content="branded-compounds-7" />
-    <link rel="stylesheet" href="styles.css?v=branded-compounds-7" />
+    <meta name="empire-build" content="branded-compounds-8" />
+    <link rel="stylesheet" href="styles.css?v=branded-compounds-8" />
   </head>
   <body>
     <section id="title-screen" class="screen" data-screen="title">
@@ -121,10 +121,22 @@
       <div class="board-body">
         <div class="map-wrap">
           <div class="map-stage" id="map-stage">
-            <div class="map-frame" id="map-frame">
-              <img class="map-art map-paint" src="assets/map.svg?v=branded-compounds-7" alt="Southwest charging continent" />
-              <svg class="corridor-layer" id="corridor-layer" viewBox="0 0 1200 800" overflow="visible" aria-hidden="true"></svg>
-              <div id="city-layer" class="city-layer"></div>
+            <div class="map-cam" id="map-cam">
+              <div class="map-frame" id="map-frame">
+                <img class="map-art map-paint" src="assets/map.svg?v=branded-compounds-8" alt="Southwest charging continent" />
+                <svg class="corridor-layer" id="corridor-layer" viewBox="0 0 1200 800" overflow="visible" aria-hidden="true"></svg>
+                <div id="city-layer" class="city-layer"></div>
+              </div>
+            </div>
+            <div class="map-tools" id="map-tools">
+              <button type="button" id="btn-zoom-in" title="Zoom in">+</button>
+              <button type="button" id="btn-zoom-out" title="Zoom out">−</button>
+              <button type="button" id="btn-exit-site" class="hidden">EXIT</button>
+            </div>
+            <div id="site-sheet" class="site-sheet hidden">
+              <p class="kicker" id="site-sheet-kicker">SITE</p>
+              <img id="site-sheet-art" class="site-sheet-art" alt="" draggable="false" />
+              <button type="button" id="btn-exit-site-sheet">EXIT</button>
             </div>
           </div>
           <aside class="ticker" id="ticker" aria-live="polite"></aside>
@@ -161,6 +173,6 @@
       <div class="modal-card" id="modal-card"></div>
     </div>
 
-    <script src="game.js?v=branded-compounds-7"></script>
+    <script src="game.js?v=branded-compounds-8"></script>
   </body>
 </html>
