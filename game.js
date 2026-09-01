@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: branded-compounds-8 */
+/* empire-build: branded-compounds-9 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -1268,18 +1268,13 @@
     if (!stage) return;
     const sw = stage.clientWidth;
     const sh = stage.clientHeight;
-    const s = mapCam.scale;
-    mapCam.scale = Math.min(3.4, Math.max(1, s));
-    const maxX = sw * 0.15;
-    const maxY = sh * 0.15;
-    const minX = sw - sw * mapCam.scale - maxX;
-    const minY = sh - sh * mapCam.scale - maxY;
-    if (mapCam.scale <= 1.02) {
-      mapCam.x = 0;
-      mapCam.y = 0;
-      mapCam.scale = 1;
-      return;
-    }
+    mapCam.scale = Math.min(3.4, Math.max(1, mapCam.scale));
+    const slackX = sw * 0.45;
+    const slackY = sh * 0.45;
+    const minX = sw - sw * mapCam.scale - slackX;
+    const maxX = slackX;
+    const minY = sh - sh * mapCam.scale - slackY;
+    const maxY = slackY;
     mapCam.x = Math.min(maxX, Math.max(minX, mapCam.x));
     mapCam.y = Math.min(maxY, Math.max(minY, mapCam.y));
   }
