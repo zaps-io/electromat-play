@@ -1314,6 +1314,8 @@
     $("site-overlay-type").textContent = SITE_TYPE_NAME[kind] || "SITE";
     const stack = $("site-stack");
     if (!stack) return;
+    const aspects = { flag: "256 / 232", dirt: "256 / 177", voltspan: "255 / 224", rival: "256 / 203" };
+    stack.style.aspectRatio = aspects[baseKind] || "256 / 177";
     const base = MAP_SPRITES[baseKind] || MAP_SPRITES.dirt;
     let html = `<img class="site-base" src="${base}?v=${KIT_V}" alt="" draggable="false" data-kind="${baseKind}">`;
     if (kind !== "voltspan" && kind !== "rival") {
