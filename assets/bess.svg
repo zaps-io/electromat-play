@@ -4,6 +4,7 @@
   <path d="M26 50 L36 42 L36 26 L26 34 Z" fill="#b4aea2" stroke="#00D4F5" stroke-width="0.6"/>
   <path d="M10 34 L26 34 L36 26 L20 26 Z" fill="#F5F0E8" stroke="#00D4F5" stroke-width="0.7"/>
   <rect x="13" y="37" width="10" height="2" fill="#00D4F5"/>
+  <rect x="15" y="31.2" width="3.2" height="1.6" fill="#E63225"/>
   <path d="M30 46 L48 46 L48 28 L30 28 Z" fill="#d4cec2" stroke="#00D4F5" stroke-width="0.6"/>
   <path d="M48 46 L58 38 L58 20 L48 28 Z" fill="#b4aea2" stroke="#00D4F5" stroke-width="0.6"/>
   <path d="M30 28 L48 28 L58 20 L40 20 Z" fill="#F5F0E8" stroke="#00D4F5" stroke-width="0.7"/>

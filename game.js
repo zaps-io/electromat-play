@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: branded-compounds-10 */
+/* empire-build: rts-match-1 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -20,16 +20,18 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
+  const SPRITE_V = "rts-match-1";
   const MAP_SPRITES = {
-    flag: "assets/sprites/survey-flag.png",
-    dirt: "assets/sprites/dirt-pad.png",
-    vegas: "assets/sprites/vegas.png",
-    tucson: "assets/sprites/tucson.png",
-    hq: "assets/sprites/phoenix-hq.png",
-    voltspan: "assets/sprites/voltspan.png",
-    rival: "assets/sprites/rival-depot.png",
+    flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
+    dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
+    vegas: `assets/sprites/vegas.png?v=${SPRITE_V}`,
+    tucson: `assets/sprites/tucson.png?v=${SPRITE_V}`,
+    plaza: `assets/sprites/plaza.png?v=${SPRITE_V}`,
+    hq: `assets/sprites/phoenix-hq.png?v=${SPRITE_V}`,
+    voltspan: `assets/sprites/voltspan.png?v=${SPRITE_V}`,
+    rival: `assets/sprites/rival-depot.png?v=${SPRITE_V}`,
   };
-  const KIT_V = "branded-compounds-10";
+  const KIT_V = "rts-match-1";
   const KIT_SPRITES = {
     dc: `assets/sprites/kit-dc.png?v=${KIT_V}`,
     mcs: `assets/sprites/kit-mcs.png?v=${KIT_V}`,
@@ -56,6 +58,7 @@
     hq: "PHOENIX HQ",
     tucson: "TUCSON YARD",
     vegas: "VEGAS STALL",
+    plaza: "ZAPS PLAZA",
     dirt: "DIRT PAD",
     flag: "SURVEY FLAG",
     voltspan: "VOLTSPAN",
@@ -793,7 +796,7 @@
 
   function occupantClass(city) {
     const kind = mapSpriteKind(city, CITY_BY_ID[city.id]);
-    if (kind === "hq" || kind === "tucson" || kind === "vegas") {
+    if (kind === "hq" || kind === "tucson" || kind === "vegas" || kind === "plaza") {
       const them = activeRivals().some((r) => hasCap(city.sites[r.id]));
       return them ? "contested zaps" : "zaps";
     }
@@ -803,7 +806,7 @@
 
   function inspectorPhase(kind) {
     if (kind === "hq") return "ZAPS HQ";
-    if (kind === "tucson" || kind === "vegas") return "ZAPS YARD";
+    if (kind === "tucson" || kind === "vegas" || kind === "plaza") return "ZAPS YARD";
     if (kind === "voltspan") return "VOLTSPAN COMPOUND";
     if (kind === "rival") return "RIVAL DEPOT";
     if (kind === "dirt") return "RAISING";
@@ -814,7 +817,7 @@
     const you = city.sites[YOU];
     const neighbors = meta.neighbors.map((id) => CITY_BY_ID[id].name).join(", ");
     const land = meta.land.toFixed(2);
-    if (kind === "hq" || kind === "tucson" || kind === "vegas") {
+    if (kind === "hq" || kind === "tucson" || kind === "vegas" || kind === "plaza") {
       return `Your price ${city.price[YOU].toFixed(2)}/kWh. Share ${Math.round((city.share[YOU] || 0) * 100)}%. Grid ${you.bess ? "STABLE" : "STRAINED"}. Crews ${crewsBusy()}/${MAX_CREWS}.`;
     }
     if (kind === "voltspan") {
@@ -951,6 +954,7 @@
     g += `<rect x="${p.flT[0] + 0.8 * s}" y="${p.flT[1] + 2.2 * s}" width="${faceW}" height="${faceH}" fill="#2a2a32"/>`;
     const amberH = Math.max(1.1, 2.1 * s);
     g += `<rect x="${p.flT[0] + 1.1 * s}" y="${p.flT[1] + 3.1 * s}" width="${Math.max(1.2, faceW - 0.6 * s)}" height="${amberH}" fill="${PAL.amber}"/>`;
+    g += `<rect x="${p.flT[0] + 1.35 * s}" y="${p.flT[1] + 3.1 * s + amberH + 0.55 * s}" width="${Math.max(1.1, 1.85 * s)}" height="${Math.max(1.15, 1.55 * s)}" fill="${PAL.red}"/>`;
     if (labeled && s >= 0.95) {
       g += `<text x="${p.flT[0] + 1.25 * s}" y="${p.flT[1] + 4.7 * s}" fill="${PAL.charcoal}" font-size="${Math.max(2.1, 2.4 * s)}" font-family="Share Tech Mono, monospace">PLUG IN</text>`;
     }
@@ -1217,7 +1221,7 @@
       if (meta.id === "phoenix") return "hq";
       if (meta.id === "vegas") return "vegas";
       if (meta.id === "tucson") return "tucson";
-      return "dirt";
+      return "plaza";
     }
     if (voltspanLive && !otherRivalLive(city)) return "voltspan";
     if (voltspanLive || otherRivalLive(city)) return "rival";
@@ -1314,7 +1318,7 @@
     $("site-overlay-type").textContent = SITE_TYPE_NAME[kind] || "SITE";
     const stack = $("site-stack");
     if (!stack) return;
-    const aspects = { flag: "256 / 232", dirt: "256 / 177", voltspan: "255 / 224", rival: "256 / 203" };
+    const aspects = { flag: "142 / 210", dirt: "220 / 131", voltspan: "240 / 204", rival: "240 / 167" };
     stack.style.aspectRatio = aspects[baseKind] || "256 / 177";
     const base = MAP_SPRITES[baseKind] || MAP_SPRITES.dirt;
     let html = `<img class="site-base" src="${base}?v=${KIT_V}" alt="" draggable="false" data-kind="${baseKind}">`;
