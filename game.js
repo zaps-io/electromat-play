@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-match-1 */
+/* empire-build: rts-match-2 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -20,7 +20,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-match-1";
+  const SPRITE_V = "rts-match-2";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -31,7 +31,7 @@
     voltspan: `assets/sprites/voltspan.png?v=${SPRITE_V}`,
     rival: `assets/sprites/rival-depot.png?v=${SPRITE_V}`,
   };
-  const KIT_V = "rts-match-1";
+  const KIT_V = "rts-match-2";
   const KIT_SPRITES = {
     dc: `assets/sprites/kit-dc.png?v=${KIT_V}`,
     mcs: `assets/sprites/kit-mcs.png?v=${KIT_V}`,
@@ -1252,7 +1252,10 @@
       btn.title = `${meta.name}, ${meta.state}`;
       btn.addEventListener("click", (ev) => {
         ev.stopPropagation();
-        if (lastPan) return;
+        if (lastPan) {
+          lastPan = false;
+          return;
+        }
         enterSite(meta.id);
       });
       const icon = document.createElement("div");
@@ -1381,7 +1384,7 @@
     stage.dataset.bound = "1";
     stage.addEventListener("pointerdown", (e) => {
       if (e.button !== 0) return;
-      if (e.target.closest(".map-tools") || e.target.closest(".site-overlay")) return;
+      if (e.target.closest(".map-tools") || e.target.closest(".site-overlay") || e.target.closest(".city-node")) return;
       mapDrag = { id: e.pointerId, x: e.clientX, y: e.clientY, ox: mapCam.x, oy: mapCam.y, moved: false };
       stage.setPointerCapture(e.pointerId);
       stage.classList.add("panning");

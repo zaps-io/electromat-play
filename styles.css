@@ -1,4 +1,4 @@
-/* empire-build: rts-match-1 */
+/* empire-build: rts-match-2 */
 :root {
   --red: #e63225;
   --charcoal: #1e1e24;
@@ -354,9 +354,9 @@ button {
 .city-node {
   pointer-events: auto;
   position: absolute;
-  width: 22px;
-  height: 22px;
-  transform: translate(-50%, -50%);
+  width: 52px;
+  height: 56px;
+  transform: translate(-50%, -62%);
   background: none;
   border: 0;
   outline: none;
@@ -374,10 +374,10 @@ button {
 .map-icon {
   position: absolute;
   left: 50%;
-  bottom: 8px;
+  bottom: 14px;
   transform: translateX(-50%);
   display: block;
-  width: 40px;
+  width: 36px;
   height: auto;
   margin: 0;
   background: none;
@@ -386,17 +386,31 @@ button {
 }
 
 .city-node.dirt .map-icon {
-  width: 32px;
+  width: 28px;
 }
 
 .city-node.zaps .map-icon {
-  width: 48px;
+  width: 42px;
 }
 
 .city-node.selected .map-icon,
 .city-node.site-focus .map-icon {
-  width: 60px;
+  width: 52px;
   filter: drop-shadow(0 0 8px rgba(0, 212, 245, 0.55));
+}
+
+.city-node.selected::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  width: 28px;
+  height: 10px;
+  transform: translateX(-50%);
+  border: 1.5px solid var(--cyan);
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow: 0 0 8px rgba(0, 212, 245, 0.45);
 }
 
 .map-sprite {
