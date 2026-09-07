@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-yard-3 */
+/* empire-build: rts-yard-4 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -20,7 +20,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-yard-3";
+  const SPRITE_V = "rts-yard-4";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -41,7 +41,7 @@
     voltspan: "240 / 204",
     rival: "240 / 167",
   };
-  const KIT_V = "rts-yard-3";
+  const KIT_V = "rts-yard-4";
   const KIT_SPRITES = {
     dc: `assets/sprites/kit-dc.png?v=${KIT_V}`,
     mcs: `assets/sprites/kit-mcs.png?v=${KIT_V}`,
@@ -1215,7 +1215,12 @@
   }
 
   function compoundMarkup(city, meta) {
-    const kind = mapSpriteKind(city, meta || CITY_BY_ID[city.id]);
+    const resolved = meta || CITY_BY_ID[city.id];
+    const kind = mapSpriteKind(city, resolved);
+    if (playerYard(city) || kind === "dirt" || kind === "flag") {
+      const baseKind = yardBaseKind(city, resolved);
+      return `<div class="insp-yard" data-kind="${baseKind}">${yardArtHtml(city, resolved, { banner: false })}</div>`;
+    }
     const src = MAP_SPRITES[kind] || MAP_SPRITES.flag;
     return `<img class="insp-sprite" src="${src}" alt="" data-kind="${kind}" draggable="false">`;
   }
@@ -1301,6 +1306,19 @@
     return MAP_SPRITES[kind] ? kind : "dirt";
   }
 
+  // Zaps-owned or Zaps-raising cities grow kit on a dirt pad. Occupancy
+  // photos (hq / plaza / tucson / vegas) stay map stamps so the zoomed
+  // yard cannot freeze on a compound that already paints BESS / lounge.
+  function playerYard(city) {
+    const site = city.sites[YOU];
+    return hasCap(site) || jobsFor(city.id).some((j) => j.faction === YOU);
+  }
+
+  function yardBaseKind(city, meta) {
+    if (playerYard(city)) return "dirt";
+    return overlayBaseKind(mapSpriteKind(city, meta));
+  }
+
   function kitLayer(type, live, raising) {
     const slots = KIT_LAYOUT[type] || [];
     const src = KIT_SPRITES[type];
@@ -1310,9 +1328,20 @@
     for (let i = 0; i < n; i += 1) {
       const slot = slots[i];
       const ghost = raising && i >= live;
-      html += `<img class="site-kit kit-${type}${ghost ? " raising" : ""}" src="${src}" alt="" draggable="false" style="left:${slot.left};top:${slot.top};width:${slot.width};z-index:${slot.z}">`;
+      html += `<img class="site-kit kit-${type}${ghost ? " raising" : ""}" src="${src}" alt="" draggable="false" data-kit="${type}" data-slot="${i}" data-state="${ghost ? "raising" : "live"}" style="left:${slot.left};top:${slot.top};width:${slot.width};z-index:${slot.z}">`;
     }
     return html;
+  }
+
+  function kitLayersHtml(city) {
+    const site = city.sites[YOU];
+    return (
+      kitLayer("bess", site.bess, raisingType(city.id, "bess") && site.bess < 1) +
+      kitLayer("lounge", site.lounge, raisingType(city.id, "lounge") && site.lounge < 1) +
+      kitLayer("dc", site.dc, raisingType(city.id, "dc")) +
+      kitLayer("mcs", site.mcs, raisingType(city.id, "mcs")) +
+      kitLayer("market", site.market, raisingType(city.id, "market") && site.market < 1)
+    );
   }
 
   function siteRaisingBanner(cityId) {
@@ -1320,6 +1349,15 @@
     if (!mine.length) return "";
     const bits = mine.map((j) => `${BUILD[j.type].name} ${j.left} MO`);
     return `<div class="site-raising">${bits.join(" · ")}</div>`;
+  }
+
+  function yardArtHtml(city, meta, { banner = true } = {}) {
+    const baseKind = yardBaseKind(city, meta);
+    const base = MAP_SPRITES[baseKind] || MAP_SPRITES.dirt;
+    let html = `<img class="site-base" src="${base}" alt="" draggable="false" data-kind="${baseKind}">`;
+    if (baseKind === "dirt" || baseKind === "flag") html += kitLayersHtml(city);
+    if (banner) html += siteRaisingBanner(meta.id);
+    return html;
   }
 
   function renderSiteYard() {
@@ -1330,24 +1368,20 @@
     const meta = CITY_BY_ID[siteView];
     const city = state.cities[siteView];
     const kind = mapSpriteKind(city, meta);
-    const baseKind = overlayBaseKind(kind);
+    const baseKind = yardBaseKind(city, meta);
     $("site-overlay-kicker").textContent = `${meta.name.toUpperCase()} // SITE`;
     $("site-overlay-type").textContent = SITE_TYPE_NAME[kind] || "SITE";
     const stack = $("site-stack");
     if (!stack) return;
+    const site = city.sites[YOU];
     stack.style.aspectRatio = SPRITE_ASPECT[baseKind] || "256 / 177";
-    const base = MAP_SPRITES[baseKind] || MAP_SPRITES.dirt;
-    let html = `<img class="site-base" src="${base}" alt="" draggable="false" data-kind="${baseKind}">`;
-    if (baseKind === "dirt" || baseKind === "flag") {
-      const site = city.sites[YOU];
-      html += kitLayer("bess", site.bess, raisingType(city.id, "bess") && site.bess < 1);
-      html += kitLayer("lounge", site.lounge, raisingType(city.id, "lounge") && site.lounge < 1);
-      html += kitLayer("dc", site.dc, raisingType(city.id, "dc"));
-      html += kitLayer("mcs", site.mcs, raisingType(city.id, "mcs"));
-      html += kitLayer("market", site.market, raisingType(city.id, "market") && site.market < 1);
-    }
-    html += siteRaisingBanner(meta.id);
-    stack.innerHTML = html;
+    stack.dataset.kind = baseKind;
+    stack.dataset.dc = String(site.dc);
+    stack.dataset.mcs = String(site.mcs);
+    stack.dataset.bess = String(site.bess);
+    stack.dataset.lounge = String(site.lounge);
+    stack.dataset.market = String(site.market);
+    stack.innerHTML = yardArtHtml(city, meta, { banner: true });
   }
 
   function clampCam() {

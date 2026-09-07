@@ -1,4 +1,4 @@
-/* empire-build: rts-yard-3 */
+/* empire-build: rts-yard-4 */
 :root {
   --red: #e63225;
   --charcoal: #1e1e24;
@@ -668,6 +668,17 @@ button {
   max-width: 320px;
   margin: 0 auto;
   image-rendering: auto;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+}
+
+.insp-yard {
+  position: relative;
+  width: min(100%, 320px);
+  margin: 0 auto;
+  aspect-ratio: 220 / 131;
+}
+
+.insp-yard .site-base {
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
 }
 
