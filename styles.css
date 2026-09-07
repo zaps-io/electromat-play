@@ -1,4 +1,4 @@
-/* empire-build: rts-yard-6 */
+/* empire-build: rts-yard-8 */
 :root {
   --red: #e63225;
   --charcoal: #1e1e24;
@@ -306,6 +306,16 @@ button {
   background: #0b2436;
 }
 
+.map-wrap:has(.site-overlay:not(.hidden)) {
+  grid-template-rows: 1fr 0;
+}
+
+.map-wrap:has(.site-overlay:not(.hidden)) .ticker {
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+}
+
 .map-stage {
   position: relative;
   min-height: 0;
@@ -493,7 +503,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.7rem 1rem 0.65rem;
+  padding: 0.5rem 1rem 0.45rem;
   border-bottom: 1px solid var(--line);
   background: rgba(18, 18, 23, 0.72);
 }
@@ -537,6 +547,7 @@ button {
   flex: 1;
   position: relative;
   min-height: 0;
+  container-type: size;
 }
 
 .site-stack {
@@ -544,7 +555,9 @@ button {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: min(88%, 820px);
+  /* Goldilocks: full pad + sand margin (~76% of yard), not postage or canopy crop. */
+  width: min(76cqi, 800px);
+  max-width: min(76cqi, 800px);
   aspect-ratio: 256 / 200;
   overflow: visible;
 }
@@ -661,7 +674,8 @@ button {
 .site-raising {
   position: absolute;
   left: 50%;
-  bottom: 4%;
+  bottom: auto;
+  top: calc(100% + 0.45rem);
   transform: translateX(-50%);
   z-index: 12;
   padding: 0.28rem 0.7rem;
@@ -675,7 +689,7 @@ button {
 
 .site-overlay-note {
   margin: 0;
-  padding: 0.45rem 1rem 0.6rem;
+  padding: 0.32rem 1rem 0.4rem;
   font-family: "Share Tech Mono", monospace;
   font-size: 0.68rem;
   letter-spacing: 0.06em;
