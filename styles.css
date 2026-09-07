@@ -1,4 +1,4 @@
-/* empire-build: rts-yard-5 */
+/* empire-build: rts-yard-6 */
 :root {
   --red: #e63225;
   --charcoal: #1e1e24;
@@ -572,6 +572,90 @@ button {
 .site-kit.raising {
   opacity: 0.55;
   filter: drop-shadow(0 0 10px rgba(0, 212, 245, 0.55));
+}
+
+.site-overlay-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.insp-compound svg.site-overlay-svg,
+.insp-yard svg.site-overlay-svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.site-plaza {
+  z-index: 1;
+}
+
+.site-posts {
+  z-index: 3;
+}
+
+.site-roof {
+  z-index: 8;
+}
+
+.site-curb {
+  fill: #d2b07a;
+  stroke: #8a6a3c;
+  stroke-width: 0.4;
+}
+
+.site-plaza-lift {
+  fill: #2a2a32;
+  stroke: #1a1a20;
+  stroke-width: 0.25;
+}
+
+.site-asphalt {
+  fill: #4a4a52;
+  stroke: #00d4f5;
+  stroke-width: 0.42;
+}
+
+.site-stall {
+  fill: rgba(18, 18, 22, 0.28);
+  stroke: rgba(0, 212, 245, 0.32);
+  stroke-width: 0.22;
+}
+
+.site-stall.mcs {
+  stroke: rgba(230, 50, 37, 0.4);
+}
+
+.site-post {
+  fill: #d8dbdf;
+  stroke: #8a9096;
+  stroke-width: 0.16;
+}
+
+.site-post-band {
+  fill: #e63225;
+}
+
+.site-roof-lip {
+  fill: #c8c2b6;
+  stroke: #8a8478;
+  stroke-width: 0.2;
+}
+
+.site-roof-deck {
+  fill: #f5f0e8;
+  stroke: #00d4f5;
+  stroke-width: 0.5;
+}
+
+.site-overlay-svg.raising {
+  opacity: 0.55;
 }
 
 .site-raising {

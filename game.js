@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-yard-5 */
+/* empire-build: rts-yard-6 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -20,7 +20,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-yard-5";
+  const SPRITE_V = "rts-yard-6";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -41,7 +41,7 @@
     voltspan: "240 / 204",
     rival: "240 / 167",
   };
-  const KIT_V = "rts-yard-5";
+  const KIT_V = "rts-yard-6";
   const KIT_SPRITES = {
     dc: `assets/sprites/kit-dc.png?v=${KIT_V}`,
     mcs: `assets/sprites/kit-mcs.png?v=${KIT_V}`,
@@ -64,20 +64,20 @@
    *   [MCS bay]     [MARKET]
    *   FRONT
    *
-   * Unique silhouettes: tall DC pedestals on a charger street, wide
+   * Unique silhouettes: tall DC pedestals under one cream canopy,
    * MCS stall at the west end, lounge pavilion east, cabinet bank
-   * behind, market kiosk front-east. Plaza slab grows with the compound.
+   * behind, market kiosk front-east. Asphalt island + curb under the kit.
    */
   const PAD = {
-    neoX: 7.9,
-    neoY: -7.05,
-    dc0: { x: 36.2, y: 57.6 },
-    dcW: 8.55,
-    mcs0: { x: 21.4, y: 70.4 },
-    mcsW: 23.2,
-    lounge: { x: 60.2, y: 48.8, w: 24.6 },
-    bess: { x: 53.4, y: 32.8, w: 19.0 },
-    market: { x: 69.6, y: 64.8, w: 16.0 },
+    neoX: 6.85,
+    neoY: -6.15,
+    dc0: { x: 34.8, y: 56.4 },
+    dcW: 6.7,
+    mcs0: { x: 20.2, y: 68.6 },
+    mcsW: 21.4,
+    lounge: { x: 54.8, y: 48.6, w: 22.4 },
+    bess: { x: 49.2, y: 34.2, w: 17.2 },
+    market: { x: 61.6, y: 63.2, w: 14.6 },
   };
 
   function padSlot(x, y, w, z, ox, oy) {
@@ -1378,6 +1378,98 @@
     };
   }
 
+  function isoPadQuad(x, y, ne, se) {
+    const neX = ne;
+    const neY = -ne * 0.97;
+    const seX = se;
+    const seY = se * 1.01;
+    return [
+      [x, y],
+      [x + seX, y + seY],
+      [x + seX + neX, y + seY + neY],
+      [x + neX, y + neY],
+    ];
+  }
+
+  function svgPts(pts) {
+    return pts.map((p) => p.map((n) => n.toFixed(2)).join(",")).join(" ");
+  }
+
+  function overlaySvg(cls, inner, extra = "") {
+    return (
+      `<svg class="site-overlay-svg ${cls}" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"${extra}>` +
+      inner +
+      `</svg>`
+    );
+  }
+
+  function plazaIslandHtml(occ) {
+    const any = occ.dc + occ.mcs + occ.bess + occ.lounge + occ.market;
+    if (!any) return "";
+    const civic = occ.lounge || occ.bess || occ.market;
+    const west = occ.mcs ? 8.6 : civic ? 13.4 : 24.4;
+    const south = occ.mcs || occ.market ? 76.4 : civic ? 70.8 : 64.4;
+    let ne = occ.dc ? 12 + occ.dc * 7.6 : 16;
+    if (civic) ne = Math.max(ne, 52);
+    if (occ.mcs && civic) ne = 60;
+    else if (occ.mcs) ne = Math.max(ne, 36);
+    const se = civic ? 18.2 : occ.mcs ? 14.4 : 11.4;
+    const lift = isoPadQuad(west - 0.8, south + 1.1, ne + 1.6, se + 1.2);
+    const curb = isoPadQuad(west - 2.4, south + 2.0, ne + 4.8, se + 2.8);
+    const deck = isoPadQuad(west, south, ne, se);
+    let marks = "";
+    for (let i = 0; i < occ.dc; i += 1) {
+      const x = PAD.dc0.x + PAD.neoX * i - 1.7;
+      const y = PAD.dc0.y + PAD.neoY * i + 1.4;
+      marks += `<polygon class="site-stall" points="${svgPts(isoPadQuad(x, y, 3.2, 5.4))}" />`;
+    }
+    if (occ.mcs) {
+      marks += `<polygon class="site-stall mcs" points="${svgPts(isoPadQuad(PAD.mcs0.x - 3.6, PAD.mcs0.y + 1.2, 10.8, 6.2))}" />`;
+    }
+    const ghost = any > 0 && !(occ.live.dc || occ.live.mcs || occ.live.bess || occ.live.lounge || occ.live.market);
+    return overlaySvg(
+      `site-plaza${ghost ? " raising" : ""}`,
+      `<polygon class="site-curb" points="${svgPts(curb)}" />` +
+        `<polygon class="site-plaza-lift" points="${svgPts(lift)}" />` +
+        `<polygon class="site-asphalt" points="${svgPts(deck)}" />` +
+        marks
+    );
+  }
+
+  function chargerPostsHtml(occ) {
+    const n = occ.dc;
+    if (n < 1) return "";
+    const ghost = occ.raising.dc && occ.live.dc < 1;
+    const posts = n >= 3 ? [-0.08, 0.3, 0.7, 1.08] : n === 2 ? [-0.12, 1.12] : [-0.18, 1.18];
+    const lift = 17.6;
+    let g = "";
+    posts.forEach((t) => {
+      const gx = PAD.dc0.x + PAD.neoX * t * Math.max(0, n - 1) - 1.05;
+      const gy = PAD.dc0.y + PAD.neoY * t * Math.max(0, n - 1) + 0.35;
+      const top = gy - lift;
+      g += `<rect class="site-post" x="${(gx - 0.7).toFixed(2)}" y="${top.toFixed(2)}" width="1.4" height="${lift.toFixed(2)}" />`;
+      g += `<rect class="site-post-band" x="${(gx - 0.78).toFixed(2)}" y="${(top + lift * 0.16).toFixed(2)}" width="1.56" height="1.15" />`;
+    });
+    return overlaySvg(`site-posts${ghost ? " raising" : ""}`, g);
+  }
+
+  function chargerRoofHtml(occ) {
+    const n = occ.dc;
+    if (n < 1) return "";
+    const ghost = occ.raising.dc && occ.live.dc < 1;
+    const x = PAD.dc0.x - 3.8;
+    const y = PAD.dc0.y - 24.2;
+    const ne = 7.4 + Math.max(0, n - 1) * PAD.neoX;
+    const se = 7.2;
+    const thick = 1.45;
+    const top = isoPadQuad(x, y, ne, se);
+    const bot = top.map((p) => [p[0] + 0.28, p[1] + thick]);
+    const inner =
+      `<polygon class="site-roof-lip" points="${svgPts(bot)}" />` +
+      `<polygon class="site-roof-deck" points="${svgPts(top)}" />`;
+    return overlaySvg(`site-roof${ghost ? " raising" : ""}`, inner, ` data-stalls="${n}"`);
+  }
+
   function kitLayer(type, live, raising) {
     const slots = KIT_LAYOUT[type] || [];
     const src = KIT_SPRITES[type];
@@ -1396,9 +1488,12 @@
     const occ = kitOccupancy(city);
     const site = occ.live;
     return (
+      plazaIslandHtml(occ) +
+      chargerPostsHtml(occ) +
       kitLayer("bess", site.bess, occ.raising.bess) +
       kitLayer("lounge", site.lounge, occ.raising.lounge) +
       kitLayer("dc", site.dc, occ.raising.dc) +
+      chargerRoofHtml(occ) +
       kitLayer("mcs", site.mcs, occ.raising.mcs) +
       kitLayer("market", site.market, occ.raising.market)
     );
