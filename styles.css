@@ -1,4 +1,4 @@
-/* empire-build: rts-yard-7 */
+/* empire-build: rts-yard-8 */
 :root {
   --red: #e63225;
   --charcoal: #1e1e24;
@@ -545,9 +545,9 @@ button {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  /* AoE compound scale: full lot diamond + void, not a canopy close-up. */
-  width: min(46cqi, 460px);
-  max-width: min(46cqi, 460px);
+  /* Goldilocks: full pad + sand margin (~76% of yard), not postage or canopy crop. */
+  width: min(76cqi, 800px);
+  max-width: min(76cqi, 800px);
   aspect-ratio: 256 / 200;
   overflow: visible;
 }

@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-yard-7 */
+/* empire-build: rts-yard-8 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -20,7 +20,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-yard-7";
+  const SPRITE_V = "rts-yard-8";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -41,7 +41,7 @@
     voltspan: "240 / 204",
     rival: "240 / 167",
   };
-  const KIT_V = "rts-yard-7";
+  const KIT_V = "rts-yard-8";
   const KIT_SPRITES = {
     dc: `assets/sprites/kit-dc.png?v=${KIT_V}`,
     mcs: `assets/sprites/kit-mcs.png?v=${KIT_V}`,
@@ -1522,8 +1522,8 @@
     return { aw, ah, css: `${aw} / ${ah}` };
   }
 
-  // Letterbox the lot diamond inside the overlay so the yard reads as an
-  // AoE compound, not a cropped product shot of one canopy.
+  // Goldilocks yard frame: full pad + a bit of sand (~76% of the yard
+  // box). Not the old 88%/820 canopy crop, not the 46%/460 postage stamp.
   function frameSiteStack(stack, aspectStr) {
     const { aw, ah, css } = parseAspect(aspectStr);
     stack.style.aspectRatio = css;
@@ -1533,8 +1533,8 @@
     const boxH = yard.clientHeight;
     if (boxW < 40 || boxH < 40) return;
     const ratio = aw / ah;
-    const maxW = Math.min(boxW * 0.46, 460);
-    const maxH = Math.min(boxH * 0.5, 290);
+    const maxW = Math.min(boxW * 0.76, 800);
+    const maxH = Math.min(boxH * 0.88, 500);
     let w = maxW;
     let h = w / ratio;
     if (h > maxH) {

@@ -1,16 +1,14 @@
-# Empire graphics review — rts-yard-7
+# Empire graphics review — rts-yard-8
 
-Stills: `board.png` · `yard-phoenix-start.png` · `yard-dc.png` · `yard-lounge-bess.png` · `yard-mcs-market.png`
+Stills: `yard-phoenix-start.png` · `yard-dc.png` · `yard-lounge-bess.png` · `yard-mcs-market.png`
 
-Replay: `?showcase=1` · `?shot=start` · `?shot=dc` · `?shot=lounge-bess` · `?shot=mcs-market`.
+Replay: `?shot=start` · `?shot=dc` · `?shot=lounge-bess` · `?shot=mcs-market`.
 
 ## Framing
 
-Site overlay **letterboxes the lot diamond** so the yard reads as an AoE compound, not a cropped canopy close-up.
+Goldilocks yard scale: **full pad + a bit of sand margin**, about **76% of the yard box** (cap 800×500). Not the pass-#17 canopy close-up (`88%` / `820px`) and not the PR-#18 postage stamp (`46%` / `460px`).
 
-- Overlay stack is contained to ~46% of the yard width (cap 460px) and ~50% of yard height (cap 290px).
-- Plaza island, shared DC canopy, grow-on-deploy, inventory sync, EXIT, pan, and wordmarks are unchanged.
-- Western Interconnect default camera stays at scale 1 (whole southwest visible).
+Kit should read as an RTS town center — readable silhouettes, intentional density. Plaza island, shared DC canopy, grow-on-deploy, inventory sync, EXIT, pan, and wordmarks are unchanged. Western Interconnect default camera stays at scale 1.
 
 ## Yard rule
 
@@ -41,9 +39,9 @@ Unbuilt dirt stays a survey flag.
 
 | Bar | Grade | Evidence |
 |---|---|---|
-| Yard framing | **REVIEW** | Overlay stack no longer fills the viewport. Lot diamond + void should read as an RTS base. Hold merge until Victor signs the stills. |
-| Yard is a planned compound | **HOLD** | Plaza + shared DC canopy + fixed slots from pass #17. Overlay and inspector share `yardArtHtml`. |
-| Brand | **HOLD** | Official cream/red wordmarks (`viewBox 0 0 932 310`, 1823-byte files). Palette unchanged. |
-| Map | **HOLD** | Default zoom 1. Pan / zoom / click-in / EXIT / Escape. Occupancy stamps unchanged. |
+| Yard framing | **REVIEW** | Stack at ~76% of yard (cap 800). Hold merge until Victor signs the stills. |
+| Yard is a planned compound | **HOLD** | Plaza + shared DC canopy + fixed slots from pass #17. |
+| Brand | **HOLD** | Official cream/red wordmarks (`viewBox 0 0 932 310`, 1823-byte files). |
+| Map | **HOLD** | Default zoom 1. Pan / zoom / click-in / EXIT / Escape. |
 
-Economy untouched. Night Shift untouched. Cache `rts-yard-7`.
+Economy untouched. Night Shift untouched. Cache `rts-yard-8`.
