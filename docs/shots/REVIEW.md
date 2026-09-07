@@ -2,7 +2,7 @@
 
 Stills: `title.png` · `board.png` · `compound.png` · `rival-depot.png`
 
-Play: `?showcase=1`, `?showcase=1&site=phoenix`, `?showcase=1&site=la`. Merge SHA goes on this line when main updates.
+Branch tip `0a3c5ce3a6973156f186707c0a9fc89a175da580`. Play: `?showcase=1`, `?showcase=1&site=phoenix`, `?showcase=1&site=la`.
 
 ## Verdict: yard click now matches occupancy
 
