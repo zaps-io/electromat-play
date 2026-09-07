@@ -1,4 +1,4 @@
-/* empire-build: rts-yard-6 */
+/* empire-build: rts-yard-7 */
 :root {
   --red: #e63225;
   --charcoal: #1e1e24;
@@ -537,6 +537,7 @@ button {
   flex: 1;
   position: relative;
   min-height: 0;
+  container-type: size;
 }
 
 .site-stack {
@@ -544,7 +545,9 @@ button {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: min(88%, 820px);
+  /* AoE compound scale: full lot diamond + void, not a canopy close-up. */
+  width: min(46cqi, 460px);
+  max-width: min(46cqi, 460px);
   aspect-ratio: 256 / 200;
   overflow: visible;
 }
@@ -661,7 +664,8 @@ button {
 .site-raising {
   position: absolute;
   left: 50%;
-  bottom: 4%;
+  bottom: auto;
+  top: calc(100% + 0.45rem);
   transform: translateX(-50%);
   z-index: 12;
   padding: 0.28rem 0.7rem;

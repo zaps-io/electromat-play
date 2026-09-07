@@ -1,16 +1,22 @@
-# Empire graphics review — rts-yard-6
+# Empire graphics review — rts-yard-7
 
-Stills: `yard-pad.png` · `yard-dc.png` · `yard-lounge-bess.png` · `yard-mcs-market.png` · `yard-phoenix-start.png` · `yard-raising.png`
+Stills: `board.png` · `yard-phoenix-start.png` · `yard-dc.png` · `yard-lounge-bess.png` · `yard-mcs-market.png`
 
-Replay: `?shot=pad` · `?shot=dc` · `?shot=lounge-bess` · `?shot=mcs-market` · `?shot=start` · `?shot=raising`.
+Replay: `?showcase=1` · `?shot=start` · `?shot=dc` · `?shot=lounge-bess` · `?shot=mcs-market`.
+
+## Framing
+
+Site overlay **letterboxes the lot diamond** so the yard reads as an AoE compound, not a cropped canopy close-up.
+
+- Overlay stack is contained to ~46% of the yard width (cap 460px) and ~50% of yard height (cap 290px).
+- Plaza island, shared DC canopy, grow-on-deploy, inventory sync, EXIT, pan, and wordmarks are unchanged.
+- Western Interconnect default camera stays at scale 1 (whole southwest visible).
 
 ## Yard rule
 
-The zoomed site overlay (and the inspector thumbnail) layers kit on a dirt diamond. Occupancy photos stay map stamps.
+The site overlay (and the inspector thumbnail) layers kit on a dirt diamond. Occupancy photos stay map stamps.
 
 Once a crew starts, an **asphalt island + tan curb** pours under the kit zone. A **shared cream canopy** (cyan edge, red-banded posts) spans the DC row. MCS keeps its own wider bay at the west end.
-
-`left`/`top` are ground anchors; CSS `--ox`/`--oy` keep a raising ghost in the final stall.
 
 ```
 BACK
@@ -35,8 +41,9 @@ Unbuilt dirt stays a survey flag.
 
 | Bar | Grade | Evidence |
 |---|---|---|
-| Yard is a planned compound | **REVIEW** | Plaza + shared DC canopy + fixed slots. Overlay and inspector share `yardArtHtml`. Ghosts do not jump. Hold merge until Victor signs the stills. |
+| Yard framing | **REVIEW** | Overlay stack no longer fills the viewport. Lot diamond + void should read as an RTS base. Hold merge until Victor signs the stills. |
+| Yard is a planned compound | **HOLD** | Plaza + shared DC canopy + fixed slots from pass #17. Overlay and inspector share `yardArtHtml`. |
 | Brand | **HOLD** | Official cream/red wordmarks (`viewBox 0 0 932 310`, 1823-byte files). Palette unchanged. |
-| Map | **HOLD** | Pan / zoom / click-in / EXIT / Escape. Occupancy stamps unchanged. |
+| Map | **HOLD** | Default zoom 1. Pan / zoom / click-in / EXIT / Escape. Occupancy stamps unchanged. |
 
-Economy untouched. Night Shift untouched. Cache `rts-yard-6`.
+Economy untouched. Night Shift untouched. Cache `rts-yard-7`.

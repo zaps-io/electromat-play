@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-yard-6 */
+/* empire-build: rts-yard-7 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -20,7 +20,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-yard-6";
+  const SPRITE_V = "rts-yard-7";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -41,7 +41,7 @@
     voltspan: "240 / 204",
     rival: "240 / 167",
   };
-  const KIT_V = "rts-yard-6";
+  const KIT_V = "rts-yard-7";
   const KIT_SPRITES = {
     dc: `assets/sprites/kit-dc.png?v=${KIT_V}`,
     mcs: `assets/sprites/kit-mcs.png?v=${KIT_V}`,
@@ -1515,6 +1515,48 @@
     return html;
   }
 
+  function parseAspect(aspectStr) {
+    const parts = String(aspectStr || "220 / 131").split("/");
+    const aw = Number(parts[0]) || 220;
+    const ah = Number(parts[1]) || 131;
+    return { aw, ah, css: `${aw} / ${ah}` };
+  }
+
+  // Letterbox the lot diamond inside the overlay so the yard reads as an
+  // AoE compound, not a cropped product shot of one canopy.
+  function frameSiteStack(stack, aspectStr) {
+    const { aw, ah, css } = parseAspect(aspectStr);
+    stack.style.aspectRatio = css;
+    const yard = $("site-yard");
+    if (!yard) return;
+    const boxW = yard.clientWidth;
+    const boxH = yard.clientHeight;
+    if (boxW < 40 || boxH < 40) return;
+    const ratio = aw / ah;
+    const maxW = Math.min(boxW * 0.46, 460);
+    const maxH = Math.min(boxH * 0.5, 290);
+    let w = maxW;
+    let h = w / ratio;
+    if (h > maxH) {
+      h = maxH;
+      w = h * ratio;
+    }
+    stack.style.width = `${Math.round(w)}px`;
+    stack.style.maxWidth = `${Math.round(w)}px`;
+  }
+
+  function bindYardFrame() {
+    const yard = $("site-yard");
+    if (!yard || yard.dataset.frameBound) return;
+    yard.dataset.frameBound = "1";
+    const ro = new ResizeObserver(() => {
+      const stack = $("site-stack");
+      if (!stack || !siteView) return;
+      frameSiteStack(stack, stack.style.aspectRatio || "220 / 131");
+    });
+    ro.observe(yard);
+  }
+
   function renderSiteYard() {
     const overlay = $("site-overlay");
     if (!overlay) return;
@@ -1529,7 +1571,9 @@
     const stack = $("site-stack");
     if (!stack) return;
     const site = city.sites[YOU];
-    stack.style.aspectRatio = SPRITE_ASPECT[baseKind] || "256 / 177";
+    const aspect = SPRITE_ASPECT[baseKind] || "220 / 131";
+    frameSiteStack(stack, aspect);
+    requestAnimationFrame(() => frameSiteStack(stack, aspect));
     stack.dataset.kind = baseKind;
     stack.dataset.layout = playerYard(city) ? "plaza" : baseKind;
     stack.dataset.dc = String(site.dc);
@@ -1631,6 +1675,7 @@
     });
     $("btn-exit-site")?.addEventListener("click", exitSite);
     $("btn-exit-site-overlay")?.addEventListener("click", exitSite);
+    bindYardFrame();
   }
 
   function renderInspector() {
