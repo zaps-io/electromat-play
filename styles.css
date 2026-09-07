@@ -1,4 +1,4 @@
-/* empire-build: rts-yard-4 */
+/* empire-build: rts-yard-5 */
 :root {
   --red: #e63225;
   --charcoal: #1e1e24;
@@ -546,6 +546,7 @@ button {
   transform: translate(-50%, -50%);
   width: min(88%, 820px);
   aspect-ratio: 256 / 200;
+  overflow: visible;
 }
 
 .site-base {
@@ -565,6 +566,7 @@ button {
   object-fit: contain;
   pointer-events: none;
   filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.5));
+  transform: translate(calc(-1 * var(--ox, 50%)), calc(-1 * var(--oy, 94%)));
 }
 
 .site-kit.raising {
@@ -676,6 +678,7 @@ button {
   width: min(100%, 320px);
   margin: 0 auto;
   aspect-ratio: 220 / 131;
+  overflow: visible;
 }
 
 .insp-yard .site-base {

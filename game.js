@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-yard-4 */
+/* empire-build: rts-yard-5 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -20,7 +20,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-yard-4";
+  const SPRITE_V = "rts-yard-5";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -41,7 +41,7 @@
     voltspan: "240 / 204",
     rival: "240 / 167",
   };
-  const KIT_V = "rts-yard-4";
+  const KIT_V = "rts-yard-5";
   const KIT_SPRITES = {
     dc: `assets/sprites/kit-dc.png?v=${KIT_V}`,
     mcs: `assets/sprites/kit-mcs.png?v=${KIT_V}`,
@@ -49,20 +49,59 @@
     lounge: `assets/sprites/kit-lounge.png?v=${KIT_V}`,
     market: `assets/sprites/kit-market.png?v=${KIT_V}`,
   };
+
+  /*
+   * Zaps plaza grid — ground anchors on the 220×131 dirt diamond.
+   * left/top are the sit-down point. CSS translates each sprite by
+   * --ox/--oy so a raising ghost occupies the final stall and does
+   * not jump when the job completes.
+   *
+   * AoE town-center read (gas-station RTS base):
+   *
+   *   BACK
+   *        [BESS bank]
+   *   DC DC DC DC   [LOUNGE]
+   *   [MCS bay]     [MARKET]
+   *   FRONT
+   *
+   * Unique silhouettes: tall DC pedestals on a charger street, wide
+   * MCS stall at the west end, lounge pavilion east, cabinet bank
+   * behind, market kiosk front-east. Plaza slab grows with the compound.
+   */
+  const PAD = {
+    neoX: 7.9,
+    neoY: -7.05,
+    dc0: { x: 36.2, y: 57.6 },
+    dcW: 8.55,
+    mcs0: { x: 21.4, y: 70.4 },
+    mcsW: 23.2,
+    lounge: { x: 60.2, y: 48.8, w: 24.6 },
+    bess: { x: 53.4, y: 32.8, w: 19.0 },
+    market: { x: 69.6, y: 64.8, w: 16.0 },
+  };
+
+  function padSlot(x, y, w, z, ox, oy) {
+    return {
+      left: `${x}%`,
+      top: `${y}%`,
+      width: `${w}%`,
+      z,
+      ox,
+      oy,
+    };
+  }
+
   const KIT_LAYOUT = {
-    dc: [
-      { left: "30%", top: "38%", width: "12%", z: 4 },
-      { left: "38%", top: "32%", width: "12%", z: 5 },
-      { left: "46%", top: "26%", width: "12%", z: 6 },
-      { left: "54%", top: "20%", width: "12%", z: 7 },
-    ],
+    dc: [0, 1, 2, 3].map((i) =>
+      padSlot(PAD.dc0.x + PAD.neoX * i, PAD.dc0.y + PAD.neoY * i, PAD.dcW, 7 - i, 50, 94)
+    ),
     mcs: [
-      { left: "14%", top: "46%", width: "26%", z: 8 },
-      { left: "26%", top: "40%", width: "26%", z: 9 },
+      padSlot(PAD.mcs0.x, PAD.mcs0.y, PAD.mcsW, 9, 58, 94),
+      padSlot(PAD.mcs0.x - PAD.neoX, PAD.mcs0.y - PAD.neoY, PAD.mcsW, 10, 58, 94),
     ],
-    bess: [{ left: "48%", top: "10%", width: "22%", z: 3 }],
-    lounge: [{ left: "58%", top: "28%", width: "28%", z: 6 }],
-    market: [{ left: "60%", top: "50%", width: "24%", z: 10 }],
+    bess: [padSlot(PAD.bess.x, PAD.bess.y, PAD.bess.w, 2, 42, 94)],
+    lounge: [padSlot(PAD.lounge.x, PAD.lounge.y, PAD.lounge.w, 6, 48, 94)],
+    market: [padSlot(PAD.market.x, PAD.market.y, PAD.market.w, 11, 58, 94)],
   };
   const SITE_TYPE_NAME = {
     hq: "PHOENIX HQ",
@@ -1319,6 +1358,26 @@
     return overlayBaseKind(mapSpriteKind(city, meta));
   }
 
+  function kitOccupancy(city) {
+    const site = city.sites[YOU];
+    const raising = {
+      dc: raisingType(city.id, "dc"),
+      mcs: raisingType(city.id, "mcs"),
+      bess: raisingType(city.id, "bess") && site.bess < 1,
+      lounge: raisingType(city.id, "lounge") && site.lounge < 1,
+      market: raisingType(city.id, "market") && site.market < 1,
+    };
+    return {
+      dc: Math.min(4, Math.max(0, site.dc) + (raising.dc ? 1 : 0)),
+      mcs: Math.min(2, Math.max(0, site.mcs) + (raising.mcs ? 1 : 0)),
+      bess: Math.min(1, Math.max(0, site.bess) + (raising.bess ? 1 : 0)),
+      lounge: Math.min(1, Math.max(0, site.lounge) + (raising.lounge ? 1 : 0)),
+      market: Math.min(1, Math.max(0, site.market) + (raising.market ? 1 : 0)),
+      raising,
+      live: site,
+    };
+  }
+
   function kitLayer(type, live, raising) {
     const slots = KIT_LAYOUT[type] || [];
     const src = KIT_SPRITES[type];
@@ -1328,19 +1387,20 @@
     for (let i = 0; i < n; i += 1) {
       const slot = slots[i];
       const ghost = raising && i >= live;
-      html += `<img class="site-kit kit-${type}${ghost ? " raising" : ""}" src="${src}" alt="" draggable="false" data-kit="${type}" data-slot="${i}" data-state="${ghost ? "raising" : "live"}" style="left:${slot.left};top:${slot.top};width:${slot.width};z-index:${slot.z}">`;
+      html += `<img class="site-kit kit-${type}${ghost ? " raising" : ""}" src="${src}" alt="" draggable="false" data-kit="${type}" data-slot="${i}" data-state="${ghost ? "raising" : "live"}" style="left:${slot.left};top:${slot.top};width:${slot.width};z-index:${slot.z};--ox:${slot.ox}%;--oy:${slot.oy}%">`;
     }
     return html;
   }
 
   function kitLayersHtml(city) {
-    const site = city.sites[YOU];
+    const occ = kitOccupancy(city);
+    const site = occ.live;
     return (
-      kitLayer("bess", site.bess, raisingType(city.id, "bess") && site.bess < 1) +
-      kitLayer("lounge", site.lounge, raisingType(city.id, "lounge") && site.lounge < 1) +
-      kitLayer("dc", site.dc, raisingType(city.id, "dc")) +
-      kitLayer("mcs", site.mcs, raisingType(city.id, "mcs")) +
-      kitLayer("market", site.market, raisingType(city.id, "market") && site.market < 1)
+      kitLayer("bess", site.bess, occ.raising.bess) +
+      kitLayer("lounge", site.lounge, occ.raising.lounge) +
+      kitLayer("dc", site.dc, occ.raising.dc) +
+      kitLayer("mcs", site.mcs, occ.raising.mcs) +
+      kitLayer("market", site.market, occ.raising.market)
     );
   }
 
@@ -1376,6 +1436,7 @@
     const site = city.sites[YOU];
     stack.style.aspectRatio = SPRITE_ASPECT[baseKind] || "256 / 177";
     stack.dataset.kind = baseKind;
+    stack.dataset.layout = playerYard(city) ? "plaza" : baseKind;
     stack.dataset.dc = String(site.dc);
     stack.dataset.mcs = String(site.mcs);
     stack.dataset.bess = String(site.bess);
