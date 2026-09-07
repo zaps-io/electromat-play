@@ -1613,6 +1613,49 @@
     ];
   }
 
+  function applyShot(name) {
+    const z = (id) => state.cities[id].sites.zaps;
+    if (name === "pad") {
+      selected = "flagstaff";
+      return "flagstaff";
+    }
+    if (name === "dc") {
+      z("flagstaff").dc = 1;
+      selected = "flagstaff";
+      return "flagstaff";
+    }
+    if (name === "lounge-bess") {
+      z("flagstaff").dc = 2;
+      z("flagstaff").lounge = 1;
+      z("flagstaff").bess = 1;
+      selected = "flagstaff";
+      return "flagstaff";
+    }
+    if (name === "mcs-market") {
+      z("flagstaff").dc = 2;
+      z("flagstaff").lounge = 1;
+      z("flagstaff").bess = 1;
+      z("flagstaff").mcs = 1;
+      z("flagstaff").market = 1;
+      selected = "flagstaff";
+      return "flagstaff";
+    }
+    if (name === "start" || name === "phoenix") {
+      selected = "phoenix";
+      return "phoenix";
+    }
+    if (name === "raising") {
+      state.queue.push(
+        { faction: YOU, city: "phoenix", type: "dc", left: 2, cost: 0 },
+        { faction: YOU, city: "phoenix", type: "bess", left: 3, cost: 0 },
+        { faction: YOU, city: "phoenix", type: "market", left: 1, cost: 0 }
+      );
+      selected = "phoenix";
+      return "phoenix";
+    }
+    return null;
+  }
+
   function openBoard() {
     state = freshState();
     selected = "phoenix";
@@ -1668,16 +1711,18 @@
     });
 
     const params = new URLSearchParams(location.search);
-    if (params.get("showcase") === "1") {
+    const shot = params.get("shot");
+    if (params.get("showcase") === "1" || shot) {
       state = freshState();
-      applyShowcase();
+      if (params.get("showcase") === "1") applyShowcase();
+      const shotCity = shot ? applyShot(shot) : null;
       const pick = params.get("select");
       if (pick && CITY_BY_ID[pick]) selected = pick;
       showBoard();
       bindMapControls();
       setSpeed(0);
       renderAll();
-      const site = params.get("site");
+      const site = params.get("site") || shotCity;
       if (site && CITY_BY_ID[site]) enterSite(site);
     }
   }

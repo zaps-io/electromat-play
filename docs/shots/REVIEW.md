@@ -1,8 +1,8 @@
 # Empire graphics review — rts-yard-4
 
-Stills: `title.png` · `board.png` · `compound.png` · `rival-depot.png` · `yard-pad.png` · `yard-dc.png` · `yard-lounge-bess.png` · `yard-mcs-market.png`
+Stills: `yard-pad.png` · `yard-dc.png` · `yard-lounge-bess.png` · `yard-mcs-market.png` · `yard-phoenix-start.png` · `yard-raising.png`
 
-Play: `?showcase=1`, `?showcase=1&site=phoenix`, `?showcase=1&site=la`. Empty pad: click Flagstaff (or any unbuilt city).
+Replay: `?shot=pad` · `?shot=dc` · `?shot=lounge-bess` · `?shot=mcs-market` · `?shot=start` · `?shot=raising`. Also `?showcase=1&site=phoenix` and `?showcase=1&site=la`.
 
 ## Yard rule
 
