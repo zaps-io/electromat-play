@@ -1,22 +1,26 @@
-# Empire graphics review — rts-yard-3
+# Empire graphics review — rts-yard-4
 
-Stills: `title.png` · `board.png` · `compound.png` · `rival-depot.png`
+Stills: `yard-pad.png` · `yard-dc.png` · `yard-lounge-bess.png` · `yard-mcs-market.png` · `yard-phoenix-start.png` · `yard-raising.png`
 
-Branch tip `0a3c5ce3a6973156f186707c0a9fc89a175da580`. Play: `?showcase=1`, `?showcase=1&site=phoenix`, `?showcase=1&site=la`.
+Replay: `?shot=pad` · `?shot=dc` · `?shot=lounge-bess` · `?shot=mcs-market` · `?shot=start` · `?shot=raising`. Also `?showcase=1&site=phoenix` and `?showcase=1&site=la`.
 
-## Verdict: yard click now matches occupancy
+## Yard rule
+
+The zoomed site overlay (and the inspector thumbnail when it is a Zaps pad) **layers kit sprites on a dirt pad**. Occupancy photos stay map stamps.
+
+| Kit | When it appears |
+|---|---|
+| DC / MCS | Ghost stall as soon as the crew starts; another live stall when the job completes. Up to 4 DC / 2 MCS slots. |
+| BESS / lounge / market | Ghost as soon as the crew starts; solid when complete. |
+
+Prefer visible construction (`.site-kit.raising`) over a frozen HQ render. Phoenix HQ no longer paints a full compound that already includes unbuilt BESS.
+
+## Verdict
 
 | Bar | Grade | Evidence |
 |---|---|---|
-| Gameplay look (AoE / C&C / StarCraft) | **FORWARD** | Site overlay is the painted compound, not dirt plus floating kit. Phoenix HQ = canopy / Slim Zeus / lounge. LA = Voltspan hangar. Albuquerque = survey flag. Map icons stay small RTS stamps. |
-| Brand | **HOLD** | Official cream/red wordmarks (`viewBox 0 0 932 310`). Red kiosk bolt on title + HUD. Palette roles unchanged. No fake logos, no WattEV. |
-| Map | **HOLD** | Painted Western Interconnect. CA pins on land. Pan at default zoom. Pan after zoom. Click-in / EXIT / Escape. First city click after a drag no longer swallowed. |
+| Yard follows inventory | **FORWARD** | Overlay `data-dc` / `data-mcs` / `data-bess` / `data-lounge` / `data-market` match the inspector counts. Adding a DC adds a stall. |
+| Brand | **HOLD** | Official cream/red wordmarks (`viewBox 0 0 932 310`, 1823-byte files). Red kiosk bolt. Palette unchanged. |
+| Map | **HOLD** | Painted Western Interconnect. CA pins on land. Pan / zoom / click-in / EXIT / Escape. Occupancy stamps unchanged. |
 
-Hard ceiling unchanged: pre-rendered 3D sprites, not a hand-painted Ensemble/Westwood atlas.
-
-## This pass
-
-- Occupancy sprite is the yard (hq / plaza / tucson / vegas / voltspan / rival / flag / dirt).
-- Kit layers only while a dirt/flag pad is growing.
-- Raising banner on the pad. Tray names the city and uses kit sprites.
-- Cache `rts-yard-3`. Economy untouched. Night Shift untouched.
+Economy untouched. Night Shift untouched. Cache `rts-yard-4`.
