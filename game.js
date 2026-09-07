@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-yard-4 */
+/* empire-build: rts-yard-6 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -20,7 +20,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-yard-4";
+  const SPRITE_V = "rts-yard-6";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -41,7 +41,7 @@
     voltspan: "240 / 204",
     rival: "240 / 167",
   };
-  const KIT_V = "rts-yard-4";
+  const KIT_V = "rts-yard-6";
   const KIT_SPRITES = {
     dc: `assets/sprites/kit-dc.png?v=${KIT_V}`,
     mcs: `assets/sprites/kit-mcs.png?v=${KIT_V}`,
@@ -49,20 +49,59 @@
     lounge: `assets/sprites/kit-lounge.png?v=${KIT_V}`,
     market: `assets/sprites/kit-market.png?v=${KIT_V}`,
   };
+
+  /*
+   * Zaps plaza grid — ground anchors on the 220×131 dirt diamond.
+   * left/top are the sit-down point. CSS translates each sprite by
+   * --ox/--oy so a raising ghost occupies the final stall and does
+   * not jump when the job completes.
+   *
+   * AoE town-center read (gas-station RTS base):
+   *
+   *   BACK
+   *        [BESS bank]
+   *   DC DC DC DC   [LOUNGE]
+   *   [MCS bay]     [MARKET]
+   *   FRONT
+   *
+   * Unique silhouettes: tall DC pedestals under one cream canopy,
+   * MCS stall at the west end, lounge pavilion east, cabinet bank
+   * behind, market kiosk front-east. Asphalt island + curb under the kit.
+   */
+  const PAD = {
+    neoX: 6.85,
+    neoY: -6.15,
+    dc0: { x: 34.8, y: 56.4 },
+    dcW: 6.7,
+    mcs0: { x: 20.2, y: 68.6 },
+    mcsW: 21.4,
+    lounge: { x: 54.8, y: 48.6, w: 22.4 },
+    bess: { x: 49.2, y: 34.2, w: 17.2 },
+    market: { x: 61.6, y: 63.2, w: 14.6 },
+  };
+
+  function padSlot(x, y, w, z, ox, oy) {
+    return {
+      left: `${x}%`,
+      top: `${y}%`,
+      width: `${w}%`,
+      z,
+      ox,
+      oy,
+    };
+  }
+
   const KIT_LAYOUT = {
-    dc: [
-      { left: "30%", top: "38%", width: "12%", z: 4 },
-      { left: "38%", top: "32%", width: "12%", z: 5 },
-      { left: "46%", top: "26%", width: "12%", z: 6 },
-      { left: "54%", top: "20%", width: "12%", z: 7 },
-    ],
+    dc: [0, 1, 2, 3].map((i) =>
+      padSlot(PAD.dc0.x + PAD.neoX * i, PAD.dc0.y + PAD.neoY * i, PAD.dcW, 7 - i, 50, 94)
+    ),
     mcs: [
-      { left: "14%", top: "46%", width: "26%", z: 8 },
-      { left: "26%", top: "40%", width: "26%", z: 9 },
+      padSlot(PAD.mcs0.x, PAD.mcs0.y, PAD.mcsW, 9, 58, 94),
+      padSlot(PAD.mcs0.x - PAD.neoX, PAD.mcs0.y - PAD.neoY, PAD.mcsW, 10, 58, 94),
     ],
-    bess: [{ left: "48%", top: "10%", width: "22%", z: 3 }],
-    lounge: [{ left: "58%", top: "28%", width: "28%", z: 6 }],
-    market: [{ left: "60%", top: "50%", width: "24%", z: 10 }],
+    bess: [padSlot(PAD.bess.x, PAD.bess.y, PAD.bess.w, 2, 42, 94)],
+    lounge: [padSlot(PAD.lounge.x, PAD.lounge.y, PAD.lounge.w, 6, 48, 94)],
+    market: [padSlot(PAD.market.x, PAD.market.y, PAD.market.w, 11, 58, 94)],
   };
   const SITE_TYPE_NAME = {
     hq: "PHOENIX HQ",
@@ -1319,6 +1358,118 @@
     return overlayBaseKind(mapSpriteKind(city, meta));
   }
 
+  function kitOccupancy(city) {
+    const site = city.sites[YOU];
+    const raising = {
+      dc: raisingType(city.id, "dc"),
+      mcs: raisingType(city.id, "mcs"),
+      bess: raisingType(city.id, "bess") && site.bess < 1,
+      lounge: raisingType(city.id, "lounge") && site.lounge < 1,
+      market: raisingType(city.id, "market") && site.market < 1,
+    };
+    return {
+      dc: Math.min(4, Math.max(0, site.dc) + (raising.dc ? 1 : 0)),
+      mcs: Math.min(2, Math.max(0, site.mcs) + (raising.mcs ? 1 : 0)),
+      bess: Math.min(1, Math.max(0, site.bess) + (raising.bess ? 1 : 0)),
+      lounge: Math.min(1, Math.max(0, site.lounge) + (raising.lounge ? 1 : 0)),
+      market: Math.min(1, Math.max(0, site.market) + (raising.market ? 1 : 0)),
+      raising,
+      live: site,
+    };
+  }
+
+  function isoPadQuad(x, y, ne, se) {
+    const neX = ne;
+    const neY = -ne * 0.97;
+    const seX = se;
+    const seY = se * 1.01;
+    return [
+      [x, y],
+      [x + seX, y + seY],
+      [x + seX + neX, y + seY + neY],
+      [x + neX, y + neY],
+    ];
+  }
+
+  function svgPts(pts) {
+    return pts.map((p) => p.map((n) => n.toFixed(2)).join(",")).join(" ");
+  }
+
+  function overlaySvg(cls, inner, extra = "") {
+    return (
+      `<svg class="site-overlay-svg ${cls}" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"${extra}>` +
+      inner +
+      `</svg>`
+    );
+  }
+
+  function plazaIslandHtml(occ) {
+    const any = occ.dc + occ.mcs + occ.bess + occ.lounge + occ.market;
+    if (!any) return "";
+    const civic = occ.lounge || occ.bess || occ.market;
+    const west = occ.mcs ? 8.6 : civic ? 13.4 : 24.4;
+    const south = occ.mcs || occ.market ? 76.4 : civic ? 70.8 : 64.4;
+    let ne = occ.dc ? 12 + occ.dc * 7.6 : 16;
+    if (civic) ne = Math.max(ne, 52);
+    if (occ.mcs && civic) ne = 60;
+    else if (occ.mcs) ne = Math.max(ne, 36);
+    const se = civic ? 18.2 : occ.mcs ? 14.4 : 11.4;
+    const lift = isoPadQuad(west - 0.8, south + 1.1, ne + 1.6, se + 1.2);
+    const curb = isoPadQuad(west - 2.4, south + 2.0, ne + 4.8, se + 2.8);
+    const deck = isoPadQuad(west, south, ne, se);
+    let marks = "";
+    for (let i = 0; i < occ.dc; i += 1) {
+      const x = PAD.dc0.x + PAD.neoX * i - 1.7;
+      const y = PAD.dc0.y + PAD.neoY * i + 1.4;
+      marks += `<polygon class="site-stall" points="${svgPts(isoPadQuad(x, y, 3.2, 5.4))}" />`;
+    }
+    if (occ.mcs) {
+      marks += `<polygon class="site-stall mcs" points="${svgPts(isoPadQuad(PAD.mcs0.x - 3.6, PAD.mcs0.y + 1.2, 10.8, 6.2))}" />`;
+    }
+    const ghost = any > 0 && !(occ.live.dc || occ.live.mcs || occ.live.bess || occ.live.lounge || occ.live.market);
+    return overlaySvg(
+      `site-plaza${ghost ? " raising" : ""}`,
+      `<polygon class="site-curb" points="${svgPts(curb)}" />` +
+        `<polygon class="site-plaza-lift" points="${svgPts(lift)}" />` +
+        `<polygon class="site-asphalt" points="${svgPts(deck)}" />` +
+        marks
+    );
+  }
+
+  function chargerPostsHtml(occ) {
+    const n = occ.dc;
+    if (n < 1) return "";
+    const ghost = occ.raising.dc && occ.live.dc < 1;
+    const posts = n >= 3 ? [-0.08, 0.3, 0.7, 1.08] : n === 2 ? [-0.12, 1.12] : [-0.18, 1.18];
+    const lift = 17.6;
+    let g = "";
+    posts.forEach((t) => {
+      const gx = PAD.dc0.x + PAD.neoX * t * Math.max(0, n - 1) - 1.05;
+      const gy = PAD.dc0.y + PAD.neoY * t * Math.max(0, n - 1) + 0.35;
+      const top = gy - lift;
+      g += `<rect class="site-post" x="${(gx - 0.7).toFixed(2)}" y="${top.toFixed(2)}" width="1.4" height="${lift.toFixed(2)}" />`;
+      g += `<rect class="site-post-band" x="${(gx - 0.78).toFixed(2)}" y="${(top + lift * 0.16).toFixed(2)}" width="1.56" height="1.15" />`;
+    });
+    return overlaySvg(`site-posts${ghost ? " raising" : ""}`, g);
+  }
+
+  function chargerRoofHtml(occ) {
+    const n = occ.dc;
+    if (n < 1) return "";
+    const ghost = occ.raising.dc && occ.live.dc < 1;
+    const x = PAD.dc0.x - 3.8;
+    const y = PAD.dc0.y - 24.2;
+    const ne = 7.4 + Math.max(0, n - 1) * PAD.neoX;
+    const se = 7.2;
+    const thick = 1.45;
+    const top = isoPadQuad(x, y, ne, se);
+    const bot = top.map((p) => [p[0] + 0.28, p[1] + thick]);
+    const inner =
+      `<polygon class="site-roof-lip" points="${svgPts(bot)}" />` +
+      `<polygon class="site-roof-deck" points="${svgPts(top)}" />`;
+    return overlaySvg(`site-roof${ghost ? " raising" : ""}`, inner, ` data-stalls="${n}"`);
+  }
+
   function kitLayer(type, live, raising) {
     const slots = KIT_LAYOUT[type] || [];
     const src = KIT_SPRITES[type];
@@ -1328,19 +1479,23 @@
     for (let i = 0; i < n; i += 1) {
       const slot = slots[i];
       const ghost = raising && i >= live;
-      html += `<img class="site-kit kit-${type}${ghost ? " raising" : ""}" src="${src}" alt="" draggable="false" data-kit="${type}" data-slot="${i}" data-state="${ghost ? "raising" : "live"}" style="left:${slot.left};top:${slot.top};width:${slot.width};z-index:${slot.z}">`;
+      html += `<img class="site-kit kit-${type}${ghost ? " raising" : ""}" src="${src}" alt="" draggable="false" data-kit="${type}" data-slot="${i}" data-state="${ghost ? "raising" : "live"}" style="left:${slot.left};top:${slot.top};width:${slot.width};z-index:${slot.z};--ox:${slot.ox}%;--oy:${slot.oy}%">`;
     }
     return html;
   }
 
   function kitLayersHtml(city) {
-    const site = city.sites[YOU];
+    const occ = kitOccupancy(city);
+    const site = occ.live;
     return (
-      kitLayer("bess", site.bess, raisingType(city.id, "bess") && site.bess < 1) +
-      kitLayer("lounge", site.lounge, raisingType(city.id, "lounge") && site.lounge < 1) +
-      kitLayer("dc", site.dc, raisingType(city.id, "dc")) +
-      kitLayer("mcs", site.mcs, raisingType(city.id, "mcs")) +
-      kitLayer("market", site.market, raisingType(city.id, "market") && site.market < 1)
+      plazaIslandHtml(occ) +
+      chargerPostsHtml(occ) +
+      kitLayer("bess", site.bess, occ.raising.bess) +
+      kitLayer("lounge", site.lounge, occ.raising.lounge) +
+      kitLayer("dc", site.dc, occ.raising.dc) +
+      chargerRoofHtml(occ) +
+      kitLayer("mcs", site.mcs, occ.raising.mcs) +
+      kitLayer("market", site.market, occ.raising.market)
     );
   }
 
@@ -1376,6 +1531,7 @@
     const site = city.sites[YOU];
     stack.style.aspectRatio = SPRITE_ASPECT[baseKind] || "256 / 177";
     stack.dataset.kind = baseKind;
+    stack.dataset.layout = playerYard(city) ? "plaza" : baseKind;
     stack.dataset.dc = String(site.dc);
     stack.dataset.mcs = String(site.mcs);
     stack.dataset.bess = String(site.bess);

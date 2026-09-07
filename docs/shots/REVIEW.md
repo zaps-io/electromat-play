@@ -1,26 +1,42 @@
-# Empire graphics review — rts-yard-4
+# Empire graphics review — rts-yard-6
 
 Stills: `yard-pad.png` · `yard-dc.png` · `yard-lounge-bess.png` · `yard-mcs-market.png` · `yard-phoenix-start.png` · `yard-raising.png`
 
-Replay: `?shot=pad` · `?shot=dc` · `?shot=lounge-bess` · `?shot=mcs-market` · `?shot=start` · `?shot=raising`. Also `?showcase=1&site=phoenix` and `?showcase=1&site=la`.
+Replay: `?shot=pad` · `?shot=dc` · `?shot=lounge-bess` · `?shot=mcs-market` · `?shot=start` · `?shot=raising`.
 
 ## Yard rule
 
-The zoomed site overlay (and the inspector thumbnail when it is a Zaps pad) **layers kit sprites on a dirt pad**. Occupancy photos stay map stamps.
+The zoomed site overlay (and the inspector thumbnail) layers kit on a dirt diamond. Occupancy photos stay map stamps.
 
-| Kit | When it appears |
-|---|---|
-| DC / MCS | Ghost stall as soon as the crew starts; another live stall when the job completes. Up to 4 DC / 2 MCS slots. |
-| BESS / lounge / market | Ghost as soon as the crew starts; solid when complete. |
+Once a crew starts, an **asphalt island + tan curb** pours under the kit zone. A **shared cream canopy** (cyan edge, red-banded posts) spans the DC row. MCS keeps its own wider bay at the west end.
 
-Prefer visible construction (`.site-kit.raising`) over a frozen HQ render. Phoenix HQ no longer paints a full compound that already includes unbuilt BESS.
+`left`/`top` are ground anchors; CSS `--ox`/`--oy` keep a raising ghost in the final stall.
+
+```
+BACK
+     [BESS bank]
+DC DC DC DC   [LOUNGE]
+[MCS bay]     [MARKET]
+FRONT
+```
+
+| Kit | Footprint | When it appears |
+|---|---|---|
+| Plaza | Asphalt island + curb under the compound | Ghost/solid with first kit |
+| DC | Up to 4 pedestals under one canopy | Ghost in the next stall; solid when complete |
+| MCS | Wider canopied bay at the west end | Same ghost-in-final-slot rule |
+| Lounge | Pavilion east of the charger street | Ghost then solid |
+| BESS | Cabinet bank behind the lounge | Ghost then solid |
+| Market | Kiosk front-east | Ghost then solid |
+
+Unbuilt dirt stays a survey flag.
 
 ## Verdict
 
 | Bar | Grade | Evidence |
 |---|---|---|
-| Yard follows inventory | **FORWARD** | Overlay `data-dc` / `data-mcs` / `data-bess` / `data-lounge` / `data-market` match the inspector counts. Adding a DC adds a stall. |
-| Brand | **HOLD** | Official cream/red wordmarks (`viewBox 0 0 932 310`, 1823-byte files). Red kiosk bolt. Palette unchanged. |
-| Map | **HOLD** | Painted Western Interconnect. CA pins on land. Pan / zoom / click-in / EXIT / Escape. Occupancy stamps unchanged. |
+| Yard is a planned compound | **REVIEW** | Plaza + shared DC canopy + fixed slots. Overlay and inspector share `yardArtHtml`. Ghosts do not jump. Hold merge until Victor signs the stills. |
+| Brand | **HOLD** | Official cream/red wordmarks (`viewBox 0 0 932 310`, 1823-byte files). Palette unchanged. |
+| Map | **HOLD** | Pan / zoom / click-in / EXIT / Escape. Occupancy stamps unchanged. |
 
-Economy untouched. Night Shift untouched. Cache `rts-yard-4`.
+Economy untouched. Night Shift untouched. Cache `rts-yard-6`.
