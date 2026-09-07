@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-match-2 */
+/* empire-build: rts-yard-3 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -20,7 +20,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-match-2";
+  const SPRITE_V = "rts-yard-3";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -31,7 +31,17 @@
     voltspan: `assets/sprites/voltspan.png?v=${SPRITE_V}`,
     rival: `assets/sprites/rival-depot.png?v=${SPRITE_V}`,
   };
-  const KIT_V = "rts-match-2";
+  const SPRITE_ASPECT = {
+    flag: "142 / 210",
+    dirt: "220 / 131",
+    vegas: "159 / 220",
+    tucson: "239 / 181",
+    plaza: "235 / 240",
+    hq: "280 / 196",
+    voltspan: "240 / 204",
+    rival: "240 / 167",
+  };
+  const KIT_V = "rts-yard-3";
   const KIT_SPRITES = {
     dc: `assets/sprites/kit-dc.png?v=${KIT_V}`,
     mcs: `assets/sprites/kit-mcs.png?v=${KIT_V}`,
@@ -71,7 +81,7 @@
       name: "DC CHARGER",
       cost: 180000,
       months: 2,
-      icon: "assets/station.svg",
+      icon: `assets/sprites/kit-dc.png?v=${KIT_V}`,
       unique: false,
     },
     mcs: {
@@ -79,7 +89,7 @@
       name: "MCS",
       cost: 420000,
       months: 3,
-      icon: "assets/station.svg",
+      icon: `assets/sprites/kit-mcs.png?v=${KIT_V}`,
       unique: false,
     },
     bess: {
@@ -87,7 +97,7 @@
       name: "BESS",
       cost: 650000,
       months: 4,
-      icon: "assets/bess.svg",
+      icon: `assets/sprites/kit-bess.png?v=${KIT_V}`,
       unique: true,
     },
     lounge: {
@@ -95,7 +105,7 @@
       name: "LOUNGE",
       cost: 280000,
       months: 3,
-      icon: "assets/lounge.svg",
+      icon: `assets/sprites/kit-lounge.png?v=${KIT_V}`,
       unique: true,
     },
     market: {
@@ -103,7 +113,7 @@
       name: "MARKET",
       cost: 220000,
       months: 2,
-      icon: "assets/market.svg",
+      icon: `assets/sprites/kit-market.png?v=${KIT_V}`,
       unique: true,
     },
   };
@@ -736,7 +746,9 @@
     }
     if (v && TICK[v]) timer = setInterval(tickMonth, TICK[v]);
     document.querySelectorAll(".speed button").forEach((b) => {
-      b.classList.toggle("active", Number(b.dataset.speed) === v);
+      const on = Number(b.dataset.speed) === v;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
     });
   }
 
@@ -1252,10 +1264,6 @@
       btn.title = `${meta.name}, ${meta.state}`;
       btn.addEventListener("click", (ev) => {
         ev.stopPropagation();
-        if (lastPan) {
-          lastPan = false;
-          return;
-        }
         enterSite(meta.id);
       });
       const icon = document.createElement("div");
@@ -1290,8 +1298,7 @@
   }
 
   function overlayBaseKind(kind) {
-    if (kind === "voltspan" || kind === "rival" || kind === "flag") return kind;
-    return "dirt";
+    return MAP_SPRITES[kind] ? kind : "dirt";
   }
 
   function kitLayer(type, live, raising) {
@@ -1308,6 +1315,13 @@
     return html;
   }
 
+  function siteRaisingBanner(cityId) {
+    const mine = jobsFor(cityId);
+    if (!mine.length) return "";
+    const bits = mine.map((j) => `${BUILD[j.type].name} ${j.left} MO`);
+    return `<div class="site-raising">${bits.join(" · ")}</div>`;
+  }
+
   function renderSiteYard() {
     const overlay = $("site-overlay");
     if (!overlay) return;
@@ -1321,11 +1335,10 @@
     $("site-overlay-type").textContent = SITE_TYPE_NAME[kind] || "SITE";
     const stack = $("site-stack");
     if (!stack) return;
-    const aspects = { flag: "142 / 210", dirt: "220 / 131", voltspan: "240 / 204", rival: "240 / 167" };
-    stack.style.aspectRatio = aspects[baseKind] || "256 / 177";
+    stack.style.aspectRatio = SPRITE_ASPECT[baseKind] || "256 / 177";
     const base = MAP_SPRITES[baseKind] || MAP_SPRITES.dirt;
-    let html = `<img class="site-base" src="${base}?v=${KIT_V}" alt="" draggable="false" data-kind="${baseKind}">`;
-    if (kind !== "voltspan" && kind !== "rival") {
+    let html = `<img class="site-base" src="${base}" alt="" draggable="false" data-kind="${baseKind}">`;
+    if (baseKind === "dirt" || baseKind === "flag") {
       const site = city.sites[YOU];
       html += kitLayer("bess", site.bess, raisingType(city.id, "bess") && site.bess < 1);
       html += kitLayer("lounge", site.lounge, raisingType(city.id, "lounge") && site.lounge < 1);
@@ -1333,6 +1346,7 @@
       html += kitLayer("mcs", site.mcs, raisingType(city.id, "mcs"));
       html += kitLayer("market", site.market, raisingType(city.id, "market") && site.market < 1);
     }
+    html += siteRaisingBanner(meta.id);
     stack.innerHTML = html;
   }
 
@@ -1441,6 +1455,7 @@
     $("insp-blurb").textContent = inspectorBlurb(city, meta, kind);
 
     $("insp-compound").innerHTML = compoundMarkup(city, meta);
+    $("insp-compound").dataset.kind = kind;
 
     const mine = jobsFor(selected);
     const qel = $("insp-queue");
@@ -1490,16 +1505,24 @@
   function renderTray() {
     const grid = $("tray-grid");
     grid.innerHTML = "";
+    const target = CITY_BY_ID[selected];
+    const label = $("tray-label");
+    if (label) {
+      label.textContent = target ? `DEPLOY // ${target.name.toUpperCase()}` : "DEPLOY";
+    }
     for (const spec of Object.values(BUILD)) {
       const cost = selected ? deployCost(spec.id, selected) : spec.cost;
-      const block = blockedReason(spec.id, selected);
+      const block = selected ? blockedReason(spec.id, selected) : "PICK A CITY";
       const btn = document.createElement("button");
       btn.className = "deploy";
       btn.disabled = Boolean(block);
+      btn.title = block
+        ? `${spec.name} — ${block}`
+        : `Deploy ${spec.name} in ${target.name} · ${money(cost)} · ${spec.months} mo`;
       const status = block
         ? `<small class="blocked">${money(cost)} · ${block}</small>`
         : `<small class="ready">${money(cost)} · ${spec.months} mo · READY</small>`;
-      btn.innerHTML = `<img src="${spec.icon}" alt=""><span>${spec.name}${status}</span>`;
+      btn.innerHTML = `<img src="${spec.icon}" alt="" draggable="false"><span>${spec.name}${status}</span>`;
       btn.addEventListener("click", () => enqueue(spec.id, selected));
       grid.appendChild(btn);
     }
@@ -1620,6 +1643,8 @@
       bindMapControls();
       setSpeed(0);
       renderAll();
+      const site = params.get("site");
+      if (site && CITY_BY_ID[site]) enterSite(site);
     }
   }
 

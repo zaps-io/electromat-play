@@ -1,4 +1,4 @@
-/* empire-build: rts-match-2 */
+/* empire-build: rts-yard-3 */
 :root {
   --red: #e63225;
   --charcoal: #1e1e24;
@@ -127,8 +127,8 @@ button {
 }
 
 .brand-lockup.compact .wordmark.official {
-  height: 44px;
-  max-width: 168px;
+  height: 48px;
+  max-width: 186px;
   image-rendering: auto;
 }
 
@@ -287,6 +287,11 @@ button {
   border-color: var(--cyan);
 }
 
+.speed button[data-speed="0"].active {
+  color: var(--amber);
+  border-color: var(--amber);
+}
+
 .board-body {
   display: grid;
   grid-template-columns: 1fr 400px;
@@ -354,8 +359,8 @@ button {
 .city-node {
   pointer-events: auto;
   position: absolute;
-  width: 52px;
-  height: 56px;
+  width: 72px;
+  height: 78px;
   transform: translate(-50%, -62%);
   background: none;
   border: 0;
@@ -539,7 +544,7 @@ button {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: min(86%, 760px);
+  width: min(88%, 820px);
   aspect-ratio: 256 / 200;
 }
 
@@ -565,6 +570,21 @@ button {
 .site-kit.raising {
   opacity: 0.55;
   filter: drop-shadow(0 0 10px rgba(0, 212, 245, 0.55));
+}
+
+.site-raising {
+  position: absolute;
+  left: 50%;
+  bottom: 4%;
+  transform: translateX(-50%);
+  z-index: 12;
+  padding: 0.28rem 0.7rem;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  color: var(--charcoal);
+  background: var(--amber);
+  white-space: nowrap;
 }
 
 .site-overlay-note {
@@ -629,9 +649,10 @@ button {
 
 .insp-compound {
   margin: 0.55rem 0 0.7rem;
-  background: #141418;
+  background:
+    radial-gradient(ellipse at 50% 40%, #2a2a33 0%, #141418 72%);
   border: 1px solid var(--line);
-  padding: 0.4rem;
+  padding: 0.65rem 0.4rem 0.5rem;
 }
 
 .insp-compound svg,
@@ -644,10 +665,10 @@ button {
 }
 
 .insp-sprite {
-  max-width: 280px;
+  max-width: 320px;
   margin: 0 auto;
   image-rendering: auto;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
 }
 
 .insp-queue {
@@ -775,10 +796,11 @@ button {
 .insp-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.45rem 0.7rem;
+  gap: 0.5rem 0.75rem;
   margin: 0.8rem 0;
   font-family: "Share Tech Mono", monospace;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
+  color: var(--amber);
 }
 
 .insp-grid b {
@@ -799,9 +821,10 @@ button {
   display: flex;
   justify-content: space-between;
   gap: 0.5rem;
-  padding: 0.25rem 0;
+  padding: 0.35rem 0;
   border-bottom: 1px solid var(--line);
-  font-size: 0.8rem;
+  font-size: 0.82rem;
+  font-family: "Share Tech Mono", monospace;
 }
 
 .tray {
@@ -818,6 +841,8 @@ button {
   font-family: Anton, sans-serif;
   letter-spacing: 0.08em;
   color: var(--amber);
+  min-width: 7.5rem;
+  line-height: 1.05;
 }
 
 .tray-grid {
@@ -829,17 +854,21 @@ button {
 .deploy {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.5rem;
   background: #2a2a32;
   border: 1px solid var(--line);
   color: var(--cream);
-  padding: 0.35rem 0.55rem;
-  min-width: 132px;
+  padding: 0.4rem 0.6rem;
+  min-width: 148px;
+  text-align: left;
 }
 
 .deploy img {
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
 }
 
 .deploy small {

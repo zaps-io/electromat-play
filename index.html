@@ -15,8 +15,8 @@
       href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Share+Tech+Mono&display=swap"
       rel="stylesheet"
     />
-    <meta name="empire-build" content="rts-match-2" />
-    <link rel="stylesheet" href="styles.css?v=rts-match-2" />
+    <meta name="empire-build" content="rts-yard-3" />
+    <link rel="stylesheet" href="styles.css?v=rts-yard-3" />
   </head>
   <body>
     <section id="title-screen" class="screen" data-screen="title">
@@ -109,10 +109,10 @@
         <div class="hud-controls">
           <button id="btn-deals" class="deals-badge hidden" type="button">DEALS</button>
           <div class="speed" role="group" aria-label="Game speed">
-            <button data-speed="0" type="button">PAUSE</button>
-            <button data-speed="1" class="active" type="button">1×</button>
-            <button data-speed="2" type="button">2×</button>
-            <button data-speed="4" type="button">4×</button>
+            <button data-speed="0" type="button" aria-pressed="false" title="Pause (Space)">PAUSE</button>
+            <button data-speed="1" class="active" type="button" aria-pressed="true" title="1× speed (1)">1×</button>
+            <button data-speed="2" type="button" aria-pressed="false" title="2× speed (2)">2×</button>
+            <button data-speed="4" type="button" aria-pressed="false" title="4× speed (4)">4×</button>
           </div>
           <button id="btn-save" class="btn-tiny" type="button">SAVE</button>
           <button id="btn-load" class="btn-tiny" type="button">LOAD</button>
@@ -125,7 +125,7 @@
           <div class="map-stage" id="map-stage">
             <div class="map-cam" id="map-cam">
               <div class="map-frame" id="map-frame">
-                <img class="map-art map-paint" src="assets/map.svg?v=rts-match-2" alt="Southwest charging continent" />
+                <img class="map-art map-paint" src="assets/map.svg?v=rts-yard-3" alt="Southwest charging continent" />
                 <svg class="corridor-layer" id="corridor-layer" viewBox="0 0 1200 800" overflow="visible" aria-hidden="true"></svg>
                 <div id="city-layer" class="city-layer"></div>
               </div>
@@ -154,7 +154,7 @@
                 <div class="site-stack" id="site-stack"></div>
               </div>
               <p class="site-overlay-note">
-                Deploy from the tray. Each kit piece lands on this pad. ESC or EXIT
+                This is the yard. Deploy from the tray into this city. ESC or EXIT
                 returns to the Western Interconnect.
               </p>
             </div>
@@ -177,11 +177,11 @@
       </div>
 
       <footer class="tray">
-        <div class="tray-label">DEPLOY</div>
+        <div class="tray-label" id="tray-label">DEPLOY</div>
         <div class="tray-grid" id="tray-grid"></div>
         <div class="tray-note">
-          Space pause · 1 2 4 speed · click a city, then deploy. Watch the yard
-          grow. Three crews.
+          Space pause · 1 2 4 speed · click a city for the yard · EXIT back to
+          the map. Three crews.
         </div>
       </footer>
     </section>
@@ -193,6 +193,6 @@
       <div class="modal-card" id="modal-card"></div>
     </div>
 
-    <script src="game.js?v=rts-match-2"></script>
+    <script src="game.js?v=rts-yard-3"></script>
   </body>
 </html>

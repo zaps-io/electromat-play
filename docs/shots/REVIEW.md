@@ -1,15 +1,22 @@
-# Empire graphics review — rts-match-2
+# Empire graphics review — rts-yard-3
 
-Stills: `title.png` · `board.png` · `board-zoom.png` · `board-exit.png` · `compound.png` · `inspector.png`
+Stills: `title.png` · `board.png` · `compound.png` · `rival-depot.png`
 
-## Verdict: MATCH (with a hard ceiling)
+Branch tip `0a3c5ce3a6973156f186707c0a9fc89a175da580`. Play: `?showcase=1`, `?showcase=1&site=phoenix`, `?showcase=1&site=la`.
+
+## Verdict: yard click now matches occupancy
 
 | Bar | Grade | Evidence |
 |---|---|---|
-| Gameplay look (AoE / C&C / StarCraft) | **MATCH** | City icons are small isometric compounds on the painted Western Interconnect, not giant pads or cyan blobs. Flag / dirt / plaza / HQ / Vegas / Tucson / Voltspan / rival have distinct silhouettes. |
-| Brand | **MATCH** | Official cream/red wordmarks (23871, viewBox 0 0 932 310). Official red kiosk bolt on title + HUD. Palette roles: red identity, amber data, cyan structure, cream yards, charcoal chrome. Zeus dispensers carry a red mark + cream/red pylons. No fake logos. |
-| Map | **MATCH** | Painted AoE terrain. CA pins on land. Pan at default zoom. Enter/exit site overlay. Occupancy sprites match inspector copy (including generic Zaps **plaza**). |
+| Gameplay look (AoE / C&C / StarCraft) | **FORWARD** | Site overlay is the painted compound, not dirt plus floating kit. Phoenix HQ = canopy / Slim Zeus / lounge. LA = Voltspan hangar. Albuquerque = survey flag. Map icons stay small RTS stamps. |
+| Brand | **HOLD** | Official cream/red wordmarks (`viewBox 0 0 932 310`). Red kiosk bolt on title + HUD. Palette roles unchanged. No fake logos, no WattEV. |
+| Map | **HOLD** | Painted Western Interconnect. CA pins on land. Pan at default zoom. Pan after zoom. Click-in / EXIT / Escape. First city click after a drag no longer swallowed. |
 
-Hard ceiling: sprites are pre-rendered 3D, not hand-painted 2D AoE pixels. Further image-gen passes will not become a classic Ensemble/Westwood atlas. That is the remaining gap, not giant pads or missing red.
+Hard ceiling unchanged: pre-rendered 3D sprites, not a hand-painted Ensemble/Westwood atlas.
 
-Gameplay holds (pan / zoom / enter / exit / build / occupancy) verified on `?showcase=1`.
+## This pass
+
+- Occupancy sprite is the yard (hq / plaza / tucson / vegas / voltspan / rival / flag / dirt).
+- Kit layers only while a dirt/flag pad is growing.
+- Raising banner on the pad. Tray names the city and uses kit sprites.
+- Cache `rts-yard-3`. Economy untouched. Night Shift untouched.
