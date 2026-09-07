@@ -1643,6 +1643,8 @@
       bindMapControls();
       setSpeed(0);
       renderAll();
+      const site = params.get("site");
+      if (site && CITY_BY_ID[site]) enterSite(site);
     }
   }
 

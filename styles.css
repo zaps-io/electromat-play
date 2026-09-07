@@ -359,8 +359,8 @@ button {
 .city-node {
   pointer-events: auto;
   position: absolute;
-  width: 52px;
-  height: 56px;
+  width: 72px;
+  height: 78px;
   transform: translate(-50%, -62%);
   background: none;
   border: 0;
