@@ -306,6 +306,16 @@ button {
   background: #0b2436;
 }
 
+.map-wrap:has(.site-overlay:not(.hidden)) {
+  grid-template-rows: 1fr 0;
+}
+
+.map-wrap:has(.site-overlay:not(.hidden)) .ticker {
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+}
+
 .map-stage {
   position: relative;
   min-height: 0;
@@ -493,7 +503,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.7rem 1rem 0.65rem;
+  padding: 0.5rem 1rem 0.45rem;
   border-bottom: 1px solid var(--line);
   background: rgba(18, 18, 23, 0.72);
 }
@@ -679,7 +689,7 @@ button {
 
 .site-overlay-note {
   margin: 0;
-  padding: 0.45rem 1rem 0.6rem;
+  padding: 0.32rem 1rem 0.4rem;
   font-family: "Share Tech Mono", monospace;
   font-size: 0.68rem;
   letter-spacing: 0.06em;

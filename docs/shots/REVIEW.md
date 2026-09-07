@@ -6,7 +6,9 @@ Replay: `?shot=start` · `?shot=dc` · `?shot=lounge-bess` · `?shot=mcs-market`
 
 ## Framing
 
-Goldilocks yard scale: **full pad + a bit of sand margin**, about **76% of the yard box** (cap 800×500). Not the pass-#17 canopy close-up (`88%` / `820px`) and not the PR-#18 postage stamp (`46%` / `460px`).
+Goldilocks yard scale: **full pad + a bit of sand margin**, about **76% of the yard box** (measured 790×470 in a 1040×521 yard at 1440×900). Not the pass-#17 canopy close-up (`88%` / `820px`) and not the first PR-#18 postage stamp (`46%` / `460px`).
+
+The site overlay collapses the interconnect ticker so the yard is tall enough for that width. Kit stays readable.
 
 Kit should read as an RTS town center — readable silhouettes, intentional density. Plaza island, shared DC canopy, grow-on-deploy, inventory sync, EXIT, pan, and wordmarks are unchanged. Western Interconnect default camera stays at scale 1.
 

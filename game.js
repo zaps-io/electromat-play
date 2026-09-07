@@ -1534,7 +1534,7 @@
     if (boxW < 40 || boxH < 40) return;
     const ratio = aw / ah;
     const maxW = Math.min(boxW * 0.76, 800);
-    const maxH = Math.min(boxH * 0.88, 500);
+    const maxH = Math.min(boxH * 0.92, 520);
     let w = maxW;
     let h = w / ratio;
     if (h > maxH) {
