@@ -1,4 +1,4 @@
-/* empire-build: rts-yard-8 */
+/* empire-build: rts-yard-9 */
 :root {
   --red: #e63225;
   --charcoal: #1e1e24;
@@ -401,17 +401,31 @@ button {
 }
 
 .city-node.dirt .map-icon {
-  width: 28px;
+  width: 38px;
 }
 
 .city-node.zaps .map-icon {
-  width: 42px;
+  width: 50px;
+}
+
+.city-node.rival .map-icon,
+.city-node.hostile .map-icon {
+  width: 46px;
+}
+
+.city-node.raising .map-icon {
+  filter: drop-shadow(0 0 10px rgba(232, 154, 46, 0.8));
 }
 
 .city-node.selected .map-icon,
 .city-node.site-focus .map-icon {
-  width: 52px;
+  width: 56px;
   filter: drop-shadow(0 0 8px rgba(0, 212, 245, 0.55));
+}
+
+.city-node.raising.selected .map-icon,
+.city-node.raising.site-focus .map-icon {
+  filter: drop-shadow(0 0 10px rgba(232, 154, 46, 0.85));
 }
 
 .city-node.selected::after {
@@ -454,10 +468,10 @@ button {
   margin-top: 2px;
   white-space: nowrap;
   font-family: "Share Tech Mono", monospace;
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
   color: var(--cream);
-  text-shadow: 0 1px 2px #000;
+  text-shadow: 0 1px 3px #000, 0 0 6px rgba(18, 18, 23, 0.9);
   pointer-events: none;
   text-align: center;
   font-weight: 600;
@@ -573,6 +587,10 @@ button {
   pointer-events: none;
 }
 
+.site-base[data-kind="dirt"] {
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.45)) saturate(1.1) contrast(1.06);
+}
+
 .site-kit {
   position: absolute;
   height: auto;
@@ -583,8 +601,19 @@ button {
 }
 
 .site-kit.raising {
-  opacity: 0.55;
-  filter: drop-shadow(0 0 10px rgba(0, 212, 245, 0.55));
+  opacity: 0.62;
+  filter: drop-shadow(0 0 12px rgba(0, 212, 245, 0.72));
+  animation: ghost-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes ghost-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.78;
+  }
 }
 
 .site-overlay-svg {
@@ -617,32 +646,61 @@ button {
   z-index: 8;
 }
 
+.site-curb-face {
+  fill: #6a5840;
+  stroke: #4a3c28;
+  stroke-width: 0.3;
+}
+
 .site-curb {
-  fill: #d2b07a;
-  stroke: #8a6a3c;
-  stroke-width: 0.4;
+  fill: #efe6d4;
+  stroke: #9a8460;
+  stroke-width: 0.55;
 }
 
 .site-plaza-lift {
-  fill: #2a2a32;
-  stroke: #1a1a20;
-  stroke-width: 0.25;
+  fill: #1c1c22;
+  stroke: #121217;
+  stroke-width: 0.22;
 }
 
 .site-asphalt {
-  fill: #4a4a52;
-  stroke: #00d4f5;
-  stroke-width: 0.42;
+  fill: #3c3c44;
+  stroke: #5a5a62;
+  stroke-width: 0.4;
+}
+
+.site-asphalt-sheen {
+  fill: rgba(245, 240, 232, 0.07);
+  stroke: none;
+}
+
+.site-joint {
+  fill: #2a2a32;
+  opacity: 0.55;
+}
+
+.site-aisle {
+  fill: rgba(245, 240, 232, 0.1);
+  stroke: rgba(245, 240, 232, 0.28);
+  stroke-width: 0.18;
+  stroke-dasharray: 1.1 0.7;
 }
 
 .site-stall {
-  fill: rgba(18, 18, 22, 0.28);
-  stroke: rgba(0, 212, 245, 0.32);
+  fill: rgba(18, 18, 22, 0.22);
+  stroke: rgba(245, 240, 232, 0.38);
   stroke-width: 0.22;
 }
 
 .site-stall.mcs {
-  stroke: rgba(230, 50, 37, 0.4);
+  stroke: rgba(230, 50, 37, 0.55);
+}
+
+.site-equip {
+  fill: rgba(0, 212, 245, 0.08);
+  stroke: rgba(0, 212, 245, 0.28);
+  stroke-width: 0.2;
 }
 
 .site-post {
@@ -661,10 +719,15 @@ button {
   stroke-width: 0.2;
 }
 
+.site-roof-under {
+  fill: rgba(232, 154, 46, 0.16);
+  stroke: none;
+}
+
 .site-roof-deck {
   fill: #f5f0e8;
   stroke: #00d4f5;
-  stroke-width: 0.5;
+  stroke-width: 0.55;
 }
 
 .site-overlay-svg.raising {
@@ -678,13 +741,24 @@ button {
   top: calc(100% + 0.45rem);
   transform: translateX(-50%);
   z-index: 12;
-  padding: 0.28rem 0.7rem;
+  padding: 0.32rem 0.8rem;
   font-family: "Share Tech Mono", monospace;
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
   color: var(--charcoal);
   background: var(--amber);
   white-space: nowrap;
+  animation: raise-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes raise-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(232, 154, 46, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(232, 154, 46, 0.16);
+  }
 }
 
 .site-overlay-note {
@@ -697,9 +771,10 @@ button {
   border-top: 1px solid var(--line);
 }
 
-.city-node.selected .city-label {
+.city-node.selected .city-label,
+.city-node.raising .city-label {
   color: var(--amber);
-  font-size: 0.66rem;
+  font-size: 0.7rem;
 }
 
 .city-kit {
@@ -975,9 +1050,23 @@ button {
   text-align: left;
 }
 
+.deploy.live {
+  border-color: rgba(0, 212, 245, 0.5);
+  background: #303038;
+}
+
+.deploy.live:hover {
+  border-color: var(--cyan);
+}
+
+.deploy.raising {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 1px rgba(232, 154, 46, 0.35);
+}
+
 .deploy img {
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   object-fit: contain;
   flex-shrink: 0;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
@@ -990,8 +1079,12 @@ button {
 }
 
 .deploy .ready {
-  color: var(--amber);
+  color: var(--cyan);
   letter-spacing: 0.08em;
+}
+
+.deploy.raising .ready {
+  color: var(--amber);
 }
 
 .deploy .blocked {
@@ -1000,7 +1093,7 @@ button {
 }
 
 .deploy:disabled {
-  opacity: 0.35;
+  opacity: 0.42;
   cursor: not-allowed;
 }
 

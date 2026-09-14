@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-yard-8 */
+/* empire-build: rts-yard-9 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -20,7 +20,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-yard-8";
+  const SPRITE_V = "rts-yard-9";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -32,7 +32,7 @@
     rival: `assets/sprites/rival-depot.png?v=${SPRITE_V}`,
   };
   const SPRITE_ASPECT = {
-    flag: "142 / 210",
+    flag: "197 / 280",
     dirt: "220 / 131",
     vegas: "159 / 220",
     tucson: "239 / 181",
@@ -41,7 +41,7 @@
     voltspan: "240 / 204",
     rival: "240 / 167",
   };
-  const KIT_V = "rts-yard-8";
+  const KIT_V = "rts-yard-9";
   const KIT_SPRITES = {
     dc: `assets/sprites/kit-dc.png?v=${KIT_V}`,
     mcs: `assets/sprites/kit-mcs.png?v=${KIT_V}`,
@@ -65,19 +65,20 @@
    *   FRONT
    *
    * Unique silhouettes: tall DC pedestals under one cream canopy,
-   * MCS stall at the west end, lounge pavilion east, cabinet bank
-   * behind, market kiosk front-east. Asphalt island + curb under the kit.
+   * MCS truck bay (dark roof) at the west end, dark-roof lounge east,
+   * BESS cabinet bank behind, awning market front-east.
+   * Asphalt island + concrete curb hugs the kit.
    */
   const PAD = {
-    neoX: 6.85,
-    neoY: -6.15,
-    dc0: { x: 34.8, y: 56.4 },
-    dcW: 6.7,
-    mcs0: { x: 20.2, y: 68.6 },
-    mcsW: 21.4,
-    lounge: { x: 54.8, y: 48.6, w: 22.4 },
-    bess: { x: 49.2, y: 34.2, w: 17.2 },
-    market: { x: 61.6, y: 63.2, w: 14.6 },
+    neoX: 7.05,
+    neoY: -6.3,
+    dc0: { x: 33.4, y: 58.6 },
+    dcW: 11.2,
+    mcs0: { x: 20.4, y: 72.2 },
+    mcsW: 26.6,
+    lounge: { x: 63.2, y: 51.0, w: 20.4 },
+    bess: { x: 51.0, y: 28.6, w: 23.2 },
+    market: { x: 64.6, y: 69.8, w: 17.2 },
   };
 
   function padSlot(x, y, w, z, ox, oy) {
@@ -1407,31 +1408,48 @@
     const any = occ.dc + occ.mcs + occ.bess + occ.lounge + occ.market;
     if (!any) return "";
     const civic = occ.lounge || occ.bess || occ.market;
-    const west = occ.mcs ? 8.6 : civic ? 13.4 : 24.4;
-    const south = occ.mcs || occ.market ? 76.4 : civic ? 70.8 : 64.4;
-    let ne = occ.dc ? 12 + occ.dc * 7.6 : 16;
-    if (civic) ne = Math.max(ne, 52);
-    if (occ.mcs && civic) ne = 60;
-    else if (occ.mcs) ne = Math.max(ne, 36);
-    const se = civic ? 18.2 : occ.mcs ? 14.4 : 11.4;
-    const lift = isoPadQuad(west - 0.8, south + 1.1, ne + 1.6, se + 1.2);
-    const curb = isoPadQuad(west - 2.4, south + 2.0, ne + 4.8, se + 2.8);
+    const west = occ.mcs ? 11.2 : civic ? 21.8 : 28.6;
+    const south = occ.mcs || occ.market ? 80.0 : civic ? 73.4 : 68.6;
+    let ne = occ.dc ? 11 + occ.dc * 6.1 : 14;
+    if (civic) ne = Math.max(ne, 45);
+    if (occ.mcs && civic) ne = 51;
+    else if (occ.mcs) ne = Math.max(ne, 33);
+    const se = civic ? 15.6 : occ.mcs ? 13.0 : 10.2;
+    const lift = isoPadQuad(west - 0.65, south + 0.95, ne + 1.3, se + 1.05);
+    const curb = isoPadQuad(west - 2.05, south + 1.75, ne + 4.1, se + 2.4);
+    const face = isoPadQuad(west - 2.05, south + 2.55, ne + 4.1, se + 2.4);
     const deck = isoPadQuad(west, south, ne, se);
+    const sheen = isoPadQuad(west + ne * 0.08, south - se * 0.12, ne * 0.72, se * 0.38);
     let marks = "";
+    for (let i = 1; i <= 3; i += 1) {
+      const t = i / 4;
+      const joint = isoPadQuad(west + ne * t, south - ne * 0.97 * t * 0.08, 0.18, se);
+      marks += `<polygon class="site-joint" points="${svgPts(joint)}" />`;
+    }
+    if (occ.dc) {
+      const ax = PAD.dc0.x - 2.4;
+      const ay = PAD.dc0.y + 4.0;
+      marks += `<polygon class="site-aisle" points="${svgPts(isoPadQuad(ax, ay, 7.2 + Math.max(0, occ.dc - 1) * PAD.neoX, 2.0))}" />`;
+    }
     for (let i = 0; i < occ.dc; i += 1) {
-      const x = PAD.dc0.x + PAD.neoX * i - 1.7;
-      const y = PAD.dc0.y + PAD.neoY * i + 1.4;
-      marks += `<polygon class="site-stall" points="${svgPts(isoPadQuad(x, y, 3.2, 5.4))}" />`;
+      const x = PAD.dc0.x + PAD.neoX * i - 2.2;
+      const y = PAD.dc0.y + PAD.neoY * i + 2.0;
+      marks += `<polygon class="site-stall" points="${svgPts(isoPadQuad(x, y, 4.0, 6.4))}" />`;
     }
     if (occ.mcs) {
-      marks += `<polygon class="site-stall mcs" points="${svgPts(isoPadQuad(PAD.mcs0.x - 3.6, PAD.mcs0.y + 1.2, 10.8, 6.2))}" />`;
+      marks += `<polygon class="site-stall mcs" points="${svgPts(isoPadQuad(PAD.mcs0.x - 4.4, PAD.mcs0.y + 1.5, 13.2, 7.0))}" />`;
+    }
+    if (occ.bess) {
+      marks += `<polygon class="site-equip" points="${svgPts(isoPadQuad(PAD.bess.x - 3.4, PAD.bess.y + 1.4, 11.2, 5.4))}" />`;
     }
     const ghost = any > 0 && !(occ.live.dc || occ.live.mcs || occ.live.bess || occ.live.lounge || occ.live.market);
     return overlaySvg(
       `site-plaza${ghost ? " raising" : ""}`,
-      `<polygon class="site-curb" points="${svgPts(curb)}" />` +
+      `<polygon class="site-curb-face" points="${svgPts(face)}" />` +
+        `<polygon class="site-curb" points="${svgPts(curb)}" />` +
         `<polygon class="site-plaza-lift" points="${svgPts(lift)}" />` +
         `<polygon class="site-asphalt" points="${svgPts(deck)}" />` +
+        `<polygon class="site-asphalt-sheen" points="${svgPts(sheen)}" />` +
         marks
     );
   }
@@ -1441,14 +1459,14 @@
     if (n < 1) return "";
     const ghost = occ.raising.dc && occ.live.dc < 1;
     const posts = n >= 3 ? [-0.08, 0.3, 0.7, 1.08] : n === 2 ? [-0.12, 1.12] : [-0.18, 1.18];
-    const lift = 17.6;
+    const lift = 19.2;
     let g = "";
     posts.forEach((t) => {
-      const gx = PAD.dc0.x + PAD.neoX * t * Math.max(0, n - 1) - 1.05;
-      const gy = PAD.dc0.y + PAD.neoY * t * Math.max(0, n - 1) + 0.35;
+      const gx = PAD.dc0.x + PAD.neoX * t * Math.max(0, n - 1) - 1.15;
+      const gy = PAD.dc0.y + PAD.neoY * t * Math.max(0, n - 1) + 0.4;
       const top = gy - lift;
-      g += `<rect class="site-post" x="${(gx - 0.7).toFixed(2)}" y="${top.toFixed(2)}" width="1.4" height="${lift.toFixed(2)}" />`;
-      g += `<rect class="site-post-band" x="${(gx - 0.78).toFixed(2)}" y="${(top + lift * 0.16).toFixed(2)}" width="1.56" height="1.15" />`;
+      g += `<rect class="site-post" x="${(gx - 0.82).toFixed(2)}" y="${top.toFixed(2)}" width="1.64" height="${lift.toFixed(2)}" />`;
+      g += `<rect class="site-post-band" x="${(gx - 0.9).toFixed(2)}" y="${(top + lift * 0.15).toFixed(2)}" width="1.8" height="1.25" />`;
     });
     return overlaySvg(`site-posts${ghost ? " raising" : ""}`, g);
   }
@@ -1457,15 +1475,17 @@
     const n = occ.dc;
     if (n < 1) return "";
     const ghost = occ.raising.dc && occ.live.dc < 1;
-    const x = PAD.dc0.x - 3.8;
-    const y = PAD.dc0.y - 24.2;
-    const ne = 7.4 + Math.max(0, n - 1) * PAD.neoX;
-    const se = 7.2;
-    const thick = 1.45;
+    const x = PAD.dc0.x - 5.2;
+    const y = PAD.dc0.y - 26.4;
+    const ne = 10.4 + Math.max(0, n - 1) * PAD.neoX;
+    const se = 8.6;
+    const thick = 1.55;
     const top = isoPadQuad(x, y, ne, se);
-    const bot = top.map((p) => [p[0] + 0.28, p[1] + thick]);
+    const bot = top.map((p) => [p[0] + 0.3, p[1] + thick]);
+    const glow = isoPadQuad(x + 0.8, y + 0.6, ne - 1.6, se - 1.2);
     const inner =
       `<polygon class="site-roof-lip" points="${svgPts(bot)}" />` +
+      `<polygon class="site-roof-under" points="${svgPts(glow)}" />` +
       `<polygon class="site-roof-deck" points="${svgPts(top)}" />`;
     return overlaySvg(`site-roof${ghost ? " raising" : ""}`, inner, ` data-stalls="${n}"`);
   }
@@ -1748,15 +1768,20 @@
     for (const spec of Object.values(BUILD)) {
       const cost = selected ? deployCost(spec.id, selected) : spec.cost;
       const block = selected ? blockedReason(spec.id, selected) : "PICK A CITY";
+      const raising = selected ? raisingType(selected, spec.id) : false;
       const btn = document.createElement("button");
-      btn.className = "deploy";
+      btn.className = `deploy${raising ? " raising" : ""}${!block && !raising ? " live" : ""}`;
       btn.disabled = Boolean(block);
-      btn.title = block
-        ? `${spec.name} — ${block}`
-        : `Deploy ${spec.name} in ${target.name} · ${money(cost)} · ${spec.months} mo`;
-      const status = block
-        ? `<small class="blocked">${money(cost)} · ${block}</small>`
-        : `<small class="ready">${money(cost)} · ${spec.months} mo · READY</small>`;
+      btn.title = raising
+        ? `${spec.name} raising in ${target.name}`
+        : block
+          ? `${spec.name} — ${block}`
+          : `Deploy ${spec.name} in ${target.name} · ${money(cost)} · ${spec.months} mo`;
+      const status = raising
+        ? `<small class="ready">RAISING</small>`
+        : block
+          ? `<small class="blocked">${money(cost)} · ${block}</small>`
+          : `<small class="ready">${money(cost)} · ${spec.months} mo · READY</small>`;
       btn.innerHTML = `<img src="${spec.icon}" alt="" draggable="false"><span>${spec.name}${status}</span>`;
       btn.addEventListener("click", () => enqueue(spec.id, selected));
       grid.appendChild(btn);
