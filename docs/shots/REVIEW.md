@@ -1,4 +1,4 @@
-# Empire graphics review — rts-yard-9
+# Empire graphics review — rts-yard-10
 
 Stills: `board.png` · `yard-phoenix-start.png` · `yard-dc.png` · `yard-lounge-bess.png` · `yard-mcs-market.png`
 
@@ -10,38 +10,37 @@ Goldilocks yard scale **unchanged**: full pad + a bit of sand margin, about **76
 
 ## This pass
 
-AoE compound readability on top of the shipped Goldilocks frame:
+Victor rejected `rts-yard-9`: photoreal kit looked like toys tossed on dirt. This pass is an AoE4 / StarCraft **planned compound**, not another loose sprinkle.
 
-- Unique kit silhouettes: tall DC pedestal · dark MCS truck bay · dark-roof lounge · BESS cabinet bank · awning market.
-- Tighter asphalt island + two-tone concrete curb, stall paint, drive aisle. Shared cream DC canopy stays. Grow-on-deploy ghosts stay.
-- Western Interconnect flags (cream/red, cyan finial) and occupancy stamps scale up; raising cities amber-pulse. Deploy tray READY / RAISING / blocked is explicit.
+Fixed 5×4 build grid on the 220×131 dirt diamond. One asphalt island hugs **occupied** cells (grows as kit lands, never a loose sprinkle). Ghosts occupy the same cells as the finished kit.
 
 ```
-BACK
-     [BESS bank]
-DC DC DC DC   [LOUNGE]
-[MCS bay]     [MARKET]
-FRONT
+BACK (NW curb)
+[ BESS BESS BESS BESS BESS ]     cabinet bank, flush to rear
+[ MCS | DC  DC  DC  DC     ]     truck bay wall-in + ONE cream canopy
+[ BAY | drive aisle        ]
+[ LOUNGE pavilion | MARKET ]     civic front strip
+FRONT (SE curb)
 ```
 
 | Kit | Footprint | When it appears |
 |---|---|---|
-| Plaza | Asphalt island + curb under the compound | Ghost/solid with first kit |
-| DC | Up to 4 pedestals under one cream canopy | Ghost in the next stall; solid when complete |
-| MCS | Wider dark-roof bay at the west end | Same ghost-in-final-slot rule |
-| Lounge | Dark-roof pavilion east of the charger street | Ghost then solid |
-| BESS | Cabinet bank behind the DC row | Ghost then solid |
-| Market | Awning kiosk front-east | Ghost then solid |
+| Plaza | Fixed asphalt island + curb + painted stalls / aisle / civic walk | Ghost/solid with first kit |
+| DC | Up to 4 pedestals under one 4-stall cream canopy | Ghost in the next stall; solid when complete |
+| MCS | Dark-roof truck bay on the west flank, adjacent to the DC row | Same ghost-in-final-slot rule |
+| Lounge | Cream pavilion on the front civic strip | Ghost then solid |
+| BESS | Four cabinets on a shared plinth, flush to the rear curb | Ghost then solid |
+| Market | Awning kiosk front-east, adjacent to the lounge | Ghost then solid |
 
-Unbuilt dirt stays a survey flag.
+Unbuilt dirt stays a survey flag. Photoreal kit PNGs stay on the deploy tray. Yard silhouettes are packed RTS forms (cream / charcoal / cyan / amber), no overlapping sprites, no random rotation.
 
 ## Verdict
 
 | Bar | Grade | Evidence |
 |---|---|---|
 | Yard framing | **HOLD** | Stack still ~76% of yard (cap 800). |
-| Yard is a planned compound | **REVIEW** | Unique silhouettes + tighter curb island. Hold merge until Victor signs the stills. |
+| Yard is a planned compound | **REVIEW** | Tight grid + shared canopy + civic strip + rear BESS bank. Hold merge until Victor signs the stills. |
 | Brand | **HOLD** | Official cream/red wordmarks (`viewBox 0 0 932 310`, 1823-byte files). |
-| Map | **HOLD** | Default zoom 1. Pan / zoom / click-in / EXIT / Escape. Flags/stamps larger. |
+| Map | **HOLD** | Default zoom 1. Pan / zoom / click-in / EXIT. |
 
-Economy untouched. Night Shift untouched. Cache `rts-yard-9`.
+Economy untouched. Night Shift untouched. Cache `rts-yard-10`.

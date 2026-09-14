@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-yard-9 */
+/* empire-build: rts-yard-10 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -20,7 +20,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-yard-9";
+  const SPRITE_V = "rts-yard-10";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -41,7 +41,7 @@
     voltspan: "240 / 204",
     rival: "240 / 167",
   };
-  const KIT_V = "rts-yard-9";
+  const KIT_V = "rts-yard-10";
   const KIT_SPRITES = {
     dc: `assets/sprites/kit-dc.png?v=${KIT_V}`,
     mcs: `assets/sprites/kit-mcs.png?v=${KIT_V}`,
@@ -51,58 +51,29 @@
   };
 
   /*
-   * Zaps plaza grid — ground anchors on the 220×131 dirt diamond.
-   * left/top are the sit-down point. CSS translates each sprite by
-   * --ox/--oy so a raising ghost occupies the final stall and does
-   * not jump when the job completes.
+   * AoE / StarCraft compound on the 220×131 dirt diamond.
+   * One asphalt island, 5×4 build grid, FIXED slots. Ghosts occupy
+   * the same cells as the finished kit — no jump on complete.
    *
-   * AoE town-center read (gas-station RTS base):
+   *   BACK (NW curb)
+   *   r0  [ BESS BESS BESS BESS BESS ]   cabinet bank, flush
+   *   r1  [ MCS | DC  DC  DC  DC     ]   one cream canopy over DC
+   *   r2  [ BAY | drive aisle        ]
+   *   r3  [ LOUNGE pavilion | MARKET ]   civic front strip
+   *   FRONT (SE curb)
    *
-   *   BACK
-   *        [BESS bank]
-   *   DC DC DC DC   [LOUNGE]
-   *   [MCS bay]     [MARKET]
-   *   FRONT
-   *
-   * Unique silhouettes: tall DC pedestals under one cream canopy,
-   * MCS truck bay (dark roof) at the west end, dark-roof lounge east,
-   * BESS cabinet bank behind, awning market front-east.
-   * Asphalt island + concrete curb hugs the kit.
+   * Photoreal kit PNGs stay on the deploy tray. The yard is a packed
+   * RTS silhouette, not a loose sprinkle of product shots.
    */
-  const PAD = {
-    neoX: 7.05,
-    neoY: -6.3,
-    dc0: { x: 33.4, y: 58.6 },
-    dcW: 11.2,
-    mcs0: { x: 20.4, y: 72.2 },
-    mcsW: 26.6,
-    lounge: { x: 63.2, y: 51.0, w: 20.4 },
-    bess: { x: 51.0, y: 28.6, w: 23.2 },
-    market: { x: 64.6, y: 69.8, w: 17.2 },
-  };
-
-  function padSlot(x, y, w, z, ox, oy) {
-    return {
-      left: `${x}%`,
-      top: `${y}%`,
-      width: `${w}%`,
-      z,
-      ox,
-      oy,
-    };
-  }
-
-  const KIT_LAYOUT = {
-    dc: [0, 1, 2, 3].map((i) =>
-      padSlot(PAD.dc0.x + PAD.neoX * i, PAD.dc0.y + PAD.neoY * i, PAD.dcW, 7 - i, 50, 94)
-    ),
-    mcs: [
-      padSlot(PAD.mcs0.x, PAD.mcs0.y, PAD.mcsW, 9, 58, 94),
-      padSlot(PAD.mcs0.x - PAD.neoX, PAD.mcs0.y - PAD.neoY, PAD.mcsW, 10, 58, 94),
-    ],
-    bess: [padSlot(PAD.bess.x, PAD.bess.y, PAD.bess.w, 2, 42, 94)],
-    lounge: [padSlot(PAD.lounge.x, PAD.lounge.y, PAD.lounge.w, 6, 48, 94)],
-    market: [padSlot(PAD.market.x, PAD.market.y, PAD.market.w, 11, 58, 94)],
+  const GRID = {
+    x: 16.8,
+    y: 75.4,
+    ne: 59.2,
+    se: 25.0,
+    cols: 5,
+    rows: 4,
+    neK: 0.97,
+    seK: 1.01,
   };
   const SITE_TYPE_NAME = {
     hq: "PHOENIX HQ",
@@ -1404,119 +1375,268 @@
     );
   }
 
-  function plazaIslandHtml(occ) {
-    const any = occ.dc + occ.mcs + occ.bess + occ.lounge + occ.market;
-    if (!any) return "";
-    const civic = occ.lounge || occ.bess || occ.market;
-    const west = occ.mcs ? 11.2 : civic ? 21.8 : 28.6;
-    const south = occ.mcs || occ.market ? 80.0 : civic ? 73.4 : 68.6;
-    let ne = occ.dc ? 11 + occ.dc * 6.1 : 14;
-    if (civic) ne = Math.max(ne, 45);
-    if (occ.mcs && civic) ne = 51;
-    else if (occ.mcs) ne = Math.max(ne, 33);
-    const se = civic ? 15.6 : occ.mcs ? 13.0 : 10.2;
-    const lift = isoPadQuad(west - 0.65, south + 0.95, ne + 1.3, se + 1.05);
-    const curb = isoPadQuad(west - 2.05, south + 1.75, ne + 4.1, se + 2.4);
-    const face = isoPadQuad(west - 2.05, south + 2.55, ne + 4.1, se + 2.4);
-    const deck = isoPadQuad(west, south, ne, se);
-    const sheen = isoPadQuad(west + ne * 0.08, south - se * 0.12, ne * 0.72, se * 0.38);
-    let marks = "";
-    for (let i = 1; i <= 3; i += 1) {
-      const t = i / 4;
-      const joint = isoPadQuad(west + ne * t, south - ne * 0.97 * t * 0.08, 0.18, se);
-      marks += `<polygon class="site-joint" points="${svgPts(joint)}" />`;
-    }
+  function gridStep() {
+    return { ne: GRID.ne / GRID.cols, se: GRID.se / GRID.rows };
+  }
+
+  function gridXY(col, row) {
+    const { ne, se } = gridStep();
+    return {
+      x: GRID.x + ne * col + se * row,
+      y: GRID.y - ne * GRID.neK * col + se * GRID.seK * row,
+    };
+  }
+
+  function gridQuad(col, row, dc, dr) {
+    const o = gridXY(col, row);
+    const { ne, se } = gridStep();
+    return isoPadQuad(o.x, o.y, ne * dc, se * dr);
+  }
+
+  function liftPts(pts, h) {
+    return pts.map((p) => [p[0], p[1] - h]);
+  }
+
+  function insetQuad(pts, t) {
+    const cx = pts.reduce((s, p) => s + p[0], 0) / 4;
+    const cy = pts.reduce((s, p) => s + p[1], 0) / 4;
+    return pts.map((p) => [p[0] + (cx - p[0]) * t, p[1] + (cy - p[1]) * t]);
+  }
+
+  function ghostTone() {
+    return { top: "#3a3a44", front: "#2c2c34", side: "#22222a", edge: "rgba(0,212,245,0.7)" };
+  }
+
+  function isoPrism(foot, h, tone) {
+    const top = liftPts(foot, h);
+    const [, se, ne] = foot;
+    const [swT, seT, neT, nwT] = top;
+    let g = poly([se, seT, neT, ne], tone.side, tone.edge, 0.26);
+    g += poly([foot[0], se, seT, swT], tone.front, tone.edge, 0.26);
+    g += poly([swT, seT, neT, nwT], tone.top, tone.edge, 0.34);
+    return { g, foot, top, sw: foot[0], se, ne, nw: foot[3], swT, seT, neT, nwT };
+  }
+
+  function faceRect(prism, inset, topPad, wFrac, hFrac, fill) {
+    const spanX = prism.seT[0] - prism.swT[0];
+    const spanY = prism.se[1] - prism.swT[1];
+    const x = prism.swT[0] + spanX * inset;
+    const y = prism.swT[1] + Math.max(1.1, spanY * topPad);
+    const w = Math.max(0.7, spanX * wFrac);
+    const h = Math.max(0.8, (prism.sw[1] - prism.swT[1]) * hFrac);
+    return `<rect x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${w.toFixed(2)}" height="${h.toFixed(2)}" fill="${fill}"/>`;
+  }
+
+  function wrapBldg(cls, ghost, inner) {
+    return `<g class="site-bldg ${cls}${ghost ? " raising" : ""}">${inner}</g>`;
+  }
+
+  function occupiedBounds(occ) {
+    let c0 = 99;
+    let r0 = 99;
+    let c1 = -99;
+    let r1 = -99;
+    const add = (c, r, dc, dr) => {
+      c0 = Math.min(c0, c);
+      r0 = Math.min(r0, r);
+      c1 = Math.max(c1, c + dc);
+      r1 = Math.max(r1, r + dr);
+    };
     if (occ.dc) {
-      const ax = PAD.dc0.x - 2.4;
-      const ay = PAD.dc0.y + 4.0;
-      marks += `<polygon class="site-aisle" points="${svgPts(isoPadQuad(ax, ay, 7.2 + Math.max(0, occ.dc - 1) * PAD.neoX, 2.0))}" />`;
+      add(1, 1, occ.dc, 1);
+      add(1, 2, occ.dc, 0.45);
+    }
+    if (occ.mcs) add(0, 1, 1.05, 2);
+    if (occ.bess) add(0, 0, 5, 1.05);
+    if (occ.lounge) add(0, 3, 2.35, 1);
+    if (occ.market) add(3.05, 3, 1.95, 1);
+    if (c1 < c0) return null;
+    return { c0, r0, c1, r1 };
+  }
+
+  function plazaGeom(occ) {
+    const b = occupiedBounds(occ);
+    if (!b) return "";
+    const o = gridXY(b.c0, b.r0);
+    const { ne: nStep, se: sStep } = gridStep();
+    const ne = nStep * (b.c1 - b.c0);
+    const se = sStep * (b.r1 - b.r0);
+    const west = o.x;
+    const south = o.y;
+    const lift = isoPadQuad(west - 0.35, south + 0.55, ne + 0.7, se + 0.55);
+    const curb = isoPadQuad(west - 1.35, south + 1.15, ne + 2.7, se + 1.6);
+    const face = isoPadQuad(west - 1.35, south + 1.8, ne + 2.7, se + 1.6);
+    const deck = isoPadQuad(west, south, ne, se);
+    const sheen = isoPadQuad(west + ne * 0.08, south - se * 0.1, ne * 0.64, se * 0.28);
+    let g =
+      `<polygon class="site-curb-face" points="${svgPts(face)}" />` +
+      `<polygon class="site-curb" points="${svgPts(curb)}" />` +
+      `<polygon class="site-plaza-lift" points="${svgPts(lift)}" />` +
+      `<polygon class="site-asphalt" points="${svgPts(deck)}" />` +
+      `<polygon class="site-asphalt-sheen" points="${svgPts(sheen)}" />`;
+    const inB = (c, r) => c + 0.05 >= b.c0 && c <= b.c1 && r + 0.05 >= b.r0 && r <= b.r1;
+    for (let c = Math.ceil(b.c0); c < b.c1; c += 1) {
+      if (inB(c, b.r0)) g += `<polygon class="site-joint" points="${svgPts(gridQuad(c, b.r0, 0.04, b.r1 - b.r0))}" />`;
     }
     for (let i = 0; i < occ.dc; i += 1) {
-      const x = PAD.dc0.x + PAD.neoX * i - 2.2;
-      const y = PAD.dc0.y + PAD.neoY * i + 2.0;
-      marks += `<polygon class="site-stall" points="${svgPts(isoPadQuad(x, y, 4.0, 6.4))}" />`;
+      g += `<polygon class="site-stall" points="${svgPts(insetQuad(gridQuad(1 + i, 1, 1, 1), 0.16))}" />`;
     }
-    if (occ.mcs) {
-      marks += `<polygon class="site-stall mcs" points="${svgPts(isoPadQuad(PAD.mcs0.x - 4.4, PAD.mcs0.y + 1.5, 13.2, 7.0))}" />`;
-    }
-    if (occ.bess) {
-      marks += `<polygon class="site-equip" points="${svgPts(isoPadQuad(PAD.bess.x - 3.4, PAD.bess.y + 1.4, 11.2, 5.4))}" />`;
-    }
-    const ghost = any > 0 && !(occ.live.dc || occ.live.mcs || occ.live.bess || occ.live.lounge || occ.live.market);
-    return overlaySvg(
-      `site-plaza${ghost ? " raising" : ""}`,
-      `<polygon class="site-curb-face" points="${svgPts(face)}" />` +
-        `<polygon class="site-curb" points="${svgPts(curb)}" />` +
-        `<polygon class="site-plaza-lift" points="${svgPts(lift)}" />` +
-        `<polygon class="site-asphalt" points="${svgPts(deck)}" />` +
-        `<polygon class="site-asphalt-sheen" points="${svgPts(sheen)}" />` +
-        marks
-    );
+    if (occ.mcs) g += `<polygon class="site-stall mcs" points="${svgPts(insetQuad(gridQuad(0, 1, 1, 2), 0.1))}" />`;
+    if (occ.bess) g += `<polygon class="site-equip" points="${svgPts(insetQuad(gridQuad(0, 0, 5, 1), 0.12))}" />`;
+    if (occ.dc) g += `<polygon class="site-aisle" points="${svgPts(insetQuad(gridQuad(1, 2, occ.dc, 0.45), 0.06))}" />`;
+    if (occ.lounge || occ.market) g += `<polygon class="site-walk" points="${svgPts(insetQuad(gridQuad(occ.lounge ? 0 : 3.05, 3, occ.market && occ.lounge ? 5 : occ.market ? 1.95 : 2.35, 1), 0.08))}" />`;
+    return g;
   }
 
-  function chargerPostsHtml(occ) {
-    const n = occ.dc;
-    if (n < 1) return "";
-    const ghost = occ.raising.dc && occ.live.dc < 1;
-    const posts = n >= 3 ? [-0.08, 0.3, 0.7, 1.08] : n === 2 ? [-0.12, 1.12] : [-0.18, 1.18];
-    const lift = 19.2;
+  function drawBess(occ) {
+    if (!occ.bess) return "";
+    const ghost = occ.raising.bess;
+    const tone = ghost ? ghostTone() : SURF.charcoal;
+    const plinth = isoPrism(insetQuad(gridQuad(0.05, 0.04, 4.9, 0.92), 0.06), 1.25, ghost ? ghostTone() : SURF.concrete);
+    let g = plinth.g;
+    for (let i = 0; i < 4; i += 1) {
+      const col = 0.22 + i * 1.18;
+      const box = isoPrism(insetQuad(gridQuad(col, 0.1, 1.08, 0.78), 0.02), 17.6, tone);
+      g += box.g;
+      if (!ghost) {
+        g += `<polygon class="site-bess-cap" points="${svgPts(insetQuad(box.top, 0.16))}" />`;
+        g += faceRect(box, 0.16, 0.1, 0.2, 0.07, PAL.amber);
+        g += faceRect(box, 0.16, 0.34, 0.68, 0.11, "#141418");
+        g += faceRect(box, 0.16, 0.52, 0.68, 0.11, "#141418");
+      }
+    }
+    return wrapBldg("kit-bess", ghost, g);
+  }
+
+  function drawMcs(occ) {
+    if (!occ.mcs) return "";
+    const n = occ.mcs;
+    const live = occ.live.mcs;
+    const raising = occ.raising.mcs;
+    const bayGhost = raising && live < 1;
+    const roofTone = bayGhost ? ghostTone() : SURF.charcoal;
+    const postTone = bayGhost ? ghostTone() : SURF.steel;
+    const lift = 16.4;
+    const bay = insetQuad(gridQuad(0.02, 1.02, 0.96, 1.92), 0.02);
     let g = "";
-    posts.forEach((t) => {
-      const gx = PAD.dc0.x + PAD.neoX * t * Math.max(0, n - 1) - 1.15;
-      const gy = PAD.dc0.y + PAD.neoY * t * Math.max(0, n - 1) + 0.4;
-      const top = gy - lift;
-      g += `<rect class="site-post" x="${(gx - 0.82).toFixed(2)}" y="${top.toFixed(2)}" width="1.64" height="${lift.toFixed(2)}" />`;
-      g += `<rect class="site-post-band" x="${(gx - 0.9).toFixed(2)}" y="${(top + lift * 0.15).toFixed(2)}" width="1.8" height="1.25" />`;
+    [
+      [0.08, 1.1],
+      [0.68, 2.58],
+    ].forEach(([c, r]) => {
+      const p = isoPrism(insetQuad(gridQuad(c, r, 0.24, 0.24), 0), lift, postTone);
+      g += p.g;
+      if (!bayGhost) g += faceRect(p, 0.04, 0.2, 0.92, 0.08, PAL.red);
     });
-    return overlaySvg(`site-posts${ghost ? " raising" : ""}`, g);
-  }
-
-  function chargerRoofHtml(occ) {
-    const n = occ.dc;
-    if (n < 1) return "";
-    const ghost = occ.raising.dc && occ.live.dc < 1;
-    const x = PAD.dc0.x - 5.2;
-    const y = PAD.dc0.y - 26.4;
-    const ne = 10.4 + Math.max(0, n - 1) * PAD.neoX;
-    const se = 8.6;
-    const thick = 1.55;
-    const top = isoPadQuad(x, y, ne, se);
-    const bot = top.map((p) => [p[0] + 0.3, p[1] + thick]);
-    const glow = isoPadQuad(x + 0.8, y + 0.6, ne - 1.6, se - 1.2);
-    const inner =
-      `<polygon class="site-roof-lip" points="${svgPts(bot)}" />` +
-      `<polygon class="site-roof-under" points="${svgPts(glow)}" />` +
-      `<polygon class="site-roof-deck" points="${svgPts(top)}" />`;
-    return overlaySvg(`site-roof${ghost ? " raising" : ""}`, inner, ` data-stalls="${n}"`);
-  }
-
-  function kitLayer(type, live, raising) {
-    const slots = KIT_LAYOUT[type] || [];
-    const src = KIT_SPRITES[type];
-    if (!src || !slots.length) return "";
-    const n = Math.min(slots.length, Math.max(0, live) + (raising ? 1 : 0));
-    let html = "";
     for (let i = 0; i < n; i += 1) {
-      const slot = slots[i];
       const ghost = raising && i >= live;
-      html += `<img class="site-kit kit-${type}${ghost ? " raising" : ""}" src="${src}" alt="" draggable="false" data-kit="${type}" data-slot="${i}" data-state="${ghost ? "raising" : "live"}" style="left:${slot.left};top:${slot.top};width:${slot.width};z-index:${slot.z};--ox:${slot.ox}%;--oy:${slot.oy}%">`;
+      const tone = ghost ? ghostTone() : SURF.charcoal;
+      const foot = insetQuad(gridQuad(0.16, 1.22 + i * 0.7, 0.68, 0.52), 0.02);
+      const body = isoPrism(foot, 13.2, tone);
+      let unit = body.g;
+      if (!ghost) {
+        unit += faceRect(body, 0.14, 0.12, 0.7, 0.46, "#1a1a20");
+        unit += faceRect(body, 0.18, 0.16, 0.6, 0.1, PAL.amber);
+        unit += `<polygon class="site-dc-ring" points="${svgPts(insetQuad(foot, -0.1))}" />`;
+      }
+      g += wrapBldg("kit-mcs-unit", ghost, unit);
     }
-    return html;
+    const roof = isoPrism(liftPts(bay, lift), 1.9, roofTone);
+    g += roof.g;
+    if (!bayGhost) g += `<polygon class="site-mcs-edge" points="${svgPts(insetQuad(roof.top, 0.1))}" />`;
+    return wrapBldg("kit-mcs", bayGhost, g);
+  }
+
+  function drawDcRow(occ) {
+    if (occ.dc < 1) return "";
+    const n = occ.dc;
+    const live = occ.live.dc;
+    const raising = occ.raising.dc;
+    const roofGhost = raising && live < 1;
+    const lift = 20.2;
+    const span = n;
+    let g = "";
+    for (let i = 0; i <= span; i += 1) {
+      const foot = insetQuad(gridQuad(0.96 + i, 1.04, 0.2, 0.22), 0);
+      const post = isoPrism(foot, lift, roofGhost ? ghostTone() : SURF.alum);
+      g += post.g;
+      if (!roofGhost) g += faceRect(post, 0.02, 0.18, 0.96, 0.07, PAL.red);
+    }
+    for (let i = 0; i < n; i += 1) {
+      const ghost = raising && i >= live;
+      const tone = ghost ? ghostTone() : SURF.charcoal;
+      const cap = ghost ? ghostTone() : SURF.alum;
+      const foot = insetQuad(gridQuad(1.22 + i, 1.22, 0.5, 0.5), 0);
+      const body = isoPrism(foot, 18.8, tone);
+      const hat = isoPrism(liftPts(insetQuad(foot, 0.1), 18.8), 1.05, cap);
+      let unit = body.g + hat.g;
+      if (!ghost) {
+        unit += faceRect(body, 0.1, 0.1, 0.78, 0.5, "#121217");
+        unit += faceRect(body, 0.14, 0.14, 0.68, 0.1, PAL.amber);
+        unit += faceRect(body, 0.18, 0.28, 0.22, 0.08, PAL.red);
+        unit += `<polygon class="site-dc-ring" points="${svgPts(insetQuad(foot, -0.12))}" />`;
+      }
+      g += wrapBldg("kit-dc-unit", ghost, unit);
+    }
+    const street = insetQuad(gridQuad(1, 1.04, span, 0.86), -0.02);
+    const roof = isoPrism(liftPts(street, lift), 2.05, roofGhost ? ghostTone() : SURF.cream);
+    g += roof.g;
+    if (!roofGhost) {
+      g += `<polygon class="site-roof-deck" points="${svgPts(roof.top)}" />`;
+      g += `<polygon class="site-roof-under" points="${svgPts(insetQuad(roof.top, 0.14))}" />`;
+    }
+    return wrapBldg("kit-dc", roofGhost, g);
+  }
+
+  function drawLounge(occ) {
+    if (!occ.lounge) return "";
+    const ghost = occ.raising.lounge;
+    const tone = ghost ? ghostTone() : SURF.cream;
+    const roofTone = ghost ? ghostTone() : SURF.cream;
+    const foot = insetQuad(gridQuad(0.08, 3.04, 2.2, 0.9), 0.02);
+    const body = isoPrism(foot, 13.6, tone);
+    let g = body.g;
+    if (!ghost) {
+      g += faceRect(body, 0.08, 0.16, 0.34, 0.4, "#1a2830");
+      g += faceRect(body, 0.5, 0.16, 0.34, 0.4, "#1a2830");
+      g += faceRect(body, 0.86, 0.2, 0.07, 0.16, PAL.red);
+    }
+    const roof = isoPrism(liftPts(insetQuad(foot, -0.05), 13.6), 1.85, roofTone);
+    g += roof.g;
+    if (!ghost) g += `<polygon class="site-lounge-edge" points="${svgPts(insetQuad(roof.top, 0.1))}" />`;
+    return wrapBldg("kit-lounge", ghost, g);
+  }
+
+  function drawMarket(occ) {
+    if (!occ.market) return "";
+    const ghost = occ.raising.market;
+    const tone = ghost ? ghostTone() : SURF.charcoal;
+    const awn = ghost ? ghostTone() : SURF.cream;
+    const foot = insetQuad(gridQuad(3.12, 3.06, 1.78, 0.88), 0.02);
+    const body = isoPrism(foot, 11.2, tone);
+    let g = body.g;
+    if (!ghost) {
+      g += faceRect(body, 0.12, 0.14, 0.5, 0.38, "#141c20");
+      g += faceRect(body, 0.16, 0.34, 0.42, 0.09, PAL.amber);
+      g += faceRect(body, 0.76, 0.2, 0.1, 0.16, PAL.red);
+    }
+    const awning = isoPrism(liftPts(insetQuad(foot, -0.06), 11.2), 1.7, awn);
+    g += awning.g;
+    return wrapBldg("kit-market", ghost, g);
   }
 
   function kitLayersHtml(city) {
     const occ = kitOccupancy(city);
-    const site = occ.live;
-    return (
-      plazaIslandHtml(occ) +
-      chargerPostsHtml(occ) +
-      kitLayer("bess", site.bess, occ.raising.bess) +
-      kitLayer("lounge", site.lounge, occ.raising.lounge) +
-      kitLayer("dc", site.dc, occ.raising.dc) +
-      chargerRoofHtml(occ) +
-      kitLayer("mcs", site.mcs, occ.raising.mcs) +
-      kitLayer("market", site.market, occ.raising.market)
-    );
+    const any = occ.dc + occ.mcs + occ.bess + occ.lounge + occ.market;
+    if (!any) return "";
+    const allGhost = !(occ.live.dc || occ.live.mcs || occ.live.bess || occ.live.lounge || occ.live.market);
+    const inner =
+      plazaGeom(occ) +
+      drawBess(occ) +
+      drawMcs(occ) +
+      drawDcRow(occ) +
+      drawLounge(occ) +
+      drawMarket(occ);
+    return overlaySvg(`site-compound${allGhost ? " raising" : ""}`, inner);
   }
 
   function siteRaisingBanner(cityId) {
