@@ -1,4 +1,4 @@
-/* empire-build: rts-yard-9 */
+/* empire-build: rts-yard-10 */
 :root {
   --red: #e63225;
   --charcoal: #1e1e24;
@@ -634,8 +634,9 @@ button {
   height: 100%;
 }
 
-.site-plaza {
-  z-index: 1;
+.site-plaza,
+.site-compound {
+  z-index: 2;
 }
 
 .site-posts {
@@ -644,6 +645,35 @@ button {
 
 .site-roof {
   z-index: 8;
+}
+
+.site-bldg.raising {
+  opacity: 0.58;
+  animation: ghost-pulse 1.6s ease-in-out infinite;
+}
+
+.site-walk {
+  fill: rgba(245, 240, 232, 0.08);
+  stroke: rgba(245, 240, 232, 0.22);
+  stroke-width: 0.16;
+}
+
+.site-bess-cap {
+  fill: #00d4f5;
+  opacity: 0.85;
+}
+
+.site-mcs-edge,
+.site-lounge-edge {
+  fill: none;
+  stroke: #00d4f5;
+  stroke-width: 0.35;
+}
+
+.site-dc-ring {
+  fill: none;
+  stroke: #00d4f5;
+  stroke-width: 0.28;
 }
 
 .site-curb-face {
@@ -688,9 +718,9 @@ button {
 }
 
 .site-stall {
-  fill: rgba(18, 18, 22, 0.22);
-  stroke: rgba(245, 240, 232, 0.38);
-  stroke-width: 0.22;
+  fill: rgba(18, 18, 22, 0.28);
+  stroke: rgba(245, 240, 232, 0.55);
+  stroke-width: 0.28;
 }
 
 .site-stall.mcs {
