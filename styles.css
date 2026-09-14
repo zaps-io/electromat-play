@@ -647,15 +647,15 @@ button {
 }
 
 .site-curb-face {
-  fill: #a88854;
-  stroke: #6a502c;
-  stroke-width: 0.28;
+  fill: #6a5840;
+  stroke: #4a3c28;
+  stroke-width: 0.3;
 }
 
 .site-curb {
-  fill: #e0d0a8;
-  stroke: #8a6a3c;
-  stroke-width: 0.45;
+  fill: #efe6d4;
+  stroke: #9a8460;
+  stroke-width: 0.55;
 }
 
 .site-plaza-lift {
@@ -666,8 +666,8 @@ button {
 
 .site-asphalt {
   fill: #3c3c44;
-  stroke: #2a2a32;
-  stroke-width: 0.35;
+  stroke: #5a5a62;
+  stroke-width: 0.4;
 }
 
 .site-asphalt-sheen {
