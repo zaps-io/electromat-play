@@ -1545,7 +1545,7 @@
     if (!text) return "";
     const q = gridQuad(c, r, 1, 1);
     const cx = (q[0][0] + q[1][0] + q[2][0] + q[3][0]) / 4;
-    const cy = Math.min(q[0][1], q[1][1], q[2][1], q[3][1]) + 1.2;
+    const cy = Math.min(q[0][1], q[1][1], q[2][1], q[3][1]) - 1.6;
     return `<text class="site-ghost-label" x="${cx.toFixed(2)}" y="${cy.toFixed(2)}" text-anchor="middle">${text}</text>`;
   }
 
