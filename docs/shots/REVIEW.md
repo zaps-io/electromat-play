@@ -1,18 +1,21 @@
-# Empire graphics review — rts-yard-11
+# Empire graphics review — rts-yard-12
 
-Stills: `board.png` · `yard-empty.png` · `yard-phoenix-start.png` · `yard-dc.png` · `yard-dc2.png` · `yard-dc4.png` · `yard-mcs.png` · `yard-lounge-bess.png` · `yard-mcs-market.png`
+Stills: `board.png` · `yard-empty.png` · `yard-dc1.png` · `yard-dc2-raising.png` · `yard-dc4.png` · `yard-full.png`
 
-Replay: `?shot=empty` · `?shot=start` · `?shot=dc` · `?shot=dc2` · `?shot=dc4` · `?shot=mcs` · `?shot=lounge-bess` · `?shot=mcs-market` / `?shot=full`. Showcase board: `?showcase=1`.
+Replay: `?shot=empty` · `?shot=dc` / `?shot=dc1` · `?shot=dc2-raising` · `?shot=dc4` · `?shot=full` · `?shot=start` · `?showcase=1`.
+
+## Playtest fix
+
+- **City picks** use nearest-stamp hit testing in map units (radius 70). Phoenix’s HQ photo no longer steals Flagstaff / Tucson. Zoom and pan do not change who wins.
+- **Calendar starts PAUSED.** 1× is ~5.6s / month. PAUSE is amber fill, 1× cyan, 4× red, plus a PAUSED / n× LIVE readout.
+- **Raising DCs** each own a chess cell: dashed cyan reserve, `DC 1` / `DC 2` labels, no shared ghost canopy.
+- **1280×800:** inspector queue + site stats scroll; event log stays docked under the yard (including while a site is open).
 
 ## Framing
 
 Goldilocks yard scale **unchanged**: full pad + a bit of sand margin, about **76% of the yard box** (cap 800).
 
-## This pass
-
-Victor: the packed compound still does not layout well **while adding pieces**. Think chessboard / Age of Empires / StarCraft — not a mega-block that appears all at once, and not a bounding-box lot.
-
-Fixed **square** 5×4 build grid (cell NE step == SE step). Kit lands on permanent integer cells. Ghosts occupy the same cells as the finished piece. Asphalt is a **tile union** of occupied + reserved cells — grows cell by cell, no giant empty rectangle, no sand gaps between sibling DCs.
+## Grow grid (hold)
 
 ```
         c0     c1     c2     c3     c4
@@ -22,24 +25,15 @@ Fixed **square** 5×4 build grid (cell NE step == SE step). Kit lands on permane
    r3  LNG    LNG    MKT    MKT     —      civic
 ```
 
-| Kit | Cells | Grow rule |
-|---|---|---|
-| DC | one cell `(1+i,1)` | Next empty stall left-to-right under one shared cream canopy (seams at cell edges). Drive rank stays dirt so each DC is a square. |
-| MCS | `(0,1)+(0,2)` | Truck bay wall-in on the west flank, same two cells forever |
-| BESS | `(0..3,0)` | Four cabinets, one per cell, shared only as contiguous tiles |
-| Lounge | `(0,3)+(1,3)` | Pavilion sits on two civic tiles |
-| Market | `(2,3)+(3,3)` | Awning kiosk on two civic tiles |
-| Plaza | Occupied + reserved tiles only | Checkerboard etch + stall paint. Faint 5×4 board under kit |
-
-Pieces sit **in** their squares (tile visible around the silhouette). No random rotation. Photoreal kit PNGs stay on the deploy tray.
-
 ## Verdict
 
 | Bar | Grade | Evidence |
 |---|---|---|
-| Incremental grow is a chessboard | **REVIEW** | 1 DC = one stall + aisle. 2–4 DC fill the next cells. MCS wall-ins. Civic/BESS snap to reserved ranks. |
+| Flagstaff after Phoenix | **FIX** | Distance pick, not the HQ rectangle |
+| Explore without the year racing | **FIX** | Boot paused; 1× is slow |
+| Two raising DCs | **FIX** | Two reserved cells, two labels |
+| 1280×800 HUD | **FIX** | Scroll dock for stats; log stays |
 | Yard framing | **HOLD** | Stack still ~76% of yard (cap 800). |
-| Brand | **HOLD** | Official cream/red wordmarks (`viewBox 0 0 932 310`, 1823-byte files). |
-| Map | **HOLD** | Default zoom 1. Pan / zoom / click-in / EXIT. |
+| Brand | **HOLD** | Official cream/red wordmarks. |
 
-Economy untouched. Night Shift untouched. Cache `rts-yard-11`.
+Economy untouched. Night Shift untouched. Cache `rts-yard-12`.

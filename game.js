@@ -1,10 +1,12 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-yard-11 */
+/* empire-build: rts-yard-12 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
   const YOU = "zaps";
-  const TICK = { 0: 0, 1: 1800, 2: 900, 4: 450 };
+  // 1× is read-the-UI pace (~5.6s / month). Start paused so explore is free.
+  const TICK = { 0: 0, 1: 5600, 2: 2400, 4: 1000 };
+  const CITY_HIT_R = 70;
   const MAX_CREWS = 3;
   const PAL = {
     red: "#E63225",
@@ -20,7 +22,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-yard-11";
+  const SPRITE_V = "rts-yard-12";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -41,7 +43,7 @@
     voltspan: "240 / 204",
     rival: "240 / 167",
   };
-  const KIT_V = "rts-yard-11";
+  const KIT_V = "rts-yard-12";
   const KIT_SPRITES = {
     dc: `assets/sprites/kit-dc.png?v=${KIT_V}`,
     mcs: `assets/sprites/kit-mcs.png?v=${KIT_V}`,
@@ -326,7 +328,7 @@
     return {
       month: 1,
       cash: 2400000,
-      speed: 1,
+      speed: 0,
       log: ["Phoenix HQ online. Two DC stalls live. The dirt still outnumbers you."],
       queue: [],
       cities,
@@ -464,8 +466,12 @@
     return state.queue.filter((q) => q.city === cityId && q.faction === faction && q.left > 0);
   }
 
+  function raisingCount(cityId, type, faction = YOU) {
+    return state.queue.filter((q) => q.city === cityId && q.type === type && q.faction === faction && q.left > 0).length;
+  }
+
   function raisingType(cityId, type, faction = YOU) {
-    return state.queue.some((q) => q.city === cityId && q.type === type && q.faction === faction && q.left > 0);
+    return raisingCount(cityId, type, faction) > 0;
   }
 
   function deployCost(type, cityId) {
@@ -770,7 +776,6 @@
     state = freshState();
     selected = "phoenix";
     lastNet = 0;
-    setSpeed(1);
     showBoard();
     bindMapControls();
     renderAll();
@@ -788,6 +793,12 @@
       b.classList.toggle("active", on);
       b.setAttribute("aria-pressed", on ? "true" : "false");
     });
+    $("board-screen")?.classList.toggle("is-paused", v === 0);
+    const read = $("speed-readout");
+    if (read) {
+      read.textContent = v === 0 ? "PAUSED" : `${v}× LIVE`;
+      read.dataset.speed = String(v);
+    }
   }
 
   function showScreen(id) {
@@ -796,7 +807,7 @@
 
   function showBoard() {
     showScreen("board-screen");
-    setSpeed(state.speed || 1);
+    setSpeed(0);
   }
 
   function showModal({ kicker, title, body, actions }) {
@@ -1302,11 +1313,13 @@
       const raising = jobsFor(meta.id).length > 0;
       const tier = compoundTier(youSite);
       btn.className = `city-node ${occ} ${selected === meta.id ? "selected" : ""} ${raising ? "raising" : ""} ${siteView === meta.id ? "site-focus" : ""} tier-${tier}`;
+      btn.dataset.city = meta.id;
       btn.style.left = `${(meta.x / 1200) * 100}%`;
       btn.style.top = `${(meta.y / 800) * 100}%`;
       btn.title = `${meta.name}, ${meta.state}`;
+      btn.tabIndex = 0;
       btn.addEventListener("click", (ev) => {
-        ev.stopPropagation();
+        ev.preventDefault();
         enterSite(meta.id);
       });
       const icon = document.createElement("div");
@@ -1360,15 +1373,15 @@
   function kitOccupancy(city) {
     const site = city.sites[YOU];
     const raising = {
-      dc: raisingType(city.id, "dc"),
-      mcs: raisingType(city.id, "mcs"),
-      bess: raisingType(city.id, "bess") && site.bess < 1,
-      lounge: raisingType(city.id, "lounge") && site.lounge < 1,
-      market: raisingType(city.id, "market") && site.market < 1,
+      dc: raisingCount(city.id, "dc"),
+      mcs: raisingCount(city.id, "mcs"),
+      bess: site.bess < 1 ? raisingCount(city.id, "bess") : 0,
+      lounge: site.lounge < 1 ? raisingCount(city.id, "lounge") : 0,
+      market: site.market < 1 ? raisingCount(city.id, "market") : 0,
     };
     return {
-      dc: Math.min(4, Math.max(0, site.dc) + (raising.dc ? 1 : 0)),
-      mcs: Math.min(2, Math.max(0, site.mcs) + (raising.mcs ? 1 : 0)),
+      dc: Math.min(4, Math.max(0, site.dc) + raising.dc),
+      mcs: Math.min(2, Math.max(0, site.mcs) + raising.mcs),
       bess: Math.min(1, Math.max(0, site.bess) + (raising.bess ? 1 : 0)),
       lounge: Math.min(1, Math.max(0, site.lounge) + (raising.lounge ? 1 : 0)),
       market: Math.min(1, Math.max(0, site.market) + (raising.market ? 1 : 0)),
@@ -1431,7 +1444,7 @@
   }
 
   function ghostTone() {
-    return { top: "#3a3a44", front: "#2c2c34", side: "#22222a", edge: "rgba(0,212,245,0.7)" };
+    return { top: "#5a6e78", front: "#3e5058", side: "#324048", edge: "rgba(0,212,245,0.95)" };
   }
 
   function isoPrism(foot, h, tone) {
@@ -1502,6 +1515,55 @@
     return g;
   }
 
+  function reservedMark(occ, c, r) {
+    for (let i = occ.live.dc; i < occ.dc; i += 1) {
+      const slot = SLOTS.dc[i];
+      if (slot && slot.c === c && slot.r === r) return { kind: "dc", label: `DC ${i + 1}` };
+    }
+    if (occ.raising.mcs) {
+      const live = occ.live.mcs;
+      for (let i = 0; i < SLOTS.mcs.length; i += 1) {
+        const slot = SLOTS.mcs[i];
+        if (i >= live && slot.c === c && slot.r === r) {
+          return { kind: "mcs", label: i === live ? "MCS" : "" };
+        }
+      }
+    }
+    if (occ.raising.bess && SLOTS.bess.some((s) => s.c === c && s.r === r)) {
+      return { kind: "bess", label: c === SLOTS.bess[0].c && r === SLOTS.bess[0].r ? "BESS" : "" };
+    }
+    if (occ.raising.lounge && SLOTS.lounge.some((s) => s.c === c && s.r === r)) {
+      return { kind: "lounge", label: c === SLOTS.lounge[0].c ? "LOUNGE" : "" };
+    }
+    if (occ.raising.market && SLOTS.market.some((s) => s.c === c && s.r === r)) {
+      return { kind: "market", label: c === SLOTS.market[0].c ? "MARKET" : "" };
+    }
+    return null;
+  }
+
+  function cellCaption(c, r, text) {
+    if (!text) return "";
+    const q = gridQuad(c, r, 1, 1);
+    const cx = (q[0][0] + q[1][0] + q[2][0] + q[3][0]) / 4;
+    const cy = Math.min(q[0][1], q[1][1], q[2][1], q[3][1]) - 1.6;
+    return `<text class="site-ghost-label" x="${cx.toFixed(2)}" y="${cy.toFixed(2)}" text-anchor="middle">${text}</text>`;
+  }
+
+  function ghostCaptions(occ) {
+    let g = "";
+    for (let i = occ.live.dc; i < occ.dc; i += 1) {
+      const slot = SLOTS.dc[i];
+      if (slot) g += cellCaption(slot.c, slot.r, `DC ${i + 1}`);
+    }
+    if (occ.raising.mcs && occ.live.mcs < occ.mcs) {
+      g += cellCaption(SLOTS.mcs[0].c, SLOTS.mcs[0].r, "MCS");
+    }
+    if (occ.raising.bess) g += cellCaption(SLOTS.bess[1].c, SLOTS.bess[1].r, "BESS");
+    if (occ.raising.lounge) g += cellCaption(SLOTS.lounge[0].c, SLOTS.lounge[0].r, "LOUNGE");
+    if (occ.raising.market) g += cellCaption(SLOTS.market[0].c, SLOTS.market[0].r, "MARKET");
+    return g;
+  }
+
   function plazaGeom(occ) {
     const tiles = occupiedTiles(occ);
     if (!tiles.length) return "";
@@ -1510,12 +1572,17 @@
     let curbs = "";
     let decks = "";
     let paint = "";
+    let reserve = "";
     for (const { c, r, kind } of ordered) {
       const quad = gridQuad(c, r, 1, 1);
       const odd = (c + r) % 2;
+      const mark = reservedMark(occ, c, r);
       lifts += `<polygon class="site-plaza-lift" points="${svgPts(insetQuad(quad, -0.02))}" />`;
       curbs += `<polygon class="site-tile-curb" points="${svgPts(insetQuad(quad, 0.03))}" />`;
-      decks += `<polygon class="site-tile${odd ? " odd" : ""} kind-${kind}" points="${svgPts(insetQuad(quad, 0.11))}" />`;
+      decks += `<polygon class="site-tile${odd ? " odd" : ""} kind-${kind}${mark ? " reserved" : ""}" points="${svgPts(insetQuad(quad, 0.11))}" />`;
+      if (mark) {
+        reserve += `<polygon class="site-tile-reserve" points="${svgPts(insetQuad(quad, 0.04))}" />`;
+      }
       if (kind === "dc") paint += stallPaint(c, r);
       if (kind === "mcs") {
         paint += `<polygon class="site-stall mcs" points="${svgPts(insetQuad(quad, 0.2))}" />`;
@@ -1527,7 +1594,7 @@
         paint += `<polygon class="site-walk" points="${svgPts(insetQuad(quad, 0.2))}" />`;
       }
     }
-    return boardEtch() + lifts + curbs + decks + paint;
+    return boardEtch() + lifts + curbs + decks + paint + reserve;
   }
 
   function drawBess(occ) {
@@ -1587,49 +1654,56 @@
     return wrapBldg("kit-mcs", bayGhost, g);
   }
 
+  function drawDcUnit(slot, ghost) {
+    const tone = ghost ? ghostTone() : SURF.charcoal;
+    const cap = ghost ? ghostTone() : SURF.alum;
+    const foot = insetQuad(gridQuad(slot.c + 0.26, slot.r + 0.16, 0.48, 0.36), 0);
+    const body = isoPrism(foot, ghost ? 8.2 : 7.8, tone);
+    const hat = isoPrism(liftPts(insetQuad(foot, 0.1), ghost ? 8.2 : 7.8), ghost ? 1.05 : 0.7, cap);
+    let unit = body.g + hat.g;
+    if (ghost) {
+      const shade = insetQuad(gridQuad(slot.c + 0.14, slot.r + 0.1, 0.72, 0.46), 0);
+      const roof = isoPrism(liftPts(shade, 10.4), 1.05, ghostTone());
+      unit += roof.g;
+      unit += `<polygon class="site-dc-ring" points="${svgPts(insetQuad(foot, -0.14))}" />`;
+    } else {
+      unit += faceRect(body, 0.1, 0.1, 0.78, 0.5, "#121217");
+      unit += faceRect(body, 0.14, 0.14, 0.68, 0.1, PAL.amber);
+      unit += faceRect(body, 0.18, 0.28, 0.22, 0.08, PAL.red);
+      unit += `<polygon class="site-dc-ring" points="${svgPts(insetQuad(foot, -0.12))}" />`;
+    }
+    return wrapBldg("kit-dc-unit", ghost, unit);
+  }
+
   function drawDcRow(occ) {
     if (occ.dc < 1) return "";
     const n = occ.dc;
     const live = occ.live.dc;
-    const raising = occ.raising.dc;
-    const roofGhost = raising && live < 1;
     const lift = 10.6;
     let g = "";
-    for (let i = 0; i <= n; i += 1) {
-      const foot = insetQuad(gridQuad(1 + i - 0.05, 1.08, 0.1, 0.1), 0);
-      const post = isoPrism(foot, lift, roofGhost ? ghostTone() : SURF.alum);
-      g += post.g;
-      if (!roofGhost) g += faceRect(post, 0.02, 0.18, 0.96, 0.08, PAL.red);
-    }
     for (let i = 0; i < n; i += 1) {
       const slot = SLOTS.dc[i];
-      const ghost = raising && i >= live;
-      const tone = ghost ? ghostTone() : SURF.charcoal;
-      const cap = ghost ? ghostTone() : SURF.alum;
-      const foot = insetQuad(gridQuad(slot.c + 0.28, slot.r + 0.14, 0.44, 0.34), 0);
-      const body = isoPrism(foot, 7.8, tone);
-      const hat = isoPrism(liftPts(insetQuad(foot, 0.12), 7.8), 0.7, cap);
-      let unit = body.g + hat.g;
-      if (!ghost) {
-        unit += faceRect(body, 0.1, 0.1, 0.78, 0.5, "#121217");
-        unit += faceRect(body, 0.14, 0.14, 0.68, 0.1, PAL.amber);
-        unit += faceRect(body, 0.18, 0.28, 0.22, 0.08, PAL.red);
-        unit += `<polygon class="site-dc-ring" points="${svgPts(insetQuad(foot, -0.12))}" />`;
-      }
-      g += wrapBldg("kit-dc-unit", ghost, unit);
+      if (!slot) continue;
+      g += drawDcUnit(slot, i >= live);
     }
-    const street = insetQuad(gridQuad(1.08, 1.08, n - 0.16, 0.52), 0);
-    const roof = isoPrism(liftPts(street, lift), 1.35, roofGhost ? ghostTone() : SURF.cream);
-    g += roof.g;
-    if (!roofGhost) {
+    if (live >= 1) {
+      for (let i = 0; i <= live; i += 1) {
+        const foot = insetQuad(gridQuad(1 + i - 0.05, 1.08, 0.1, 0.1), 0);
+        const post = isoPrism(foot, lift, SURF.alum);
+        g += post.g;
+        g += faceRect(post, 0.02, 0.18, 0.96, 0.08, PAL.red);
+      }
+      const street = insetQuad(gridQuad(1.08, 1.08, live - 0.16, 0.52), 0);
+      const roof = isoPrism(liftPts(street, lift), 1.35, SURF.cream);
+      g += roof.g;
       g += `<polygon class="site-roof-deck" points="${svgPts(roof.top)}" />`;
       g += `<polygon class="site-roof-under" points="${svgPts(insetQuad(roof.top, 0.14))}" />`;
-      for (let i = 1; i < n; i += 1) {
+      for (let i = 1; i < live; i += 1) {
         const seam = insetQuad(gridQuad(1 + i - 0.015, 1.06, 0.03, 0.68), 0);
         g += `<polygon class="site-roof-seam" points="${svgPts(liftPts(seam, lift + 1.35))}" />`;
       }
     }
-    return wrapBldg("kit-dc", roofGhost, g);
+    return wrapBldg("kit-dc", false, g);
   }
 
   function drawLounge(occ) {
@@ -1673,21 +1747,27 @@
     const occ = kitOccupancy(city);
     const any = occ.dc + occ.mcs + occ.bess + occ.lounge + occ.market;
     if (!any) return "";
-    const allGhost = !(occ.live.dc || occ.live.mcs || occ.live.bess || occ.live.lounge || occ.live.market);
     const inner =
       plazaGeom(occ) +
       drawBess(occ) +
       drawMcs(occ) +
       drawDcRow(occ) +
       drawLounge(occ) +
-      drawMarket(occ);
-    return overlaySvg(`site-compound${allGhost ? " raising" : ""}`, inner);
+      drawMarket(occ) +
+      ghostCaptions(occ);
+    return overlaySvg("site-compound", inner);
   }
 
   function siteRaisingBanner(cityId) {
     const mine = jobsFor(cityId);
     if (!mine.length) return "";
-    const bits = mine.map((j) => `${BUILD[j.type].name} ${j.left} MO`);
+    const live = state.cities[cityId].sites[YOU];
+    const seen = {};
+    const bits = mine.map((j) => {
+      seen[j.type] = (seen[j.type] || 0) + 1;
+      if (j.type === "dc") return `DC ${ (live.dc || 0) + seen.dc } ${j.left} MO`;
+      return `${BUILD[j.type].name} ${j.left} MO`;
+    });
     return `<div class="site-raising">${bits.join(" · ")}</div>`;
   }
 
@@ -1811,13 +1891,39 @@
     renderAll();
   }
 
+  function mapPointFromClient(clientX, clientY) {
+    const frame = $("map-frame");
+    if (!frame) return null;
+    const rect = frame.getBoundingClientRect();
+    if (rect.width < 8 || rect.height < 8) return null;
+    return {
+      x: ((clientX - rect.left) / rect.width) * 1200,
+      y: ((clientY - rect.top) / rect.height) * 800,
+    };
+  }
+
+  function cityAtClient(clientX, clientY) {
+    const pt = mapPointFromClient(clientX, clientY);
+    if (!pt) return null;
+    let best = null;
+    let bestD = Infinity;
+    for (const c of CITIES) {
+      const d = Math.hypot(c.x - pt.x, c.y - pt.y);
+      if (d < bestD) {
+        bestD = d;
+        best = c;
+      }
+    }
+    return best && bestD <= CITY_HIT_R ? best : null;
+  }
+
   function bindMapControls() {
     const stage = $("map-stage");
     if (!stage || stage.dataset.bound) return;
     stage.dataset.bound = "1";
     stage.addEventListener("pointerdown", (e) => {
       if (e.button !== 0) return;
-      if (e.target.closest(".map-tools") || e.target.closest(".site-overlay") || e.target.closest(".city-node")) return;
+      if (e.target.closest(".map-tools") || e.target.closest(".site-overlay")) return;
       mapDrag = { id: e.pointerId, x: e.clientX, y: e.clientY, ox: mapCam.x, oy: mapCam.y, moved: false };
       stage.setPointerCapture(e.pointerId);
       stage.classList.add("panning");
@@ -1840,7 +1946,15 @@
       stage.classList.remove("panning");
       if (lastPan) e.preventDefault();
     };
-    stage.addEventListener("pointerup", endDrag);
+    stage.addEventListener("pointerup", (e) => {
+      const dragged = mapDrag && mapDrag.id === e.pointerId && mapDrag.moved;
+      endDrag(e);
+      if (dragged || lastPan) return;
+      if (siteView) return;
+      if (e.target.closest(".map-tools") || e.target.closest(".site-overlay")) return;
+      const city = cityAtClient(e.clientX, e.clientY);
+      if (city) enterSite(city.id);
+    });
     stage.addEventListener("pointercancel", endDrag);
     stage.addEventListener("wheel", (e) => {
       e.preventDefault();
@@ -1933,17 +2047,17 @@
     for (const spec of Object.values(BUILD)) {
       const cost = selected ? deployCost(spec.id, selected) : spec.cost;
       const block = selected ? blockedReason(spec.id, selected) : "PICK A CITY";
-      const raising = selected ? raisingType(selected, spec.id) : false;
+      const raisingN = selected ? raisingCount(selected, spec.id) : 0;
       const btn = document.createElement("button");
-      btn.className = `deploy${raising ? " raising" : ""}${!block && !raising ? " live" : ""}`;
+      btn.className = `deploy${raisingN ? " raising" : ""}${!block && !raisingN ? " live" : ""}`;
       btn.disabled = Boolean(block);
-      btn.title = raising
-        ? `${spec.name} raising in ${target.name}`
+      btn.title = raisingN
+        ? `${spec.name} raising ×${raisingN} in ${target.name}`
         : block
           ? `${spec.name} — ${block}`
           : `Deploy ${spec.name} in ${target.name} · ${money(cost)} · ${spec.months} mo`;
-      const status = raising
-        ? `<small class="ready">RAISING</small>`
+      const status = raisingN
+        ? `<small class="ready">RAISING${raisingN > 1 ? ` ×${raisingN}` : ""}</small>`
         : block
           ? `<small class="blocked">${money(cost)} · ${block}</small>`
           : `<small class="ready">${money(cost)} · ${spec.months} mo · READY</small>`;
@@ -2055,6 +2169,19 @@
     if (name === "start" || name === "phoenix") {
       selected = "phoenix";
       return "phoenix";
+    }
+    if (name === "dc1") {
+      z("flagstaff").dc = 1;
+      selected = "flagstaff";
+      return "flagstaff";
+    }
+    if (name === "dc2-raising" || name === "raising-dc" || name === "raising-dc2") {
+      state.queue.push(
+        { faction: YOU, city: "flagstaff", type: "dc", left: 2, cost: 0 },
+        { faction: YOU, city: "flagstaff", type: "dc", left: 2, cost: 0 }
+      );
+      selected = "flagstaff";
+      return "flagstaff";
     }
     if (name === "raising") {
       state.queue.push(

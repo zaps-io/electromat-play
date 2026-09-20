@@ -15,8 +15,8 @@
       href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Share+Tech+Mono&display=swap"
       rel="stylesheet"
     />
-    <meta name="empire-build" content="rts-yard-11" />
-    <link rel="stylesheet" href="styles.css?v=rts-yard-11" />
+    <meta name="empire-build" content="rts-yard-12" />
+    <link rel="stylesheet" href="styles.css?v=rts-yard-12" />
   </head>
   <body>
     <section id="title-screen" class="screen" data-screen="title">
@@ -109,10 +109,11 @@
         <div class="hud-controls">
           <button id="btn-deals" class="deals-badge hidden" type="button">DEALS</button>
           <div class="speed" role="group" aria-label="Game speed">
-            <button data-speed="0" type="button" aria-pressed="false" title="Pause (Space)">PAUSE</button>
-            <button data-speed="1" class="active" type="button" aria-pressed="true" title="1× speed (1)">1×</button>
+            <button data-speed="0" class="active" type="button" aria-pressed="true" title="Pause (Space)">PAUSE</button>
+            <button data-speed="1" type="button" aria-pressed="false" title="1× speed (1) — about 6 seconds per month">1×</button>
             <button data-speed="2" type="button" aria-pressed="false" title="2× speed (2)">2×</button>
             <button data-speed="4" type="button" aria-pressed="false" title="4× speed (4)">4×</button>
+            <span id="speed-readout" class="speed-readout" data-speed="0">PAUSED</span>
           </div>
           <button id="btn-save" class="btn-tiny" type="button">SAVE</button>
           <button id="btn-load" class="btn-tiny" type="button">LOAD</button>
@@ -171,8 +172,10 @@
             raises a building you can read from the map.
           </p>
           <div id="insp-compound" class="insp-compound" aria-hidden="true"></div>
-          <div id="insp-queue" class="insp-queue"></div>
-          <div id="insp-body" class="insp-body"></div>
+          <div id="insp-scroll" class="insp-scroll">
+            <div id="insp-queue" class="insp-queue"></div>
+            <div id="insp-body" class="insp-body"></div>
+          </div>
         </aside>
       </div>
 
@@ -180,8 +183,8 @@
         <div class="tray-label" id="tray-label">DEPLOY</div>
         <div class="tray-grid" id="tray-grid"></div>
         <div class="tray-note">
-          Space pause · 1 2 4 speed · click a city for the yard · EXIT back to
-          the map. Three crews.
+          Starts paused. Space pause · 1 2 4 speed · click a city for the yard ·
+          EXIT back to the map. Three crews.
         </div>
       </footer>
     </section>
@@ -193,6 +196,6 @@
       <div class="modal-card" id="modal-card"></div>
     </div>
 
-    <script src="game.js?v=rts-yard-11"></script>
+    <script src="game.js?v=rts-yard-12"></script>
   </body>
 </html>
