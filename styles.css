@@ -653,10 +653,10 @@ button {
 @keyframes ghost-pulse {
   0%,
   100% {
-    opacity: 0.5;
+    opacity: 0.72;
   }
   50% {
-    opacity: 0.78;
+    opacity: 0.96;
   }
 }
 
@@ -692,7 +692,7 @@ button {
 }
 
 .site-bldg.raising {
-  opacity: 0.58;
+  opacity: 0.88;
   animation: ghost-pulse 1.6s ease-in-out infinite;
 }
 
@@ -757,12 +757,12 @@ button {
 .site-ghost-label {
   fill: #00d4f5;
   font-family: "Share Tech Mono", "Courier New", monospace;
-  font-size: 3.15px;
+  font-size: 3.45px;
   font-weight: 700;
   letter-spacing: 0.08em;
   paint-order: stroke;
   stroke: #121217;
-  stroke-width: 0.45px;
+  stroke-width: 0.5px;
 }
 
 .site-stall-hash {
@@ -878,7 +878,7 @@ button {
 }
 
 .site-overlay-svg.raising {
-  opacity: 0.55;
+  opacity: 1;
 }
 
 .site-raising {

@@ -1444,7 +1444,7 @@
   }
 
   function ghostTone() {
-    return { top: "#3a3a44", front: "#2c2c34", side: "#22222a", edge: "rgba(0,212,245,0.7)" };
+    return { top: "#5a6e78", front: "#3e5058", side: "#324048", edge: "rgba(0,212,245,0.95)" };
   }
 
   function isoPrism(foot, h, tone) {
@@ -1657,11 +1657,16 @@
   function drawDcUnit(slot, ghost) {
     const tone = ghost ? ghostTone() : SURF.charcoal;
     const cap = ghost ? ghostTone() : SURF.alum;
-    const foot = insetQuad(gridQuad(slot.c + 0.28, slot.r + 0.14, 0.44, 0.34), 0);
-    const body = isoPrism(foot, 7.8, tone);
-    const hat = isoPrism(liftPts(insetQuad(foot, 0.12), 7.8), 0.7, cap);
+    const foot = insetQuad(gridQuad(slot.c + 0.26, slot.r + 0.16, 0.48, 0.36), 0);
+    const body = isoPrism(foot, ghost ? 8.2 : 7.8, tone);
+    const hat = isoPrism(liftPts(insetQuad(foot, 0.1), ghost ? 8.2 : 7.8), ghost ? 1.05 : 0.7, cap);
     let unit = body.g + hat.g;
-    if (!ghost) {
+    if (ghost) {
+      const shade = insetQuad(gridQuad(slot.c + 0.14, slot.r + 0.1, 0.72, 0.46), 0);
+      const roof = isoPrism(liftPts(shade, 10.4), 1.05, ghostTone());
+      unit += roof.g;
+      unit += `<polygon class="site-dc-ring" points="${svgPts(insetQuad(foot, -0.14))}" />`;
+    } else {
       unit += faceRect(body, 0.1, 0.1, 0.78, 0.5, "#121217");
       unit += faceRect(body, 0.14, 0.14, 0.68, 0.1, PAL.amber);
       unit += faceRect(body, 0.18, 0.28, 0.22, 0.08, PAL.red);
@@ -1742,7 +1747,6 @@
     const occ = kitOccupancy(city);
     const any = occ.dc + occ.mcs + occ.bess + occ.lounge + occ.market;
     if (!any) return "";
-    const allGhost = !(occ.live.dc || occ.live.mcs || occ.live.bess || occ.live.lounge || occ.live.market);
     const inner =
       plazaGeom(occ) +
       drawBess(occ) +
@@ -1751,7 +1755,7 @@
       drawLounge(occ) +
       drawMarket(occ) +
       ghostCaptions(occ);
-    return overlaySvg(`site-compound${allGhost ? " raising" : ""}`, inner);
+    return overlaySvg("site-compound", inner);
   }
 
   function siteRaisingBanner(cityId) {
