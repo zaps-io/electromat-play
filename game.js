@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-yard-10 */
+/* empire-build: rts-yard-11 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -20,7 +20,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-yard-10";
+  const SPRITE_V = "rts-yard-11";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -41,7 +41,7 @@
     voltspan: "240 / 204",
     rival: "240 / 167",
   };
-  const KIT_V = "rts-yard-10";
+  const KIT_V = "rts-yard-11";
   const KIT_SPRITES = {
     dc: `assets/sprites/kit-dc.png?v=${KIT_V}`,
     mcs: `assets/sprites/kit-mcs.png?v=${KIT_V}`,
@@ -51,29 +51,56 @@
   };
 
   /*
-   * AoE / StarCraft compound on the 220×131 dirt diamond.
-   * One asphalt island, 5×4 build grid, FIXED slots. Ghosts occupy
-   * the same cells as the finished kit — no jump on complete.
+   * Chessboard / AoE build grid on the 220×131 dirt diamond.
+   * Equal cells (step NE == step SE). Every kit owns permanent
+   * integer cells. Ghosts use the same slots as the finished piece.
+   * Asphalt is a TILE UNION of occupied + reserved cells — never a
+   * bounding-box empty lot, never sand between siblings.
    *
-   *   BACK (NW curb)
-   *   r0  [ BESS BESS BESS BESS BESS ]   cabinet bank, flush
-   *   r1  [ MCS | DC  DC  DC  DC     ]   one cream canopy over DC
-   *   r2  [ BAY | drive aisle        ]
-   *   r3  [ LOUNGE pavilion | MARKET ]   civic front strip
-   *   FRONT (SE curb)
+   *        c0     c1     c2     c3     c4
+   *   r0  BESS   BESS   BESS   BESS    —      rear cabinets
+   *   r1  MCS    DC0    DC1    DC2    DC3     kit rank
+   *   r2  MCS    aisle  aisle  aisle  aisle   drive
+   *   r3  LNG    LNG    MKT    MKT     —      civic
    *
-   * Photoreal kit PNGs stay on the deploy tray. The yard is a packed
-   * RTS silhouette, not a loose sprinkle of product shots.
+   * DC fills left-to-right under one shared canopy. Photoreal kit
+   * PNGs stay on the deploy tray. Yard is stylized RTS pieces.
    */
   const GRID = {
-    x: 16.8,
-    y: 75.4,
-    ne: 59.2,
-    se: 25.0,
+    x: 14.9,
+    y: 53.2,
+    ne: 39.0,
+    se: 31.2,
     cols: 5,
     rows: 4,
     neK: 0.97,
     seK: 1.01,
+  };
+  const SLOTS = {
+    dc: [
+      { c: 1, r: 1, aisle: { c: 1, r: 2 } },
+      { c: 2, r: 1, aisle: { c: 2, r: 2 } },
+      { c: 3, r: 1, aisle: { c: 3, r: 2 } },
+      { c: 4, r: 1, aisle: { c: 4, r: 2 } },
+    ],
+    mcs: [
+      { c: 0, r: 1 },
+      { c: 0, r: 2 },
+    ],
+    bess: [
+      { c: 0, r: 0 },
+      { c: 1, r: 0 },
+      { c: 2, r: 0 },
+      { c: 3, r: 0 },
+    ],
+    lounge: [
+      { c: 0, r: 3 },
+      { c: 1, r: 3 },
+    ],
+    market: [
+      { c: 2, r: 3 },
+      { c: 3, r: 3 },
+    ],
   };
   const SITE_TYPE_NAME = {
     hq: "PHOENIX HQ",
@@ -1431,80 +1458,96 @@
     return `<g class="site-bldg ${cls}${ghost ? " raising" : ""}">${inner}</g>`;
   }
 
-  function occupiedBounds(occ) {
-    let c0 = 99;
-    let r0 = 99;
-    let c1 = -99;
-    let r1 = -99;
-    const add = (c, r, dc, dr) => {
-      c0 = Math.min(c0, c);
-      r0 = Math.min(r0, r);
-      c1 = Math.max(c1, c + dc);
-      r1 = Math.max(r1, r + dr);
+  function occupiedTiles(occ) {
+    const tiles = new Map();
+    const add = (c, r, kind) => {
+      const key = `${c},${r}`;
+      if (!tiles.has(key)) tiles.set(key, { c, r, kind });
     };
-    if (occ.dc) {
-      add(1, 1, occ.dc, 1);
-      add(1, 2, occ.dc, 0.45);
+    for (let i = 0; i < occ.dc; i += 1) {
+      const slot = SLOTS.dc[i];
+      if (!slot) continue;
+      add(slot.c, slot.r, "dc");
+      add(slot.aisle.c, slot.aisle.r, "aisle");
     }
-    if (occ.mcs) add(0, 1, 1.05, 2);
-    if (occ.bess) add(0, 0, 5, 1.05);
-    if (occ.lounge) add(0, 3, 2.35, 1);
-    if (occ.market) add(3.05, 3, 1.95, 1);
-    if (c1 < c0) return null;
-    return { c0, r0, c1, r1 };
+    if (occ.mcs) SLOTS.mcs.forEach((s) => add(s.c, s.r, "mcs"));
+    if (occ.bess) SLOTS.bess.forEach((s) => add(s.c, s.r, "bess"));
+    if (occ.lounge) SLOTS.lounge.forEach((s) => add(s.c, s.r, "lounge"));
+    if (occ.market) SLOTS.market.forEach((s) => add(s.c, s.r, "market"));
+    return [...tiles.values()];
+  }
+
+  function tilePaintOrder(a, b) {
+    return a.r - a.c - (b.r - b.c) || a.r - b.r || b.c - a.c;
+  }
+
+  function stallPaint(c, r) {
+    const stall = insetQuad(gridQuad(c + 0.08, r + 0.28, 0.84, 0.64), 0);
+    const mid = insetQuad(gridQuad(c + 0.46, r + 0.36, 0.08, 0.48), 0);
+    return (
+      `<polygon class="site-stall" points="${svgPts(stall)}" />` +
+      `<polygon class="site-stall-hash" points="${svgPts(mid)}" />`
+    );
+  }
+
+  function boardEtch() {
+    let g = "";
+    for (let r = 0; r < GRID.rows; r += 1) {
+      for (let c = 0; c < GRID.cols; c += 1) {
+        const odd = (c + r) % 2;
+        g += `<polygon class="site-board-etch${odd ? " odd" : ""}" points="${svgPts(insetQuad(gridQuad(c, r, 1, 1), 0.03))}" />`;
+      }
+    }
+    return g;
   }
 
   function plazaGeom(occ) {
-    const b = occupiedBounds(occ);
-    if (!b) return "";
-    const o = gridXY(b.c0, b.r0);
-    const { ne: nStep, se: sStep } = gridStep();
-    const ne = nStep * (b.c1 - b.c0);
-    const se = sStep * (b.r1 - b.r0);
-    const west = o.x;
-    const south = o.y;
-    const lift = isoPadQuad(west - 0.35, south + 0.55, ne + 0.7, se + 0.55);
-    const curb = isoPadQuad(west - 1.35, south + 1.15, ne + 2.7, se + 1.6);
-    const face = isoPadQuad(west - 1.35, south + 1.8, ne + 2.7, se + 1.6);
-    const deck = isoPadQuad(west, south, ne, se);
-    const sheen = isoPadQuad(west + ne * 0.08, south - se * 0.1, ne * 0.64, se * 0.28);
-    let g =
-      `<polygon class="site-curb-face" points="${svgPts(face)}" />` +
-      `<polygon class="site-curb" points="${svgPts(curb)}" />` +
-      `<polygon class="site-plaza-lift" points="${svgPts(lift)}" />` +
-      `<polygon class="site-asphalt" points="${svgPts(deck)}" />` +
-      `<polygon class="site-asphalt-sheen" points="${svgPts(sheen)}" />`;
-    const inB = (c, r) => c + 0.05 >= b.c0 && c <= b.c1 && r + 0.05 >= b.r0 && r <= b.r1;
-    for (let c = Math.ceil(b.c0); c < b.c1; c += 1) {
-      if (inB(c, b.r0)) g += `<polygon class="site-joint" points="${svgPts(gridQuad(c, b.r0, 0.04, b.r1 - b.r0))}" />`;
+    const tiles = occupiedTiles(occ);
+    if (!tiles.length) return "";
+    const ordered = tiles.slice().sort(tilePaintOrder);
+    let lifts = "";
+    let curbs = "";
+    let decks = "";
+    let paint = "";
+    for (const { c, r, kind } of ordered) {
+      const quad = gridQuad(c, r, 1, 1);
+      const odd = (c + r) % 2;
+      lifts += `<polygon class="site-plaza-lift" points="${svgPts(insetQuad(quad, -0.1))}" />`;
+      curbs += `<polygon class="site-tile-curb" points="${svgPts(insetQuad(quad, -0.045))}" />`;
+      decks += `<polygon class="site-tile${odd ? " odd" : ""} kind-${kind}" points="${svgPts(insetQuad(quad, 0.018))}" />`;
+      if (kind === "dc") paint += stallPaint(c, r);
+      if (kind === "aisle") {
+        paint += `<polygon class="site-aisle" points="${svgPts(insetQuad(quad, 0.22))}" />`;
+      }
+      if (kind === "mcs") {
+        paint += `<polygon class="site-stall mcs" points="${svgPts(insetQuad(quad, 0.14))}" />`;
+      }
+      if (kind === "bess") {
+        paint += `<polygon class="site-equip" points="${svgPts(insetQuad(quad, 0.16))}" />`;
+      }
+      if (kind === "lounge" || kind === "market") {
+        paint += `<polygon class="site-walk" points="${svgPts(insetQuad(quad, 0.12))}" />`;
+      }
     }
-    for (let i = 0; i < occ.dc; i += 1) {
-      g += `<polygon class="site-stall" points="${svgPts(insetQuad(gridQuad(1 + i, 1, 1, 1), 0.16))}" />`;
-    }
-    if (occ.mcs) g += `<polygon class="site-stall mcs" points="${svgPts(insetQuad(gridQuad(0, 1, 1, 2), 0.1))}" />`;
-    if (occ.bess) g += `<polygon class="site-equip" points="${svgPts(insetQuad(gridQuad(0, 0, 5, 1), 0.12))}" />`;
-    if (occ.dc) g += `<polygon class="site-aisle" points="${svgPts(insetQuad(gridQuad(1, 2, occ.dc, 0.45), 0.06))}" />`;
-    if (occ.lounge || occ.market) g += `<polygon class="site-walk" points="${svgPts(insetQuad(gridQuad(occ.lounge ? 0 : 3.05, 3, occ.market && occ.lounge ? 5 : occ.market ? 1.95 : 2.35, 1), 0.08))}" />`;
-    return g;
+    return boardEtch() + lifts + curbs + decks + paint;
   }
 
   function drawBess(occ) {
     if (!occ.bess) return "";
     const ghost = occ.raising.bess;
     const tone = ghost ? ghostTone() : SURF.charcoal;
-    const plinth = isoPrism(insetQuad(gridQuad(0.05, 0.04, 4.9, 0.92), 0.06), 1.25, ghost ? ghostTone() : SURF.concrete);
-    let g = plinth.g;
-    for (let i = 0; i < 4; i += 1) {
-      const col = 0.22 + i * 1.18;
-      const box = isoPrism(insetQuad(gridQuad(col, 0.1, 1.08, 0.78), 0.02), 17.6, tone);
-      g += box.g;
+    let g = "";
+    SLOTS.bess.forEach((slot) => {
+      const plinth = isoPrism(insetQuad(gridQuad(slot.c + 0.14, slot.r + 0.16, 0.72, 0.68), 0.02), 1.05, ghost ? ghostTone() : SURF.concrete);
+      const box = isoPrism(insetQuad(gridQuad(slot.c + 0.22, slot.r + 0.22, 0.56, 0.54), 0.02), 9.2, tone);
+      g += plinth.g + box.g;
       if (!ghost) {
         g += `<polygon class="site-bess-cap" points="${svgPts(insetQuad(box.top, 0.16))}" />`;
-        g += faceRect(box, 0.16, 0.1, 0.2, 0.07, PAL.amber);
-        g += faceRect(box, 0.16, 0.34, 0.68, 0.11, "#141418");
-        g += faceRect(box, 0.16, 0.52, 0.68, 0.11, "#141418");
+        g += faceRect(box, 0.16, 0.1, 0.22, 0.08, PAL.amber);
+        g += faceRect(box, 0.16, 0.34, 0.68, 0.12, "#141418");
+        g += faceRect(box, 0.16, 0.52, 0.68, 0.12, "#141418");
       }
-    }
+    });
     return wrapBldg("kit-bess", ghost, g);
   }
 
@@ -1516,22 +1559,22 @@
     const bayGhost = raising && live < 1;
     const roofTone = bayGhost ? ghostTone() : SURF.charcoal;
     const postTone = bayGhost ? ghostTone() : SURF.steel;
-    const lift = 16.4;
-    const bay = insetQuad(gridQuad(0.02, 1.02, 0.96, 1.92), 0.02);
+    const lift = 11.6;
+    const bay = insetQuad(gridQuad(0.1, 1.08, 0.8, 1.84), 0.02);
     let g = "";
     [
-      [0.08, 1.1],
-      [0.68, 2.58],
+      [0.12, 1.12],
+      [0.12, 2.72],
     ].forEach(([c, r]) => {
-      const p = isoPrism(insetQuad(gridQuad(c, r, 0.24, 0.24), 0), lift, postTone);
+      const p = isoPrism(insetQuad(gridQuad(c, r, 0.18, 0.16), 0), lift, postTone);
       g += p.g;
       if (!bayGhost) g += faceRect(p, 0.04, 0.2, 0.92, 0.08, PAL.red);
     });
     for (let i = 0; i < n; i += 1) {
       const ghost = raising && i >= live;
       const tone = ghost ? ghostTone() : SURF.charcoal;
-      const foot = insetQuad(gridQuad(0.16, 1.22 + i * 0.7, 0.68, 0.52), 0.02);
-      const body = isoPrism(foot, 13.2, tone);
+      const foot = insetQuad(gridQuad(0.18, 1.28 + i * 0.78, 0.64, 0.52), 0.02);
+      const body = isoPrism(foot, 8.8, tone);
       let unit = body.g;
       if (!ghost) {
         unit += faceRect(body, 0.14, 0.12, 0.7, 0.46, "#1a1a20");
@@ -1540,7 +1583,7 @@
       }
       g += wrapBldg("kit-mcs-unit", ghost, unit);
     }
-    const roof = isoPrism(liftPts(bay, lift), 1.9, roofTone);
+    const roof = isoPrism(liftPts(bay, lift), 1.45, roofTone);
     g += roof.g;
     if (!bayGhost) g += `<polygon class="site-mcs-edge" points="${svgPts(insetQuad(roof.top, 0.1))}" />`;
     return wrapBldg("kit-mcs", bayGhost, g);
@@ -1552,22 +1595,22 @@
     const live = occ.live.dc;
     const raising = occ.raising.dc;
     const roofGhost = raising && live < 1;
-    const lift = 20.2;
-    const span = n;
+    const lift = 11.4;
     let g = "";
-    for (let i = 0; i <= span; i += 1) {
-      const foot = insetQuad(gridQuad(0.96 + i, 1.04, 0.2, 0.22), 0);
+    for (let i = 0; i <= n; i += 1) {
+      const foot = insetQuad(gridQuad(0.96 + i, 1.06, 0.1, 0.1), 0);
       const post = isoPrism(foot, lift, roofGhost ? ghostTone() : SURF.alum);
       g += post.g;
-      if (!roofGhost) g += faceRect(post, 0.02, 0.18, 0.96, 0.07, PAL.red);
+      if (!roofGhost) g += faceRect(post, 0.02, 0.18, 0.96, 0.08, PAL.red);
     }
     for (let i = 0; i < n; i += 1) {
+      const slot = SLOTS.dc[i];
       const ghost = raising && i >= live;
       const tone = ghost ? ghostTone() : SURF.charcoal;
       const cap = ghost ? ghostTone() : SURF.alum;
-      const foot = insetQuad(gridQuad(1.22 + i, 1.22, 0.5, 0.5), 0);
-      const body = isoPrism(foot, 18.8, tone);
-      const hat = isoPrism(liftPts(insetQuad(foot, 0.1), 18.8), 1.05, cap);
+      const foot = insetQuad(gridQuad(slot.c + 0.3, slot.r + 0.1, 0.4, 0.3), 0);
+      const body = isoPrism(foot, 8.4, tone);
+      const hat = isoPrism(liftPts(insetQuad(foot, 0.12), 8.4), 0.75, cap);
       let unit = body.g + hat.g;
       if (!ghost) {
         unit += faceRect(body, 0.1, 0.1, 0.78, 0.5, "#121217");
@@ -1577,12 +1620,16 @@
       }
       g += wrapBldg("kit-dc-unit", ghost, unit);
     }
-    const street = insetQuad(gridQuad(1, 1.04, span, 0.86), -0.02);
-    const roof = isoPrism(liftPts(street, lift), 2.05, roofGhost ? ghostTone() : SURF.cream);
+    const street = insetQuad(gridQuad(1.02, 1.04, n - 0.04, 0.72), -0.02);
+    const roof = isoPrism(liftPts(street, lift), 1.35, roofGhost ? ghostTone() : SURF.cream);
     g += roof.g;
     if (!roofGhost) {
       g += `<polygon class="site-roof-deck" points="${svgPts(roof.top)}" />`;
       g += `<polygon class="site-roof-under" points="${svgPts(insetQuad(roof.top, 0.14))}" />`;
+      for (let i = 1; i < n; i += 1) {
+        const seam = insetQuad(gridQuad(1 + i - 0.015, 1.06, 0.03, 0.68), 0);
+        g += `<polygon class="site-roof-seam" points="${svgPts(liftPts(seam, lift + 1.35))}" />`;
+      }
     }
     return wrapBldg("kit-dc", roofGhost, g);
   }
@@ -1592,15 +1639,15 @@
     const ghost = occ.raising.lounge;
     const tone = ghost ? ghostTone() : SURF.cream;
     const roofTone = ghost ? ghostTone() : SURF.cream;
-    const foot = insetQuad(gridQuad(0.08, 3.04, 2.2, 0.9), 0.02);
-    const body = isoPrism(foot, 13.6, tone);
+    const foot = insetQuad(gridQuad(0.14, 3.16, 1.72, 0.68), 0.02);
+    const body = isoPrism(foot, 7.6, tone);
     let g = body.g;
     if (!ghost) {
       g += faceRect(body, 0.08, 0.16, 0.34, 0.4, "#1a2830");
       g += faceRect(body, 0.5, 0.16, 0.34, 0.4, "#1a2830");
       g += faceRect(body, 0.86, 0.2, 0.07, 0.16, PAL.red);
     }
-    const roof = isoPrism(liftPts(insetQuad(foot, -0.05), 13.6), 1.85, roofTone);
+    const roof = isoPrism(liftPts(insetQuad(foot, -0.04), 7.6), 1.35, roofTone);
     g += roof.g;
     if (!ghost) g += `<polygon class="site-lounge-edge" points="${svgPts(insetQuad(roof.top, 0.1))}" />`;
     return wrapBldg("kit-lounge", ghost, g);
@@ -1611,15 +1658,15 @@
     const ghost = occ.raising.market;
     const tone = ghost ? ghostTone() : SURF.charcoal;
     const awn = ghost ? ghostTone() : SURF.cream;
-    const foot = insetQuad(gridQuad(3.12, 3.06, 1.78, 0.88), 0.02);
-    const body = isoPrism(foot, 11.2, tone);
+    const foot = insetQuad(gridQuad(2.16, 3.18, 1.68, 0.64), 0.02);
+    const body = isoPrism(foot, 6.8, tone);
     let g = body.g;
     if (!ghost) {
       g += faceRect(body, 0.12, 0.14, 0.5, 0.38, "#141c20");
       g += faceRect(body, 0.16, 0.34, 0.42, 0.09, PAL.amber);
       g += faceRect(body, 0.76, 0.2, 0.1, 0.16, PAL.red);
     }
-    const awning = isoPrism(liftPts(insetQuad(foot, -0.06), 11.2), 1.7, awn);
+    const awning = isoPrism(liftPts(insetQuad(foot, -0.05), 6.8), 1.25, awn);
     g += awning.g;
     return wrapBldg("kit-market", ghost, g);
   }
@@ -1961,12 +2008,33 @@
 
   function applyShot(name) {
     const z = (id) => state.cities[id].sites.zaps;
-    if (name === "pad") {
+    if (name === "pad" || name === "empty") {
       selected = "flagstaff";
       return "flagstaff";
     }
     if (name === "dc") {
       z("flagstaff").dc = 1;
+      selected = "flagstaff";
+      return "flagstaff";
+    }
+    if (name === "dc2") {
+      z("flagstaff").dc = 2;
+      selected = "flagstaff";
+      return "flagstaff";
+    }
+    if (name === "dc3") {
+      z("flagstaff").dc = 3;
+      selected = "flagstaff";
+      return "flagstaff";
+    }
+    if (name === "dc4") {
+      z("flagstaff").dc = 4;
+      selected = "flagstaff";
+      return "flagstaff";
+    }
+    if (name === "mcs") {
+      z("flagstaff").dc = 2;
+      z("flagstaff").mcs = 1;
       selected = "flagstaff";
       return "flagstaff";
     }
@@ -1977,8 +2045,8 @@
       selected = "flagstaff";
       return "flagstaff";
     }
-    if (name === "mcs-market") {
-      z("flagstaff").dc = 2;
+    if (name === "mcs-market" || name === "full") {
+      z("flagstaff").dc = 4;
       z("flagstaff").lounge = 1;
       z("flagstaff").bess = 1;
       z("flagstaff").mcs = 1;

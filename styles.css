@@ -1,4 +1,4 @@
-/* empire-build: rts-yard-10 */
+/* empire-build: rts-yard-11 */
 :root {
   --red: #e63225;
   --charcoal: #1e1e24;
@@ -653,9 +653,53 @@ button {
 }
 
 .site-walk {
-  fill: rgba(245, 240, 232, 0.08);
-  stroke: rgba(245, 240, 232, 0.22);
+  fill: rgba(245, 240, 232, 0.1);
+  stroke: rgba(245, 240, 232, 0.28);
   stroke-width: 0.16;
+}
+
+.site-board-etch {
+  fill: rgba(245, 240, 232, 0.045);
+  stroke: rgba(245, 240, 232, 0.22);
+  stroke-width: 0.18;
+}
+
+.site-board-etch.odd {
+  fill: rgba(30, 30, 36, 0.08);
+}
+
+.site-tile-curb {
+  fill: #efe6d4;
+  stroke: #9a8460;
+  stroke-width: 0.28;
+}
+
+.site-tile {
+  fill: #3a3a44;
+  stroke: rgba(245, 240, 232, 0.38);
+  stroke-width: 0.22;
+}
+
+.site-tile.odd {
+  fill: #2e2e36;
+}
+
+.site-tile.kind-dc {
+  fill: #34343c;
+}
+
+.site-tile.odd.kind-dc {
+  fill: #2a2a32;
+}
+
+.site-stall-hash {
+  fill: rgba(245, 240, 232, 0.22);
+  stroke: none;
+}
+
+.site-roof-seam {
+  fill: rgba(30, 30, 36, 0.28);
+  stroke: none;
 }
 
 .site-bess-cap {
