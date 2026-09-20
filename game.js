@@ -1468,7 +1468,6 @@
       const slot = SLOTS.dc[i];
       if (!slot) continue;
       add(slot.c, slot.r, "dc");
-      add(slot.aisle.c, slot.aisle.r, "aisle");
     }
     if (occ.mcs) SLOTS.mcs.forEach((s) => add(s.c, s.r, "mcs"));
     if (occ.bess) SLOTS.bess.forEach((s) => add(s.c, s.r, "bess"));
@@ -1482,8 +1481,8 @@
   }
 
   function stallPaint(c, r) {
-    const stall = insetQuad(gridQuad(c + 0.08, r + 0.28, 0.84, 0.64), 0);
-    const mid = insetQuad(gridQuad(c + 0.46, r + 0.36, 0.08, 0.48), 0);
+    const stall = insetQuad(gridQuad(c + 0.16, r + 0.38, 0.68, 0.48), 0);
+    const mid = insetQuad(gridQuad(c + 0.47, r + 0.42, 0.06, 0.38), 0);
     return (
       `<polygon class="site-stall" points="${svgPts(stall)}" />` +
       `<polygon class="site-stall-hash" points="${svgPts(mid)}" />`
@@ -1495,7 +1494,9 @@
     for (let r = 0; r < GRID.rows; r += 1) {
       for (let c = 0; c < GRID.cols; c += 1) {
         const odd = (c + r) % 2;
-        g += `<polygon class="site-board-etch${odd ? " odd" : ""}" points="${svgPts(insetQuad(gridQuad(c, r, 1, 1), 0.03))}" />`;
+        const quad = gridQuad(c, r, 1, 1);
+        g += `<polygon class="site-board-grout" points="${svgPts(insetQuad(quad, 0.02))}" />`;
+        g += `<polygon class="site-board-etch${odd ? " odd" : ""}" points="${svgPts(insetQuad(quad, 0.08))}" />`;
       }
     }
     return g;
@@ -1512,21 +1513,18 @@
     for (const { c, r, kind } of ordered) {
       const quad = gridQuad(c, r, 1, 1);
       const odd = (c + r) % 2;
-      lifts += `<polygon class="site-plaza-lift" points="${svgPts(insetQuad(quad, -0.1))}" />`;
-      curbs += `<polygon class="site-tile-curb" points="${svgPts(insetQuad(quad, -0.045))}" />`;
-      decks += `<polygon class="site-tile${odd ? " odd" : ""} kind-${kind}" points="${svgPts(insetQuad(quad, 0.018))}" />`;
+      lifts += `<polygon class="site-plaza-lift" points="${svgPts(insetQuad(quad, -0.02))}" />`;
+      curbs += `<polygon class="site-tile-curb" points="${svgPts(insetQuad(quad, 0.03))}" />`;
+      decks += `<polygon class="site-tile${odd ? " odd" : ""} kind-${kind}" points="${svgPts(insetQuad(quad, 0.11))}" />`;
       if (kind === "dc") paint += stallPaint(c, r);
-      if (kind === "aisle") {
-        paint += `<polygon class="site-aisle" points="${svgPts(insetQuad(quad, 0.22))}" />`;
-      }
       if (kind === "mcs") {
-        paint += `<polygon class="site-stall mcs" points="${svgPts(insetQuad(quad, 0.14))}" />`;
+        paint += `<polygon class="site-stall mcs" points="${svgPts(insetQuad(quad, 0.2))}" />`;
       }
       if (kind === "bess") {
-        paint += `<polygon class="site-equip" points="${svgPts(insetQuad(quad, 0.16))}" />`;
+        paint += `<polygon class="site-equip" points="${svgPts(insetQuad(quad, 0.22))}" />`;
       }
       if (kind === "lounge" || kind === "market") {
-        paint += `<polygon class="site-walk" points="${svgPts(insetQuad(quad, 0.12))}" />`;
+        paint += `<polygon class="site-walk" points="${svgPts(insetQuad(quad, 0.2))}" />`;
       }
     }
     return boardEtch() + lifts + curbs + decks + paint;
@@ -1538,8 +1536,8 @@
     const tone = ghost ? ghostTone() : SURF.charcoal;
     let g = "";
     SLOTS.bess.forEach((slot) => {
-      const plinth = isoPrism(insetQuad(gridQuad(slot.c + 0.14, slot.r + 0.16, 0.72, 0.68), 0.02), 1.05, ghost ? ghostTone() : SURF.concrete);
-      const box = isoPrism(insetQuad(gridQuad(slot.c + 0.22, slot.r + 0.22, 0.56, 0.54), 0.02), 9.2, tone);
+      const plinth = isoPrism(insetQuad(gridQuad(slot.c + 0.22, slot.r + 0.22, 0.56, 0.56), 0.02), 1.05, ghost ? ghostTone() : SURF.concrete);
+      const box = isoPrism(insetQuad(gridQuad(slot.c + 0.28, slot.r + 0.28, 0.44, 0.44), 0.02), 8.4, tone);
       g += plinth.g + box.g;
       if (!ghost) {
         g += `<polygon class="site-bess-cap" points="${svgPts(insetQuad(box.top, 0.16))}" />`;
@@ -1559,8 +1557,8 @@
     const bayGhost = raising && live < 1;
     const roofTone = bayGhost ? ghostTone() : SURF.charcoal;
     const postTone = bayGhost ? ghostTone() : SURF.steel;
-    const lift = 11.6;
-    const bay = insetQuad(gridQuad(0.1, 1.08, 0.8, 1.84), 0.02);
+    const lift = 10.2;
+    const bay = insetQuad(gridQuad(0.16, 1.14, 0.68, 1.72), 0.02);
     let g = "";
     [
       [0.12, 1.12],
@@ -1573,8 +1571,8 @@
     for (let i = 0; i < n; i += 1) {
       const ghost = raising && i >= live;
       const tone = ghost ? ghostTone() : SURF.charcoal;
-      const foot = insetQuad(gridQuad(0.18, 1.28 + i * 0.78, 0.64, 0.52), 0.02);
-      const body = isoPrism(foot, 8.8, tone);
+      const foot = insetQuad(gridQuad(0.24, 1.32 + i * 0.78, 0.52, 0.44), 0.02);
+      const body = isoPrism(foot, 7.6, tone);
       let unit = body.g;
       if (!ghost) {
         unit += faceRect(body, 0.14, 0.12, 0.7, 0.46, "#1a1a20");
@@ -1595,10 +1593,10 @@
     const live = occ.live.dc;
     const raising = occ.raising.dc;
     const roofGhost = raising && live < 1;
-    const lift = 11.4;
+    const lift = 10.6;
     let g = "";
     for (let i = 0; i <= n; i += 1) {
-      const foot = insetQuad(gridQuad(0.96 + i, 1.06, 0.1, 0.1), 0);
+      const foot = insetQuad(gridQuad(1 + i - 0.05, 1.08, 0.1, 0.1), 0);
       const post = isoPrism(foot, lift, roofGhost ? ghostTone() : SURF.alum);
       g += post.g;
       if (!roofGhost) g += faceRect(post, 0.02, 0.18, 0.96, 0.08, PAL.red);
@@ -1608,9 +1606,9 @@
       const ghost = raising && i >= live;
       const tone = ghost ? ghostTone() : SURF.charcoal;
       const cap = ghost ? ghostTone() : SURF.alum;
-      const foot = insetQuad(gridQuad(slot.c + 0.3, slot.r + 0.1, 0.4, 0.3), 0);
-      const body = isoPrism(foot, 8.4, tone);
-      const hat = isoPrism(liftPts(insetQuad(foot, 0.12), 8.4), 0.75, cap);
+      const foot = insetQuad(gridQuad(slot.c + 0.28, slot.r + 0.14, 0.44, 0.34), 0);
+      const body = isoPrism(foot, 7.8, tone);
+      const hat = isoPrism(liftPts(insetQuad(foot, 0.12), 7.8), 0.7, cap);
       let unit = body.g + hat.g;
       if (!ghost) {
         unit += faceRect(body, 0.1, 0.1, 0.78, 0.5, "#121217");
@@ -1620,7 +1618,7 @@
       }
       g += wrapBldg("kit-dc-unit", ghost, unit);
     }
-    const street = insetQuad(gridQuad(1.02, 1.04, n - 0.04, 0.72), -0.02);
+    const street = insetQuad(gridQuad(1.08, 1.08, n - 0.16, 0.52), 0);
     const roof = isoPrism(liftPts(street, lift), 1.35, roofGhost ? ghostTone() : SURF.cream);
     g += roof.g;
     if (!roofGhost) {
@@ -1639,8 +1637,8 @@
     const ghost = occ.raising.lounge;
     const tone = ghost ? ghostTone() : SURF.cream;
     const roofTone = ghost ? ghostTone() : SURF.cream;
-    const foot = insetQuad(gridQuad(0.14, 3.16, 1.72, 0.68), 0.02);
-    const body = isoPrism(foot, 7.6, tone);
+    const foot = insetQuad(gridQuad(0.22, 3.22, 1.56, 0.56), 0.02);
+    const body = isoPrism(foot, 6.8, tone);
     let g = body.g;
     if (!ghost) {
       g += faceRect(body, 0.08, 0.16, 0.34, 0.4, "#1a2830");
@@ -1658,8 +1656,8 @@
     const ghost = occ.raising.market;
     const tone = ghost ? ghostTone() : SURF.charcoal;
     const awn = ghost ? ghostTone() : SURF.cream;
-    const foot = insetQuad(gridQuad(2.16, 3.18, 1.68, 0.64), 0.02);
-    const body = isoPrism(foot, 6.8, tone);
+    const foot = insetQuad(gridQuad(2.22, 3.24, 1.56, 0.52), 0.02);
+    const body = isoPrism(foot, 6.2, tone);
     let g = body.g;
     if (!ghost) {
       g += faceRect(body, 0.12, 0.14, 0.5, 0.38, "#141c20");

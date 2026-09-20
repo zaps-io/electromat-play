@@ -24,7 +24,7 @@ Fixed **square** 5×4 build grid (cell NE step == SE step). Kit lands on permane
 
 | Kit | Cells | Grow rule |
 |---|---|---|
-| DC | `(1+i,1)` + reserved aisle `(1+i,2)` | Next empty stall left-to-right under one shared cream canopy (seams at cell edges) |
+| DC | one cell `(1+i,1)` | Next empty stall left-to-right under one shared cream canopy (seams at cell edges). Drive rank stays dirt so each DC is a square. |
 | MCS | `(0,1)+(0,2)` | Truck bay wall-in on the west flank, same two cells forever |
 | BESS | `(0..3,0)` | Four cabinets, one per cell, shared only as contiguous tiles |
 | Lounge | `(0,3)+(1,3)` | Pavilion sits on two civic tiles |
