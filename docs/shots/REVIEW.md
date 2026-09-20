@@ -1,46 +1,45 @@
-# Empire graphics review — rts-yard-10
+# Empire graphics review — rts-yard-11
 
-Stills: `board.png` · `yard-phoenix-start.png` · `yard-dc.png` · `yard-lounge-bess.png` · `yard-mcs-market.png`
+Stills: `board.png` · `yard-empty.png` · `yard-phoenix-start.png` · `yard-dc.png` · `yard-dc2.png` · `yard-dc4.png` · `yard-mcs.png` · `yard-lounge-bess.png` · `yard-mcs-market.png`
 
-Replay: `?shot=start` · `?shot=dc` · `?shot=lounge-bess` · `?shot=mcs-market`. Showcase board: `?showcase=1`.
+Replay: `?shot=empty` · `?shot=start` · `?shot=dc` · `?shot=dc2` · `?shot=dc4` · `?shot=mcs` · `?shot=lounge-bess` · `?shot=mcs-market` / `?shot=full`. Showcase board: `?showcase=1`.
 
 ## Framing
 
-Goldilocks yard scale **unchanged**: full pad + a bit of sand margin, about **76% of the yard box** (cap 800). Not the pass-#17 canopy close-up (`88%` / `820px`) and not the first PR-#18 postage stamp (`46%` / `460px`).
+Goldilocks yard scale **unchanged**: full pad + a bit of sand margin, about **76% of the yard box** (cap 800).
 
 ## This pass
 
-Victor rejected `rts-yard-9`: photoreal kit looked like toys tossed on dirt. This pass is an AoE4 / StarCraft **planned compound**, not another loose sprinkle.
+Victor: the packed compound still does not layout well **while adding pieces**. Think chessboard / Age of Empires / StarCraft — not a mega-block that appears all at once, and not a bounding-box lot.
 
-Fixed 5×4 build grid on the 220×131 dirt diamond. One asphalt island hugs **occupied** cells (grows as kit lands, never a loose sprinkle). Ghosts occupy the same cells as the finished kit.
+Fixed **square** 5×4 build grid (cell NE step == SE step). Kit lands on permanent integer cells. Ghosts occupy the same cells as the finished piece. Asphalt is a **tile union** of occupied + reserved cells — grows cell by cell, no giant empty rectangle, no sand gaps between sibling DCs.
 
 ```
-BACK (NW curb)
-[ BESS BESS BESS BESS BESS ]     cabinet bank, flush to rear
-[ MCS | DC  DC  DC  DC     ]     truck bay wall-in + ONE cream canopy
-[ BAY | drive aisle        ]
-[ LOUNGE pavilion | MARKET ]     civic front strip
-FRONT (SE curb)
+        c0     c1     c2     c3     c4
+   r0  BESS   BESS   BESS   BESS    —      rear cabinets
+   r1  MCS    DC0    DC1    DC2    DC3     kit rank
+   r2  MCS    aisle  aisle  aisle  aisle   drive
+   r3  LNG    LNG    MKT    MKT     —      civic
 ```
 
-| Kit | Footprint | When it appears |
+| Kit | Cells | Grow rule |
 |---|---|---|
-| Plaza | Fixed asphalt island + curb + painted stalls / aisle / civic walk | Ghost/solid with first kit |
-| DC | Up to 4 pedestals under one 4-stall cream canopy | Ghost in the next stall; solid when complete |
-| MCS | Dark-roof truck bay on the west flank, adjacent to the DC row | Same ghost-in-final-slot rule |
-| Lounge | Cream pavilion on the front civic strip | Ghost then solid |
-| BESS | Four cabinets on a shared plinth, flush to the rear curb | Ghost then solid |
-| Market | Awning kiosk front-east, adjacent to the lounge | Ghost then solid |
+| DC | one cell `(1+i,1)` | Next empty stall left-to-right under one shared cream canopy (seams at cell edges). Drive rank stays dirt so each DC is a square. |
+| MCS | `(0,1)+(0,2)` | Truck bay wall-in on the west flank, same two cells forever |
+| BESS | `(0..3,0)` | Four cabinets, one per cell, shared only as contiguous tiles |
+| Lounge | `(0,3)+(1,3)` | Pavilion sits on two civic tiles |
+| Market | `(2,3)+(3,3)` | Awning kiosk on two civic tiles |
+| Plaza | Occupied + reserved tiles only | Checkerboard etch + stall paint. Faint 5×4 board under kit |
 
-Unbuilt dirt stays a survey flag. Photoreal kit PNGs stay on the deploy tray. Yard silhouettes are packed RTS forms (cream / charcoal / cyan / amber), no overlapping sprites, no random rotation.
+Pieces sit **in** their squares (tile visible around the silhouette). No random rotation. Photoreal kit PNGs stay on the deploy tray.
 
 ## Verdict
 
 | Bar | Grade | Evidence |
 |---|---|---|
+| Incremental grow is a chessboard | **REVIEW** | 1 DC = one stall + aisle. 2–4 DC fill the next cells. MCS wall-ins. Civic/BESS snap to reserved ranks. |
 | Yard framing | **HOLD** | Stack still ~76% of yard (cap 800). |
-| Yard is a planned compound | **REVIEW** | Tight grid + shared canopy + civic strip + rear BESS bank. Hold merge until Victor signs the stills. |
 | Brand | **HOLD** | Official cream/red wordmarks (`viewBox 0 0 932 310`, 1823-byte files). |
 | Map | **HOLD** | Default zoom 1. Pan / zoom / click-in / EXIT. |
 
-Economy untouched. Night Shift untouched. Cache `rts-yard-10`.
+Economy untouched. Night Shift untouched. Cache `rts-yard-11`.
