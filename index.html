@@ -15,8 +15,8 @@
       href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Share+Tech+Mono&display=swap"
       rel="stylesheet"
     />
-    <meta name="empire-build" content="rts-yard-12" />
-    <link rel="stylesheet" href="styles.css?v=rts-yard-12" />
+    <meta name="empire-build" content="rts-yard-13" />
+    <link rel="stylesheet" href="styles.css?v=rts-yard-13" />
   </head>
   <body>
     <section id="title-screen" class="screen" data-screen="title">
@@ -149,14 +149,16 @@
                     <p class="site-type" id="site-overlay-type">DIRT PAD</p>
                   </div>
                 </div>
-                <button type="button" id="btn-exit-site-overlay">EXIT</button>
+                <button type="button" id="btn-exit-site-overlay" title="Return to the Western Interconnect (Esc)">
+                  EXIT<span class="exit-key">ESC</span>
+                </button>
               </div>
               <div class="site-yard" id="site-yard">
                 <div class="site-stack" id="site-stack"></div>
               </div>
               <p class="site-overlay-note">
-                Kit appears when a crew starts (ghost) and stays when complete.
-                ESC or EXIT returns to the Western Interconnect.
+                Kit ghosts show a countdown and fill as crews work. Complete pops
+                in place. ESC or EXIT returns to the Western Interconnect.
               </p>
             </div>
           </div>
@@ -196,6 +198,6 @@
       <div class="modal-card" id="modal-card"></div>
     </div>
 
-    <script src="game.js?v=rts-yard-12"></script>
+    <script src="game.js?v=rts-yard-13"></script>
   </body>
 </html>
