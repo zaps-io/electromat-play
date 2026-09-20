@@ -1,8 +1,8 @@
 # Empire graphics review — rts-yard-13
 
-Stills: `board.png` · `yard-empty.png` · `yard-dc2-raising.png` · `yard-full.png` · `inspector.png`
+Stills: `board.png` · `yard-empty.png` · `yard-dc2-raising.png` · `yard-raising.png` · `yard-full.png` · `inspector.png`
 
-Replay: `?shot=empty` · `?shot=dc2-raising` / `?shot=raising-ghosts` · `?shot=full` · `?shot=start` · `?showcase=1`.
+Replay: `?shot=board` · `?shot=empty` · `?shot=dc2-raising` / `?shot=raising-ghosts` · `?shot=raising` · `?shot=full` · `?shot=start` · `?showcase=1`.
 
 ## AoE polish
 

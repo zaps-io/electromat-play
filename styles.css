@@ -1301,9 +1301,16 @@ button {
   color: var(--amber);
   min-width: 0;
   line-height: 1.05;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.tray-label span {
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: var(--cream);
 }
 
 .tray-grid {

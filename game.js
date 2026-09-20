@@ -1507,7 +1507,7 @@
 
   function growH(base, ghost, pct) {
     if (!ghost) return base;
-    return base * (0.42 + 0.58 * Math.max(0.12, Math.min(1, pct || 0.12)));
+    return base * (0.68 + 0.32 * Math.max(0.18, Math.min(1, pct || 0.18)));
   }
 
   function slotJob(occ, type, ghostIndex) {
@@ -1630,7 +1630,7 @@
     if (!title) return "";
     const q = gridQuad(c, r, 1, 1);
     const cx = (q[0][0] + q[1][0] + q[2][0] + q[3][0]) / 4;
-    const cy = Math.min(q[0][1], q[1][1], q[2][1], q[3][1]) - 2.2;
+    const cy = Math.min(q[0][1], q[1][1], q[2][1], q[3][1]) - 4.4;
     const count = job?.preview ? "SET" : `${job?.left ?? ""} MO`;
     return (
       `<g class="site-ghost-badge${job?.preview ? " preview" : ""}">` +
@@ -1693,13 +1693,13 @@
 
   function pitchedRoof(foot, rise, tone) {
     const [sw, se, ne, nw] = foot;
-    const midFront = [(sw[0] + se[0]) / 2, (sw[1] + se[1]) / 2 - rise];
-    const midBack = [(nw[0] + ne[0]) / 2, (nw[1] + ne[1]) / 2 - rise];
-    let g = poly([sw, se, midFront], tone.front, tone.edge, 0.26);
-    g += poly([se, ne, midBack, midFront], tone.side, tone.edge, 0.26);
-    g += poly([nw, ne, midBack], tone.top, tone.edge, 0.3);
-    g += poly([sw, nw, midBack, midFront], tone.top, tone.edge, 0.34);
-    return { g, midFront, midBack };
+    const midL = [(sw[0] + nw[0]) / 2, (sw[1] + nw[1]) / 2 - rise];
+    const midR = [(se[0] + ne[0]) / 2, (se[1] + ne[1]) / 2 - rise];
+    let g = poly([sw, se, midR, midL], tone.front, tone.edge, 0.28);
+    g += poly([se, ne, midR], tone.side, tone.edge, 0.26);
+    g += poly([nw, ne, midR, midL], tone.top, tone.edge, 0.34);
+    g += poly([sw, nw, midL], tone.front, tone.edge, 0.26);
+    return { g, midL, midR };
   }
 
   function drawBess(occ) {
@@ -1763,8 +1763,8 @@
   function drawDcUnit(slot, ghost, job, pop) {
     const tone = ghost ? ghostTone("dc") : SURF.charcoal;
     const cap = ghost ? ghostTone("dc") : SURF.alum;
-    const h = growH(11.6, ghost, job?.pct);
-    const foot = insetQuad(gridQuad(slot.c + 0.36, slot.r + 0.2, 0.28, 0.26), 0);
+    const h = growH(12.4, ghost, job?.pct);
+    const foot = insetQuad(gridQuad(slot.c + 0.3, slot.r + 0.16, 0.4, 0.34), 0);
     const body = isoPrism(foot, h, tone);
     const hat = isoPrism(liftPts(insetQuad(foot, 0.12), h), ghost ? 0.7 : 0.55, cap);
     let unit = body.g + hat.g;
@@ -1821,8 +1821,8 @@
     const job = ghost ? slotJob(occ, "lounge", 0) : null;
     const tone = ghost ? ghostTone("lounge") : SURF.cream;
     const h = growH(7.4, ghost, job?.pct);
-    const foot = insetQuad(gridQuad(0.22, 3.18, 1.56, 0.56), 0.02);
-    const patio = isoPrism(insetQuad(gridQuad(0.42, 3.62, 0.72, 0.22), 0), 0.7, ghost ? ghostTone("lounge") : SURF.concrete);
+    const foot = insetQuad(gridQuad(0.18, 3.16, 1.64, 0.58), 0.02);
+    const patio = isoPrism(insetQuad(gridQuad(0.36, 3.6, 0.8, 0.24), 0), 0.75, ghost ? ghostTone("lounge") : SURF.concrete);
     const body = isoPrism(foot, h, tone);
     let g = patio.g + body.g;
     g += faceRect(body, 0.08, 0.16, 0.34, 0.42, ghost ? "#243038" : "#1a2830");
@@ -1847,9 +1847,9 @@
     g += faceRect(body, 0.1, 0.16, 0.32, 0.36, ghost ? "#2a2418" : "#141c20");
     g += faceRect(body, 0.14, 0.28, 0.24, 0.12, PAL.amber);
     g += faceRect(body, 0.72, 0.2, 0.12, 0.18, PAL.red);
-    const roofFoot = liftPts(insetQuad(foot, -0.02), h);
-    g += pitchedRoof(roofFoot, 3.6, tone).g;
-    const awning = isoPrism(liftPts(insetQuad(gridQuad(2.16, 3.5, 1.68, 0.3), 0), h * 0.7), 0.7, awn);
+    const roofFoot = liftPts(insetQuad(foot, -0.04), h);
+    g += pitchedRoof(roofFoot, 5.2, { ...tone, top: awn.top, front: awn.front, edge: tone.edge }).g;
+    const awning = isoPrism(liftPts(insetQuad(gridQuad(2.14, 3.48, 1.72, 0.34), 0), h * 0.62), 0.85, awn);
     g += awning.g;
     return wrapBldg("kit-market", ghost, g, slotPop(occ, "market", 0), job?.preview);
   }
@@ -2158,7 +2158,9 @@
     const target = CITY_BY_ID[selected];
     const label = $("tray-label");
     if (label) {
-      label.textContent = target ? `DEPLOY // ${target.name.toUpperCase()}` : "DEPLOY";
+      label.innerHTML = target
+        ? `DEPLOY<span>${target.name.toUpperCase()}</span>`
+        : "DEPLOY";
     }
     for (const spec of Object.values(BUILD)) {
       const cost = selected ? deployCost(spec.id, selected) : spec.cost;
@@ -2260,6 +2262,10 @@
 
   function applyShot(name) {
     const z = (id) => state.cities[id].sites.zaps;
+    if (name === "board" || name === "map") {
+      selected = "phoenix";
+      return null;
+    }
     if (name === "pad" || name === "empty") {
       selected = "flagstaff";
       return "flagstaff";
