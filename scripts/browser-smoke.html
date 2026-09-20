@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Empire browser smoke</title>
+  </head>
+  <body>
+    <pre id="out">running…</pre>
+    <iframe id="g" src="/?shot=empty" style="position:absolute;left:-9999px;width:1280px;height:800px;border:0"></iframe>
+    <script>
+      const out = document.getElementById("out");
+      const frame = document.getElementById("g");
+      const report = (obj) => {
+        out.textContent = JSON.stringify(obj, null, 2);
+        document.title = obj.ok ? "SMOKE PASS" : "SMOKE FAIL";
+      };
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      frame.addEventListener("load", async () => {
+        try {
+          await wait(800);
+          const w = frame.contentWindow;
+          const d = frame.contentDocument;
+          const smoke = w.__EMPIRE_SMOKE__;
+          if (!smoke) throw new Error("no __EMPIRE_SMOKE__");
+          const before = {
+            site: smoke.getSite(),
+            selected: smoke.getSelected(),
+            paused: smoke.paused(),
+            speed: smoke.getState().speed,
+          };
+          const dc = d.querySelector('[data-kit="dc"]');
+          if (!dc) throw new Error("no DC tray button");
+          dc.click();
+          await wait(250);
+          const state = smoke.getState();
+          const after = {
+            site: smoke.getSite(),
+            selected: smoke.getSelected(),
+            paused: smoke.paused(),
+            queue: state.queue,
+            crews: state.queue.filter((q) => q.faction === "zaps").length,
+          };
+          const flag = smoke.nearestCity(400, 370);
+          const tuc = smoke.nearestCity(455, 545);
+          const ok =
+            before.site === "flagstaff" &&
+            after.site === "flagstaff" &&
+            after.selected === "flagstaff" &&
+            after.paused === true &&
+            after.queue.some((q) => q.city === "flagstaff" && q.type === "dc") &&
+            flag.id === "flagstaff" &&
+            tuc.id === "tucson";
+          report({ ok, before, after, flag: flag.id, tucson: tuc.id, hits: { flagstaff: flag.id, tucson: tuc.id } });
+        } catch (err) {
+          report({ ok: false, error: String(err && err.stack ? err.stack : err) });
+        }
+      });
+    </script>
+  </body>
+</html>

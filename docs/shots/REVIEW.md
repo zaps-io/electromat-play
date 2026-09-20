@@ -1,15 +1,15 @@
-# Empire graphics review — rts-yard-12
+# Empire graphics review — rts-yard-13
 
-Stills: `board.png` · `yard-empty.png` · `yard-dc1.png` · `yard-dc2-raising.png` · `yard-dc4.png` · `yard-full.png`
+Stills: `board.png` · `yard-empty.png` · `yard-dc2-raising.png` · `yard-raising.png` · `yard-full.png` · `inspector.png`
 
-Replay: `?shot=empty` · `?shot=dc` / `?shot=dc1` · `?shot=dc2-raising` · `?shot=dc4` · `?shot=full` · `?shot=start` · `?showcase=1`.
+Replay: `?shot=board` · `?shot=empty` · `?shot=dc2-raising` / `?shot=raising-ghosts` · `?shot=raising` · `?shot=full` · `?shot=start` · `?showcase=1`.
 
-## Playtest fix
+## AoE polish
 
-- **City picks** use nearest-stamp hit testing in map units (radius 70). Phoenix’s HQ photo no longer steals Flagstaff / Tucson. Zoom and pan do not change who wins.
-- **Calendar starts PAUSED.** 1× is ~5.6s / month. PAUSE is amber fill, 1× cyan, 4× red, plus a PAUSED / n× LIVE readout.
-- **Raising DCs** each own a chess cell: dashed cyan reserve, `DC 1` / `DC 2` labels, no shared ghost canopy.
-- **1280×800:** inspector queue + site stats scroll; event log stays docked under the yard (including while a site is open).
+- **Silhouettes.** DC is a slim Zeus pedestal under a cream canopy. MCS is a charcoal hangar with red-banded posts. BESS is a cyan-capped cabinet row. Lounge is a cream glass pavilion. Market is a pitched kiosk with a cream awning. Ghosts keep those rooflines and tint instead of sharing one cyan cube.
+- **Construction.** Raising tiles fill with remaining-month progress. Each ghost wears a countdown badge (`DC 1` / `2 MO`). Finished kit pops in place. Hovering a ready tray item previews the next chess cell.
+- **Tray.** Selected kit gets a cyan frame. Disabled reasons are amber chips (`NEED PAD`, `CREWS FULL`) — not faded 42% text. Five-column grid at 1280×800; the note hides so labels do not clip.
+- **Map.** Nearest-stamp hits stay radius 70. Flagstaff / Tucson cannot be stolen by the Phoenix HQ photo. Default zoom remains the full interconnect. EXIT shows `ESC`; Esc still closes the yard.
 
 ## Framing
 
@@ -29,11 +29,12 @@ Goldilocks yard scale **unchanged**: full pad + a bit of sand margin, about **76
 
 | Bar | Grade | Evidence |
 |---|---|---|
-| Flagstaff after Phoenix | **FIX** | Distance pick, not the HQ rectangle |
-| Explore without the year racing | **FIX** | Boot paused; 1× is slow |
-| Two raising DCs | **FIX** | Two reserved cells, two labels |
-| 1280×800 HUD | **FIX** | Scroll dock for stats; log stays |
-| Yard framing | **HOLD** | Stack still ~76% of yard (cap 800). |
-| Brand | **HOLD** | Official cream/red wordmarks. |
+| Instant-read kit | **RAISE** | Distinct rooflines / colors on yard and ghosts |
+| Raising feedback | **RAISE** | Tile fill + countdown badge + complete pop |
+| Tray at 1280×800 | **RAISE** | Selected frame, why-chips, no wrap clip |
+| Flagstaff after Phoenix | **HOLD** | Distance pick, radius 70 |
+| Explore without the year racing | **HOLD** | Boot paused; 1× is slow |
+| Yard framing | **HOLD** | Stack still ~76% of yard (cap 800) |
+| Brand | **HOLD** | Official cream/red wordmarks |
 
-Economy untouched. Night Shift untouched. Cache `rts-yard-12`.
+Economy untouched. Night Shift untouched. Cache `rts-yard-13`.

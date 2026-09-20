@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-yard-12 */
+/* empire-build: rts-yard-13 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -22,7 +22,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-yard-12";
+  const SPRITE_V = "rts-yard-13";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -43,7 +43,7 @@
     voltspan: "240 / 204",
     rival: "240 / 167",
   };
-  const KIT_V = "rts-yard-12";
+  const KIT_V = "rts-yard-13";
   const KIT_SPRITES = {
     dc: `assets/sprites/kit-dc.png?v=${KIT_V}`,
     mcs: `assets/sprites/kit-mcs.png?v=${KIT_V}`,
@@ -279,6 +279,9 @@
   let siteView = null;
   let mapDrag = null;
   let lastPan = false;
+  let armedKit = null;
+  let hoverKit = null;
+  let pops = [];
 
   function emptySite() {
     return { dc: 0, mcs: 0, bess: 0, lounge: 0, market: 0 };
@@ -532,6 +535,14 @@
     const site = city.sites[job.faction];
     if (BUILD[job.type].unique) site[job.type] = 1;
     else site[job.type] += 1;
+    if (job.faction === YOU) {
+      pops.push({
+        city: job.city,
+        type: job.type,
+        slot: Math.max(0, site[job.type] - 1),
+        until: Date.now() + 1200,
+      });
+    }
     const who = job.faction === YOU ? "Zaps" : RIVALS[job.faction].name;
     log(`${who} brings ${BUILD[job.type].name} online in ${CITY_BY_ID[job.city].name}.`, job.faction === YOU ? "good" : "bad");
   }
@@ -776,6 +787,10 @@
     state = freshState();
     selected = "phoenix";
     lastNet = 0;
+    armedKit = null;
+    hoverKit = null;
+    pops = [];
+    siteView = null;
     showBoard();
     bindMapControls();
     renderAll();
@@ -1370,6 +1385,20 @@
     return overlayBaseKind(mapSpriteKind(city, meta));
   }
 
+  function jobList(cityId, type) {
+    return jobsFor(cityId).filter((j) => j.type === type);
+  }
+
+  function jobPct(job, type) {
+    const months = BUILD[type].months;
+    return Math.max(0.12, Math.min(1, (months - job.left) / months));
+  }
+
+  function prunePops() {
+    const now = Date.now();
+    pops = pops.filter((p) => p.until > now);
+  }
+
   function kitOccupancy(city) {
     const site = city.sites[YOU];
     const raising = {
@@ -1379,7 +1408,8 @@
       lounge: site.lounge < 1 ? raisingCount(city.id, "lounge") : 0,
       market: site.market < 1 ? raisingCount(city.id, "market") : 0,
     };
-    return {
+    const occ = {
+      cityId: city.id,
       dc: Math.min(4, Math.max(0, site.dc) + raising.dc),
       mcs: Math.min(2, Math.max(0, site.mcs) + raising.mcs),
       bess: Math.min(1, Math.max(0, site.bess) + (raising.bess ? 1 : 0)),
@@ -1387,7 +1417,23 @@
       market: Math.min(1, Math.max(0, site.market) + (raising.market ? 1 : 0)),
       raising,
       live: site,
+      jobs: {
+        dc: jobList(city.id, "dc"),
+        mcs: jobList(city.id, "mcs"),
+        bess: jobList(city.id, "bess"),
+        lounge: jobList(city.id, "lounge"),
+        market: jobList(city.id, "market"),
+      },
+      preview: null,
     };
+    const cap = { dc: 4, mcs: 2, bess: 1, lounge: 1, market: 1 };
+    if (hoverKit && city.id === selected && cap[hoverKit] && !blockedReason(hoverKit, city.id) && occ[hoverKit] < cap[hoverKit]) {
+      occ[hoverKit] += 1;
+      occ.preview = hoverKit;
+      if (hoverKit === "dc" || hoverKit === "mcs") occ.raising[hoverKit] += 1;
+      else occ.raising[hoverKit] = 1;
+    }
+    return occ;
   }
 
   function isoPadQuad(x, y, ne, se) {
@@ -1443,8 +1489,37 @@
     return pts.map((p) => [p[0] + (cx - p[0]) * t, p[1] + (cy - p[1]) * t]);
   }
 
-  function ghostTone() {
+  function ghostTone(kind) {
+    if (kind === "lounge") {
+      return { top: "#c8c2b4", front: "#9a9488", side: "#7a7468", edge: "rgba(245,240,232,0.95)" };
+    }
+    if (kind === "market") {
+      return { top: "#6a5a48", front: "#4a3e34", side: "#3a322c", edge: "rgba(232,154,46,0.95)" };
+    }
+    if (kind === "mcs") {
+      return { top: "#5a4848", front: "#3e3234", side: "#32282a", edge: "rgba(230,50,37,0.9)" };
+    }
+    if (kind === "bess") {
+      return { top: "#3a4a52", front: "#2a383e", side: "#222e34", edge: "rgba(0,212,245,0.95)" };
+    }
     return { top: "#5a6e78", front: "#3e5058", side: "#324048", edge: "rgba(0,212,245,0.95)" };
+  }
+
+  function growH(base, ghost, pct) {
+    if (!ghost) return base;
+    return base * (0.68 + 0.32 * Math.max(0.18, Math.min(1, pct || 0.18)));
+  }
+
+  function slotJob(occ, type, ghostIndex) {
+    const job = occ.jobs?.[type]?.[ghostIndex];
+    if (job) return { left: job.left, pct: jobPct(job, type), preview: false };
+    if (occ.preview === type) return { left: BUILD[type].months, pct: 0.22, preview: true };
+    return { left: BUILD[type].months, pct: 0.22, preview: false };
+  }
+
+  function slotPop(occ, type, index) {
+    prunePops();
+    return pops.some((p) => p.city === occ.cityId && p.type === type && (p.slot == null || p.slot === index));
   }
 
   function isoPrism(foot, h, tone) {
@@ -1467,8 +1542,12 @@
     return `<rect x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${w.toFixed(2)}" height="${h.toFixed(2)}" fill="${fill}"/>`;
   }
 
-  function wrapBldg(cls, ghost, inner) {
-    return `<g class="site-bldg ${cls}${ghost ? " raising" : ""}">${inner}</g>`;
+  function wrapBldg(cls, ghost, inner, pop, preview) {
+    const bits = ["site-bldg", cls];
+    if (ghost) bits.push("raising");
+    if (preview) bits.push("preview");
+    if (pop) bits.push("pop");
+    return `<g class="${bits.join(" ")}">${inner}</g>`;
   }
 
   function occupiedTiles(occ) {
@@ -1518,49 +1597,62 @@
   function reservedMark(occ, c, r) {
     for (let i = occ.live.dc; i < occ.dc; i += 1) {
       const slot = SLOTS.dc[i];
-      if (slot && slot.c === c && slot.r === r) return { kind: "dc", label: `DC ${i + 1}` };
+      if (slot && slot.c === c && slot.r === r) {
+        return { kind: "dc", label: `DC ${i + 1}`, ...slotJob(occ, "dc", i - occ.live.dc) };
+      }
     }
     if (occ.raising.mcs) {
       const live = occ.live.mcs;
       for (let i = 0; i < SLOTS.mcs.length; i += 1) {
         const slot = SLOTS.mcs[i];
         if (i >= live && slot.c === c && slot.r === r) {
-          return { kind: "mcs", label: i === live ? "MCS" : "" };
+          return { kind: "mcs", label: i === live ? "MCS" : "", ...slotJob(occ, "mcs", i - live) };
         }
       }
     }
     if (occ.raising.bess && SLOTS.bess.some((s) => s.c === c && s.r === r)) {
-      return { kind: "bess", label: c === SLOTS.bess[0].c && r === SLOTS.bess[0].r ? "BESS" : "" };
+      return {
+        kind: "bess",
+        label: c === SLOTS.bess[0].c && r === SLOTS.bess[0].r ? "BESS" : "",
+        ...slotJob(occ, "bess", 0),
+      };
     }
     if (occ.raising.lounge && SLOTS.lounge.some((s) => s.c === c && s.r === r)) {
-      return { kind: "lounge", label: c === SLOTS.lounge[0].c ? "LOUNGE" : "" };
+      return { kind: "lounge", label: c === SLOTS.lounge[0].c ? "LOUNGE" : "", ...slotJob(occ, "lounge", 0) };
     }
     if (occ.raising.market && SLOTS.market.some((s) => s.c === c && s.r === r)) {
-      return { kind: "market", label: c === SLOTS.market[0].c ? "MARKET" : "" };
+      return { kind: "market", label: c === SLOTS.market[0].c ? "MARKET" : "", ...slotJob(occ, "market", 0) };
     }
     return null;
   }
 
-  function cellCaption(c, r, text) {
-    if (!text) return "";
+  function ghostBadge(c, r, title, job) {
+    if (!title) return "";
     const q = gridQuad(c, r, 1, 1);
     const cx = (q[0][0] + q[1][0] + q[2][0] + q[3][0]) / 4;
-    const cy = Math.min(q[0][1], q[1][1], q[2][1], q[3][1]) - 1.6;
-    return `<text class="site-ghost-label" x="${cx.toFixed(2)}" y="${cy.toFixed(2)}" text-anchor="middle">${text}</text>`;
+    const cy = Math.min(q[0][1], q[1][1], q[2][1], q[3][1]) - 4.4;
+    const count = job?.preview ? "SET" : `${job?.left ?? ""} MO`;
+    return (
+      `<g class="site-ghost-badge${job?.preview ? " preview" : ""}">` +
+      `<rect class="site-ghost-plate" x="${(cx - 6.8).toFixed(2)}" y="${(cy - 5.0).toFixed(2)}" width="13.6" height="6.5" rx="0.7"/>` +
+      `<text class="site-ghost-label" x="${cx.toFixed(2)}" y="${(cy - 1.2).toFixed(2)}" text-anchor="middle">${title}</text>` +
+      `<text class="site-ghost-count" x="${cx.toFixed(2)}" y="${(cy + 2.2).toFixed(2)}" text-anchor="middle">${count}</text>` +
+      `</g>`
+    );
   }
 
   function ghostCaptions(occ) {
     let g = "";
     for (let i = occ.live.dc; i < occ.dc; i += 1) {
       const slot = SLOTS.dc[i];
-      if (slot) g += cellCaption(slot.c, slot.r, `DC ${i + 1}`);
+      if (slot) g += ghostBadge(slot.c, slot.r, `DC ${i + 1}`, slotJob(occ, "dc", i - occ.live.dc));
     }
     if (occ.raising.mcs && occ.live.mcs < occ.mcs) {
-      g += cellCaption(SLOTS.mcs[0].c, SLOTS.mcs[0].r, "MCS");
+      g += ghostBadge(SLOTS.mcs[0].c, SLOTS.mcs[0].r, "MCS", slotJob(occ, "mcs", 0));
     }
-    if (occ.raising.bess) g += cellCaption(SLOTS.bess[1].c, SLOTS.bess[1].r, "BESS");
-    if (occ.raising.lounge) g += cellCaption(SLOTS.lounge[0].c, SLOTS.lounge[0].r, "LOUNGE");
-    if (occ.raising.market) g += cellCaption(SLOTS.market[0].c, SLOTS.market[0].r, "MARKET");
+    if (occ.raising.bess) g += ghostBadge(SLOTS.bess[1].c, SLOTS.bess[1].r, "BESS", slotJob(occ, "bess", 0));
+    if (occ.raising.lounge) g += ghostBadge(SLOTS.lounge[0].c, SLOTS.lounge[0].r, "LOUNGE", slotJob(occ, "lounge", 0));
+    if (occ.raising.market) g += ghostBadge(SLOTS.market[0].c, SLOTS.market[0].r, "MARKET", slotJob(occ, "market", 0));
     return g;
   }
 
@@ -1581,7 +1673,9 @@
       curbs += `<polygon class="site-tile-curb" points="${svgPts(insetQuad(quad, 0.03))}" />`;
       decks += `<polygon class="site-tile${odd ? " odd" : ""} kind-${kind}${mark ? " reserved" : ""}" points="${svgPts(insetQuad(quad, 0.11))}" />`;
       if (mark) {
-        reserve += `<polygon class="site-tile-reserve" points="${svgPts(insetQuad(quad, 0.04))}" />`;
+        reserve += `<polygon class="site-tile-reserve kind-${mark.kind}${mark.preview ? " preview" : ""}" points="${svgPts(insetQuad(quad, 0.04))}" />`;
+        const pct = mark.pct || 0.12;
+        reserve += `<polygon class="site-tile-progress kind-${mark.kind}" points="${svgPts(insetQuad(quad, 0.18 + (1 - pct) * 0.28))}" />`;
       }
       if (kind === "dc") paint += stallPaint(c, r);
       if (kind === "mcs") {
@@ -1597,23 +1691,34 @@
     return boardEtch() + lifts + curbs + decks + paint + reserve;
   }
 
+  function pitchedRoof(foot, rise, tone) {
+    const [sw, se, ne, nw] = foot;
+    const midL = [(sw[0] + nw[0]) / 2, (sw[1] + nw[1]) / 2 - rise];
+    const midR = [(se[0] + ne[0]) / 2, (se[1] + ne[1]) / 2 - rise];
+    let g = poly([sw, se, midR, midL], tone.front, tone.edge, 0.28);
+    g += poly([se, ne, midR], tone.side, tone.edge, 0.26);
+    g += poly([nw, ne, midR, midL], tone.top, tone.edge, 0.34);
+    g += poly([sw, nw, midL], tone.front, tone.edge, 0.26);
+    return { g, midL, midR };
+  }
+
   function drawBess(occ) {
     if (!occ.bess) return "";
-    const ghost = occ.raising.bess;
-    const tone = ghost ? ghostTone() : SURF.charcoal;
+    const ghost = Boolean(occ.raising.bess);
+    const job = ghost ? slotJob(occ, "bess", 0) : null;
+    const tone = ghost ? ghostTone("bess") : SURF.charcoal;
+    const h = growH(9.8, ghost, job?.pct);
     let g = "";
     SLOTS.bess.forEach((slot) => {
-      const plinth = isoPrism(insetQuad(gridQuad(slot.c + 0.22, slot.r + 0.22, 0.56, 0.56), 0.02), 1.05, ghost ? ghostTone() : SURF.concrete);
-      const box = isoPrism(insetQuad(gridQuad(slot.c + 0.28, slot.r + 0.28, 0.44, 0.44), 0.02), 8.4, tone);
+      const plinth = isoPrism(insetQuad(gridQuad(slot.c + 0.2, slot.r + 0.2, 0.6, 0.6), 0.02), 1.05, ghost ? ghostTone("bess") : SURF.concrete);
+      const box = isoPrism(insetQuad(gridQuad(slot.c + 0.26, slot.r + 0.26, 0.48, 0.48), 0.02), h, tone);
       g += plinth.g + box.g;
-      if (!ghost) {
-        g += `<polygon class="site-bess-cap" points="${svgPts(insetQuad(box.top, 0.16))}" />`;
-        g += faceRect(box, 0.16, 0.1, 0.22, 0.08, PAL.amber);
-        g += faceRect(box, 0.16, 0.34, 0.68, 0.12, "#141418");
-        g += faceRect(box, 0.16, 0.52, 0.68, 0.12, "#141418");
-      }
+      g += `<polygon class="site-bess-cap" points="${svgPts(insetQuad(box.top, 0.14))}" />`;
+      g += faceRect(box, 0.16, 0.1, 0.2, 0.07, PAL.amber);
+      g += faceRect(box, 0.16, 0.32, 0.68, 0.1, ghost ? "#243038" : "#141418");
+      g += faceRect(box, 0.16, 0.5, 0.68, 0.1, ghost ? "#243038" : "#141418");
     });
-    return wrapBldg("kit-bess", ghost, g);
+    return wrapBldg("kit-bess", ghost, g, slotPop(occ, "bess", 0), job?.preview);
   }
 
   function drawMcs(occ) {
@@ -1622,69 +1727,73 @@
     const live = occ.live.mcs;
     const raising = occ.raising.mcs;
     const bayGhost = raising && live < 1;
-    const roofTone = bayGhost ? ghostTone() : SURF.charcoal;
-    const postTone = bayGhost ? ghostTone() : SURF.steel;
-    const lift = 10.2;
-    const bay = insetQuad(gridQuad(0.16, 1.14, 0.68, 1.72), 0.02);
+    const roofTone = bayGhost ? ghostTone("mcs") : SURF.charcoal;
+    const postTone = bayGhost ? ghostTone("mcs") : SURF.steel;
+    const lift = 12.6;
+    const bay = insetQuad(gridQuad(0.12, 1.1, 0.76, 1.8), 0.02);
     let g = "";
     [
-      [0.12, 1.12],
-      [0.12, 2.72],
+      [0.1, 1.1],
+      [0.1, 2.74],
     ].forEach(([c, r]) => {
-      const p = isoPrism(insetQuad(gridQuad(c, r, 0.18, 0.16), 0), lift, postTone);
+      const p = isoPrism(insetQuad(gridQuad(c, r, 0.2, 0.16), 0), lift, postTone);
       g += p.g;
-      if (!bayGhost) g += faceRect(p, 0.04, 0.2, 0.92, 0.08, PAL.red);
+      g += faceRect(p, 0.04, 0.2, 0.92, 0.08, PAL.red);
     });
     for (let i = 0; i < n; i += 1) {
       const ghost = raising && i >= live;
-      const tone = ghost ? ghostTone() : SURF.charcoal;
-      const foot = insetQuad(gridQuad(0.24, 1.32 + i * 0.78, 0.52, 0.44), 0.02);
-      const body = isoPrism(foot, 7.6, tone);
+      const job = ghost ? slotJob(occ, "mcs", i - live) : null;
+      const tone = ghost ? ghostTone("mcs") : SURF.charcoal;
+      const h = growH(8.8, ghost, job?.pct);
+      const foot = insetQuad(gridQuad(0.28, 1.28 + i * 0.78, 0.42, 0.4), 0.02);
+      const body = isoPrism(foot, h, tone);
       let unit = body.g;
-      if (!ghost) {
-        unit += faceRect(body, 0.14, 0.12, 0.7, 0.46, "#1a1a20");
-        unit += faceRect(body, 0.18, 0.16, 0.6, 0.1, PAL.amber);
-        unit += `<polygon class="site-dc-ring" points="${svgPts(insetQuad(foot, -0.1))}" />`;
-      }
-      g += wrapBldg("kit-mcs-unit", ghost, unit);
+      unit += faceRect(body, 0.14, 0.12, 0.7, 0.5, ghost ? "#2a2020" : "#1a1a20");
+      unit += faceRect(body, 0.18, 0.16, 0.6, 0.1, PAL.amber);
+      unit += faceRect(body, 0.22, 0.3, 0.18, 0.07, PAL.red);
+      unit += `<polygon class="site-dc-ring" points="${svgPts(insetQuad(foot, -0.12))}" />`;
+      g += wrapBldg("kit-mcs-unit", ghost, unit, slotPop(occ, "mcs", i), job?.preview);
     }
-    const roof = isoPrism(liftPts(bay, lift), 1.45, roofTone);
+    const roof = isoPrism(liftPts(bay, lift), 1.55, roofTone);
     g += roof.g;
-    if (!bayGhost) g += `<polygon class="site-mcs-edge" points="${svgPts(insetQuad(roof.top, 0.1))}" />`;
-    return wrapBldg("kit-mcs", bayGhost, g);
+    g += `<polygon class="site-mcs-edge" points="${svgPts(insetQuad(roof.top, 0.08))}" />`;
+    return wrapBldg("kit-mcs", bayGhost, g, slotPop(occ, "mcs", 0) && live >= 1, occ.preview === "mcs" && live < 1);
   }
 
-  function drawDcUnit(slot, ghost) {
-    const tone = ghost ? ghostTone() : SURF.charcoal;
-    const cap = ghost ? ghostTone() : SURF.alum;
-    const foot = insetQuad(gridQuad(slot.c + 0.26, slot.r + 0.16, 0.48, 0.36), 0);
-    const body = isoPrism(foot, ghost ? 8.2 : 7.8, tone);
-    const hat = isoPrism(liftPts(insetQuad(foot, 0.1), ghost ? 8.2 : 7.8), ghost ? 1.05 : 0.7, cap);
+  function drawDcUnit(slot, ghost, job, pop) {
+    const tone = ghost ? ghostTone("dc") : SURF.charcoal;
+    const cap = ghost ? ghostTone("dc") : SURF.alum;
+    const h = growH(12.4, ghost, job?.pct);
+    const foot = insetQuad(gridQuad(slot.c + 0.3, slot.r + 0.16, 0.4, 0.34), 0);
+    const body = isoPrism(foot, h, tone);
+    const hat = isoPrism(liftPts(insetQuad(foot, 0.12), h), ghost ? 0.7 : 0.55, cap);
     let unit = body.g + hat.g;
-    if (ghost) {
-      const shade = insetQuad(gridQuad(slot.c + 0.14, slot.r + 0.1, 0.72, 0.46), 0);
-      const roof = isoPrism(liftPts(shade, 10.4), 1.05, ghostTone());
-      unit += roof.g;
-      unit += `<polygon class="site-dc-ring" points="${svgPts(insetQuad(foot, -0.14))}" />`;
-    } else {
-      unit += faceRect(body, 0.1, 0.1, 0.78, 0.5, "#121217");
-      unit += faceRect(body, 0.14, 0.14, 0.68, 0.1, PAL.amber);
-      unit += faceRect(body, 0.18, 0.28, 0.22, 0.08, PAL.red);
-      unit += `<polygon class="site-dc-ring" points="${svgPts(insetQuad(foot, -0.12))}" />`;
+    unit += faceRect(body, 0.12, 0.1, 0.76, 0.62, ghost ? "#243038" : "#121217");
+    unit += faceRect(body, 0.16, 0.14, 0.66, 0.08, PAL.amber);
+    unit += faceRect(body, 0.2, 0.28, 0.2, 0.07, PAL.red);
+    unit += `<polygon class="site-dc-ring" points="${svgPts(insetQuad(foot, -0.2))}" />`;
+    const hook = insetQuad(gridQuad(slot.c + 0.6, slot.r + 0.3, 0.08, 0.06), 0);
+    const holster = isoPrism(liftPts(hook, h * 0.52), 1.05, ghost ? ghostTone("dc") : SURF.charcoal);
+    unit += holster.g;
+    if (!ghost) {
+      const a = holster.seT;
+      unit += `<path class="site-dc-cable" d="M${a[0].toFixed(2)} ${a[1].toFixed(2)} Q${(a[0] + 2.1).toFixed(2)} ${(a[1] + 3.4).toFixed(2)} ${(a[0] + 0.8).toFixed(2)} ${(a[1] + 5.6).toFixed(2)}" />`;
     }
-    return wrapBldg("kit-dc-unit", ghost, unit);
+    return wrapBldg("kit-dc-unit", ghost, unit, pop, job?.preview);
   }
 
   function drawDcRow(occ) {
     if (occ.dc < 1) return "";
     const n = occ.dc;
     const live = occ.live.dc;
-    const lift = 10.6;
+    const lift = 12.2;
     let g = "";
     for (let i = 0; i < n; i += 1) {
       const slot = SLOTS.dc[i];
       if (!slot) continue;
-      g += drawDcUnit(slot, i >= live);
+      const ghost = i >= live;
+      const job = ghost ? slotJob(occ, "dc", i - live) : null;
+      g += drawDcUnit(slot, ghost, job, slotPop(occ, "dc", i));
     }
     if (live >= 1) {
       for (let i = 0; i <= live; i += 1) {
@@ -1708,39 +1817,41 @@
 
   function drawLounge(occ) {
     if (!occ.lounge) return "";
-    const ghost = occ.raising.lounge;
-    const tone = ghost ? ghostTone() : SURF.cream;
-    const roofTone = ghost ? ghostTone() : SURF.cream;
-    const foot = insetQuad(gridQuad(0.22, 3.22, 1.56, 0.56), 0.02);
-    const body = isoPrism(foot, 6.8, tone);
-    let g = body.g;
-    if (!ghost) {
-      g += faceRect(body, 0.08, 0.16, 0.34, 0.4, "#1a2830");
-      g += faceRect(body, 0.5, 0.16, 0.34, 0.4, "#1a2830");
-      g += faceRect(body, 0.86, 0.2, 0.07, 0.16, PAL.red);
-    }
-    const roof = isoPrism(liftPts(insetQuad(foot, -0.04), 7.6), 1.35, roofTone);
+    const ghost = Boolean(occ.raising.lounge);
+    const job = ghost ? slotJob(occ, "lounge", 0) : null;
+    const tone = ghost ? ghostTone("lounge") : SURF.cream;
+    const h = growH(7.4, ghost, job?.pct);
+    const foot = insetQuad(gridQuad(0.18, 3.16, 1.64, 0.58), 0.02);
+    const patio = isoPrism(insetQuad(gridQuad(0.36, 3.6, 0.8, 0.24), 0), 0.75, ghost ? ghostTone("lounge") : SURF.concrete);
+    const body = isoPrism(foot, h, tone);
+    let g = patio.g + body.g;
+    g += faceRect(body, 0.08, 0.16, 0.34, 0.42, ghost ? "#243038" : "#1a2830");
+    g += faceRect(body, 0.5, 0.16, 0.34, 0.42, ghost ? "#243038" : "#1a2830");
+    g += faceRect(body, 0.86, 0.2, 0.07, 0.16, PAL.red);
+    const roof = isoPrism(liftPts(insetQuad(foot, -0.06), h + 0.7), 1.2, tone);
     g += roof.g;
     if (!ghost) g += `<polygon class="site-lounge-edge" points="${svgPts(insetQuad(roof.top, 0.1))}" />`;
-    return wrapBldg("kit-lounge", ghost, g);
+    return wrapBldg("kit-lounge", ghost, g, slotPop(occ, "lounge", 0), job?.preview);
   }
 
   function drawMarket(occ) {
     if (!occ.market) return "";
-    const ghost = occ.raising.market;
-    const tone = ghost ? ghostTone() : SURF.charcoal;
-    const awn = ghost ? ghostTone() : SURF.cream;
-    const foot = insetQuad(gridQuad(2.22, 3.24, 1.56, 0.52), 0.02);
-    const body = isoPrism(foot, 6.2, tone);
+    const ghost = Boolean(occ.raising.market);
+    const job = ghost ? slotJob(occ, "market", 0) : null;
+    const tone = ghost ? ghostTone("market") : SURF.charcoal;
+    const awn = ghost ? ghostTone("lounge") : SURF.cream;
+    const h = growH(6.6, ghost, job?.pct);
+    const foot = insetQuad(gridQuad(2.22, 3.22, 1.56, 0.52), 0.02);
+    const body = isoPrism(foot, h, tone);
     let g = body.g;
-    if (!ghost) {
-      g += faceRect(body, 0.12, 0.14, 0.5, 0.38, "#141c20");
-      g += faceRect(body, 0.16, 0.34, 0.42, 0.09, PAL.amber);
-      g += faceRect(body, 0.76, 0.2, 0.1, 0.16, PAL.red);
-    }
-    const awning = isoPrism(liftPts(insetQuad(foot, -0.05), 6.8), 1.25, awn);
+    g += faceRect(body, 0.1, 0.16, 0.32, 0.36, ghost ? "#2a2418" : "#141c20");
+    g += faceRect(body, 0.14, 0.28, 0.24, 0.12, PAL.amber);
+    g += faceRect(body, 0.72, 0.2, 0.12, 0.18, PAL.red);
+    const roofFoot = liftPts(insetQuad(foot, -0.04), h);
+    g += pitchedRoof(roofFoot, 5.2, { ...tone, top: awn.top, front: awn.front, edge: tone.edge }).g;
+    const awning = isoPrism(liftPts(insetQuad(gridQuad(2.14, 3.48, 1.72, 0.34), 0), h * 0.62), 0.85, awn);
     g += awning.g;
-    return wrapBldg("kit-market", ghost, g);
+    return wrapBldg("kit-market", ghost, g, slotPop(occ, "market", 0), job?.preview);
   }
 
   function kitLayersHtml(city) {
@@ -1886,6 +1997,7 @@
 
   function exitSite() {
     siteView = null;
+    hoverKit = null;
     mapCam = { ...interconnectCam };
     clampCam();
     renderAll();
@@ -1902,19 +2014,23 @@
     };
   }
 
-  function cityAtClient(clientX, clientY) {
-    const pt = mapPointFromClient(clientX, clientY);
-    if (!pt) return null;
+  function nearestCity(x, y, r = CITY_HIT_R) {
     let best = null;
     let bestD = Infinity;
     for (const c of CITIES) {
-      const d = Math.hypot(c.x - pt.x, c.y - pt.y);
+      const d = Math.hypot(c.x - x, c.y - y);
       if (d < bestD) {
         bestD = d;
         best = c;
       }
     }
-    return best && bestD <= CITY_HIT_R ? best : null;
+    return best && bestD <= r ? best : null;
+  }
+
+  function cityAtClient(clientX, clientY) {
+    const pt = mapPointFromClient(clientX, clientY);
+    if (!pt) return null;
+    return nearestCity(pt.x, pt.y);
   }
 
   function bindMapControls() {
@@ -2042,27 +2158,53 @@
     const target = CITY_BY_ID[selected];
     const label = $("tray-label");
     if (label) {
-      label.textContent = target ? `DEPLOY // ${target.name.toUpperCase()}` : "DEPLOY";
+      label.innerHTML = target
+        ? `DEPLOY<span>${target.name.toUpperCase()}</span>`
+        : "DEPLOY";
     }
     for (const spec of Object.values(BUILD)) {
       const cost = selected ? deployCost(spec.id, selected) : spec.cost;
       const block = selected ? blockedReason(spec.id, selected) : "PICK A CITY";
       const raisingN = selected ? raisingCount(selected, spec.id) : 0;
+      const soon = selected ? jobList(selected, spec.id)[0] : null;
       const btn = document.createElement("button");
-      btn.className = `deploy${raisingN ? " raising" : ""}${!block && !raisingN ? " live" : ""}`;
+      btn.className = [
+        "deploy",
+        raisingN ? "raising" : "",
+        !block && !raisingN ? "live" : "",
+        block ? "is-blocked" : "",
+        armedKit === spec.id ? "selected" : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
       btn.disabled = Boolean(block);
+      btn.dataset.kit = spec.id;
+      btn.setAttribute("aria-pressed", armedKit === spec.id ? "true" : "false");
       btn.title = raisingN
-        ? `${spec.name} raising ×${raisingN} in ${target.name}`
+        ? `${spec.name} raising ×${raisingN} in ${target.name} · ${soon ? `${soon.left} mo left` : ""}`
         : block
           ? `${spec.name} — ${block}`
           : `Deploy ${spec.name} in ${target.name} · ${money(cost)} · ${spec.months} mo`;
+      const short = spec.id === "dc" ? "DC" : spec.name;
       const status = raisingN
-        ? `<small class="ready">RAISING${raisingN > 1 ? ` ×${raisingN}` : ""}</small>`
+        ? `<small class="ready">RAISING${raisingN > 1 ? ` ×${raisingN}` : ""}${soon ? ` · ${soon.left} MO` : ""}</small>`
         : block
-          ? `<small class="blocked">${money(cost)} · ${block}</small>`
-          : `<small class="ready">${money(cost)} · ${spec.months} mo · READY</small>`;
-      btn.innerHTML = `<img src="${spec.icon}" alt="" draggable="false"><span>${spec.name}${status}</span>`;
-      btn.addEventListener("click", () => enqueue(spec.id, selected));
+          ? `<small class="why">${block}</small>`
+          : `<small class="ready">${money(cost)} · ${spec.months} MO</small>`;
+      btn.innerHTML = `<img src="${spec.icon}" alt="" draggable="false"><span class="deploy-copy"><b>${short}</b>${status}</span>`;
+      btn.addEventListener("mouseenter", () => {
+        hoverKit = spec.id;
+        renderSiteYard();
+      });
+      btn.addEventListener("mouseleave", () => {
+        if (hoverKit === spec.id) hoverKit = null;
+        renderSiteYard();
+      });
+      btn.addEventListener("click", () => {
+        armedKit = spec.id;
+        if (!block) enqueue(spec.id, selected);
+        else renderTray();
+      });
       grid.appendChild(btn);
     }
   }
@@ -2120,6 +2262,10 @@
 
   function applyShot(name) {
     const z = (id) => state.cities[id].sites.zaps;
+    if (name === "board" || name === "map") {
+      selected = "phoenix";
+      return null;
+    }
     if (name === "pad" || name === "empty") {
       selected = "flagstaff";
       return "flagstaff";
@@ -2175,10 +2321,10 @@
       selected = "flagstaff";
       return "flagstaff";
     }
-    if (name === "dc2-raising" || name === "raising-dc" || name === "raising-dc2") {
+    if (name === "dc2-raising" || name === "raising-dc" || name === "raising-dc2" || name === "raising-ghosts") {
       state.queue.push(
         { faction: YOU, city: "flagstaff", type: "dc", left: 2, cost: 0 },
-        { faction: YOU, city: "flagstaff", type: "dc", left: 2, cost: 0 }
+        { faction: YOU, city: "flagstaff", type: "dc", left: 1, cost: 0 }
       );
       selected = "flagstaff";
       return "flagstaff";
@@ -2265,6 +2411,20 @@
       if (site && CITY_BY_ID[site]) enterSite(site);
     }
   }
+
+  window.__EMPIRE_SMOKE__ = {
+    build: "rts-yard-13",
+    hitR: CITY_HIT_R,
+    goldilocks: 0.76,
+    nearestCity,
+    cities: CITIES.map((c) => ({ id: c.id, name: c.name, x: c.x, y: c.y })),
+    paused: () => !state || state.speed === 0,
+    getState: () => state,
+    getSite: () => siteView,
+    getSelected: () => selected,
+    slots: SLOTS,
+    grid: { cols: GRID.cols, rows: GRID.rows },
+  };
 
   boot();
 })();
