@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-yard-18 */
+/* empire-build: rts-yard-19 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -22,7 +22,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-yard-18";
+  const SPRITE_V = "rts-yard-19";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -43,7 +43,7 @@
     voltspan: "240 / 204",
     rival: "240 / 167",
   };
-  const KIT_V = "rts-yard-18";
+  const KIT_V = "rts-yard-19";
   const KIT_SPRITES = {
     dc: `assets/sprites/kit-dc.png?v=${KIT_V}`,
     mcs: `assets/sprites/kit-mcs.png?v=${KIT_V}`,
@@ -287,6 +287,10 @@
   let yardFlash = null;
   let queuePulse = 0;
   let lastPriceToast = { city: "", at: 0, from: 0, to: 0 };
+  let crewPick = 0;
+  const SCOUT_COST = 40000;
+  const MAX_SCOUT_FLIGHTS = 2;
+  const PULSE_MONTHS = 4;
 
   function emptySite() {
     return { dc: 0, mcs: 0, bess: 0, lounge: 0, market: 0 };
@@ -365,6 +369,12 @@
         total: 3,
       },
       scout: null,
+      scouts: [],
+      crews: [
+        { id: 1, task: "raise", city: null },
+        { id: 2, task: "raise", city: null },
+        { id: 3, task: "raise", city: null },
+      ],
       intel: {},
       skirmish: null,
     };
@@ -574,14 +584,118 @@
     }
   }
 
+  function playerBuilds() {
+    if (!state?.queue) return 0;
+    return state.queue.filter((q) => q.left > 0 && q.faction === YOU).length;
+  }
+
+  function normalizeScouts() {
+    if (!state) return;
+    if (!Array.isArray(state.scouts)) {
+      state.scouts = state.scout && state.scout.city && state.scout.left > 0
+        ? [{ crewId: null, ...state.scout }]
+        : [];
+    }
+    state.scouts = state.scouts.filter((s) => s && s.city && s.left > 0);
+    state.scout = state.scouts[0] || null;
+  }
+
+  function inFlight() {
+    if (!state) return [];
+    normalizeScouts();
+    return state.scouts;
+  }
+
+  function scoutFlight(cityId) {
+    return inFlight().find((s) => s.city === cityId) || null;
+  }
+
+  function normalizeCrews() {
+    if (!state) return;
+    if (!Array.isArray(state.crews) || state.crews.length !== MAX_CREWS) {
+      const respond = state.crewPosture === "respond";
+      state.crews = [1, 2, 3].map((id) => ({
+        id,
+        task: respond && id === 1 ? "respond" : "raise",
+        city: null,
+      }));
+    }
+    state.crews.forEach((c, i) => {
+      c.id = i + 1;
+      if (c.task !== "raise" && c.task !== "respond" && c.task !== "scout") c.task = "raise";
+      if (c.task !== "scout") c.city = null;
+    });
+    if (state.crewPosture === "respond" && !state.crews.some((c) => c.task === "respond")) {
+      const volunteer = state.crews.find((c) => c.task === "raise");
+      if (volunteer) {
+        volunteer.task = "respond";
+        volunteer.city = null;
+      }
+    }
+    for (const sc of inFlight()) {
+      let crew = state.crews.find((c) => c.id === sc.crewId && c.task === "scout");
+      if (!crew) crew = state.crews.find((c) => c.id === sc.crewId);
+      if (!crew || crew.task === "scout" && crew.city && crew.city !== sc.city) {
+        crew = state.crews.find((c) => c.task === "raise") || state.crews.find((c) => c.task !== "scout");
+      }
+      if (crew) {
+        crew.task = "scout";
+        crew.city = sc.city;
+        sc.crewId = crew.id;
+      }
+    }
+    state.crewPosture = state.crews.some((c) => c.task === "respond") ? "respond" : "raise";
+  }
+
+  function crews() {
+    normalizeCrews();
+    return state.crews;
+  }
+
+  function syncPostureFromCrews() {
+    if (!state?.crews) return;
+    state.crewPosture = state.crews.some((c) => c.task === "respond") ? "respond" : "raise";
+  }
+
+  function idleCrewCount() {
+    if (!state) return 0;
+    const raisers = crews().filter((c) => c.task === "raise").length;
+    return Math.max(0, raisers - playerBuilds());
+  }
+
+  function scoutHandsFree() {
+    return Math.max(0, MAX_CREWS - playerBuilds() - inFlight().length);
+  }
+
   function crewCap() {
-    return state?.crewPosture === "respond" ? MAX_CREWS - 1 : MAX_CREWS;
+    if (!state) return MAX_CREWS;
+    return crews().filter((c) => c.task === "raise").length;
   }
 
   function crewsBusy() {
-    const builds = state.queue.filter((q) => q.left > 0 && q.faction === YOU).length;
-    const scouting = state.scout && state.scout.left > 0 ? 1 : 0;
-    return builds + scouting;
+    return playerBuilds();
+  }
+
+  function setCrewPosture(next) {
+    normalizeCrews();
+    if (next === "respond") {
+      if (!state.crews.some((c) => c.task === "respond")) {
+        const volunteer = state.crews.find((c) => c.task === "raise")
+          || state.crews.find((c) => !(c.task === "scout" && scoutFlight(c.city)));
+        if (volunteer && !(volunteer.task === "scout" && scoutFlight(volunteer.city))) {
+          volunteer.task = "respond";
+          volunteer.city = null;
+        }
+      }
+      state.idleMonths = 0;
+    } else {
+      state.crews.forEach((c) => {
+        if (c.task === "scout" && scoutFlight(c.city)) return;
+        c.task = "raise";
+        c.city = null;
+      });
+    }
+    syncPostureFromCrews();
   }
 
   function jobsFor(cityId, faction = YOU) {
@@ -1418,6 +1532,8 @@
     if (!state.intel || typeof state.intel !== "object") state.intel = {};
     if (state.skirmish === undefined) state.skirmish = null;
     if (state.scout === undefined) state.scout = null;
+    normalizeScouts();
+    normalizeCrews();
     if (state.pressure == null) state.pressure = 0;
     if (state.idleMonths == null) state.idleMonths = 0;
     if (state.lastObjective == null) state.lastObjective = "";
@@ -1616,8 +1732,8 @@
     if (bumped.length) log(`Rival tempo: ${bumped.join(", ")} prices slip.`, "bad");
   }
 
-  function tickIdleCrews(worked) {
-    if (state.month < 2 || worked) {
+  function tickIdleCrews() {
+    if (state.month < 2 || idleCrewCount() <= 0) {
       state.idleMonths = 0;
       return;
     }
@@ -1745,19 +1861,102 @@
     state.skirmish = null;
   }
 
+  function pushSkirmish() {
+    const sk = state.skirmish;
+    if (!sk) return false;
+    const bonus = state.crewPosture === "respond" ? 10 : 7;
+    sk.you = Math.min(100, (sk.you || 0) + bonus);
+    const label = sk.kind === "amenity" ? "AMENITY RACE" : "PRICE WAR";
+    if (sk.you >= 100) resolveSkirmish();
+    else toast(`${label} · ZAPS ${sk.you}`, "deal");
+    renderAll();
+    return true;
+  }
+
+  function pulseMonths(cityId) {
+    const info = state.intel && state.intel[cityId];
+    if (!info || info.until < state.month) return 0;
+    return Math.max(1, info.until - state.month + 1);
+  }
+
+  function pulseAlpha(cityId) {
+    const left = pulseMonths(cityId);
+    if (!left) return 0;
+    return Math.max(0.34, Math.min(1, left / PULSE_MONTHS));
+  }
+
   function scoutBlock(cityId) {
     if (!cityId || !CITY_BY_ID[cityId]) return "PICK A CITY";
-    if (state.scout && state.scout.left > 0) return "SCOUT OUT";
-    if (state.cash < 40000) return "NEED CASH";
-    if (crewsBusy() >= crewCap()) return "CREWS FULL";
+    if (scoutFlight(cityId)) return "SCOUT OUT";
+    if (pulseMonths(cityId) > 0) return "";
+    if (inFlight().length >= MAX_SCOUT_FLIGHTS) return "SCOUTS FULL";
+    if (state.cash < SCOUT_COST) return "NEED CASH";
+    if (scoutHandsFree() < 1) return "CREWS FULL";
     return "";
   }
 
-  function launchScout(cityId) {
+  function scoutVolunteer(preferId) {
+    const list = crews();
+    if (preferId) {
+      const crew = list.find((c) => c.id === Number(preferId));
+      if (crew && !(crew.task === "scout" && scoutFlight(crew.city))) return crew;
+    }
+    const builds = playerBuilds();
+    const raisers = list.filter((c) => c.task === "raise");
+    if (raisers.length > builds) return raisers[raisers.length - 1];
+    return list.find((c) => c.task === "respond") || null;
+  }
+
+  function refreshPulse(cityId) {
+    const city = state.cities[cityId];
+    const info = state.intel && state.intel[cityId];
+    if (!city || !info) return false;
+    const rival = RIVALS[info.rival] || strongestRival(city) || activeRivals()[0];
+    if (rival && city.sites[rival.id]) {
+      const next = rivalBuildType(city.sites[rival.id], hasCap(city.sites[YOU]));
+      info.rival = rival.id;
+      info.kit = BUILD[next] ? BUILD[next].name : info.kit;
+      info.price = city.price[rival.id] || info.price;
+    }
+    info.until = state.month + PULSE_MONTHS - 1;
+    const name = CITY_BY_ID[cityId].name;
+    log(`Intel refresh on ${name} is free while the detector holds.`, "deal");
+    toast(`REFRESH · ${name} · FREE`, "good");
+    return true;
+  }
+
+  function plantPulse(sc) {
+    state.intel[sc.city] = {
+      rival: sc.rival,
+      kit: sc.kit,
+      price: sc.price,
+      until: state.month + PULSE_MONTHS,
+    };
+    const rival = RIVALS[sc.rival];
+    const name = CITY_BY_ID[sc.city].name;
+    log(`Detector on ${name}. ${rival ? rival.name : "Rival"} next ${sc.kit} · $${Number(sc.price).toFixed(2)}/kWh. Pulse holds ${PULSE_MONTHS} months — refresh is free.`, "deal");
+    toast(`DETECTOR · ${name} · ${PULSE_MONTHS} MO`, "good");
+  }
+
+  function launchScout(cityId, opts = {}) {
     const block = scoutBlock(cityId);
     if (block) {
       toast(`SCOUT · ${block}`, "bad");
       return false;
+    }
+    if (pulseMonths(cityId) > 0 && !scoutFlight(cityId)) {
+      const ok = refreshPulse(cityId);
+      if (ok && opts.crewId) {
+        const crew = crews().find((c) => c.id === Number(opts.crewId));
+        if (crew && !(crew.task === "scout" && scoutFlight(crew.city))) {
+          crew.task = "scout";
+          crew.city = cityId;
+          syncPostureFromCrews();
+          toast(`CREW ${crew.id} · DETECTOR · ${CITY_BY_ID[cityId].name}`, "deal");
+        }
+      }
+      renderAll();
+      return ok;
     }
     const city = state.cities[cityId];
     const rival = strongestRival(city) || activeRivals()[0];
@@ -1765,43 +1964,90 @@
       toast("SCOUT · no rival in range.", "bad");
       return false;
     }
-    state.cash -= 40000;
-    const next = rivalBuildType(city.sites[rival.id], hasCap(city.sites[YOU]));
-    state.scout = {
+    const crew = scoutVolunteer(opts.crewId);
+    if (!crew) {
+      toast("SCOUT · CREWS FULL", "bad");
+      return false;
+    }
+    state.cash -= SCOUT_COST;
+    const site = city.sites[rival.id] || emptySite();
+    const next = rivalBuildType(site, hasCap(city.sites[YOU]));
+    crew.task = "scout";
+    crew.city = cityId;
+    state.scouts.push({
       city: cityId,
       left: 1,
       rival: rival.id,
       kit: BUILD[next] ? BUILD[next].name : "DC CHARGER",
       price: city.price[rival.id] || 0.42,
-    };
-    log(`Scout dispatched to ${CITY_BY_ID[cityId].name}. One crew, one month.`, "deal");
-    toast(`SCOUT · ${CITY_BY_ID[cityId].name} · 1 mo`, "deal");
+      crewId: crew.id,
+    });
+    state.scout = state.scouts[0] || null;
+    syncPostureFromCrews();
+    const which = state.scouts.length > 1 ? "Second scout" : "Scout";
+    log(`${which} dispatched to ${CITY_BY_ID[cityId].name}. One crew, one month, $40K.`, "deal");
+    toast(`SCOUT · ${CITY_BY_ID[cityId].name} · $40K · 1 MO`, "deal");
     renderAll();
     return true;
   }
 
   function tickScout() {
-    if (!state.scout || state.scout.left == null) return;
-    state.scout.left -= 1;
-    if (state.scout.left > 0) return;
-    const sc = state.scout;
-    state.intel[sc.city] = {
-      rival: sc.rival,
-      kit: sc.kit,
-      price: sc.price,
-      until: state.month + 4,
-    };
-    const rival = RIVALS[sc.rival];
-    log(`Intel: ${rival ? rival.name : "Rival"} next ${sc.kit} · $${Number(sc.price).toFixed(2)}/kWh in ${CITY_BY_ID[sc.city].name}.`, "deal");
-    toast(`INTEL · ${rival ? rival.name : "RIVAL"} next ${sc.kit} · $${Number(sc.price).toFixed(2)}`, "good");
-    state.scout = null;
+    normalizeScouts();
+    normalizeCrews();
+    if (!state.scouts.length) return;
+    const finished = [];
+    for (const sc of state.scouts) {
+      sc.left -= 1;
+      if (sc.left <= 0) finished.push(sc);
+    }
+    state.scouts = state.scouts.filter((sc) => sc.left > 0);
+    const finishedCities = new Set(finished.map((sc) => sc.city));
+    for (const sc of finished) plantPulse(sc);
+    for (const crew of state.crews) {
+      if (crew.task === "scout" && finishedCities.has(crew.city)) {
+        crew.task = "raise";
+        crew.city = null;
+      }
+    }
+    state.scout = state.scouts[0] || null;
+    syncPostureFromCrews();
+  }
+
+  function cycleCrew(id, cityId) {
+    normalizeCrews();
+    const crew = state.crews.find((c) => c.id === Number(id));
+    if (!crew) return false;
+    crewPick = crew.id;
+    if (crew.task === "scout" && crew.city && scoutFlight(crew.city)) {
+      toast(`CREW ${crew.id} · SCOUT OUT · ${scoutFlight(crew.city).left} MO`, "deal");
+      renderAll();
+      return false;
+    }
+    const order = ["raise", "respond", "scout"];
+    const next = order[(Math.max(0, order.indexOf(crew.task)) + 1) % order.length];
+    if (next === "scout") {
+      const target = cityId && CITY_BY_ID[cityId] ? cityId : (siteView || selected);
+      return launchScout(target, { crewId: crew.id });
+    }
+    crew.task = next;
+    crew.city = null;
+    if (next === "respond") state.idleMonths = 0;
+    syncPostureFromCrews();
+    const cap = crewCap();
+    toast(next === "respond"
+      ? `CREW ${crew.id} · RESPOND · on call. Build cap ${cap}.`
+      : `CREW ${crew.id} · RAISE`, "deal");
+    log(`Crew ${crew.id} assigned ${next.toUpperCase()}.`, "deal");
+    renderAll();
+    return true;
   }
 
   function intelHtml(city) {
     const info = state.intel && state.intel[city.id];
-    if (!info || info.until < state.month) return "";
+    const left = pulseMonths(city.id);
+    if (!info || !left) return "";
     const rival = RIVALS[info.rival];
-    return `<p class="intel-line">INTEL · ${rival ? rival.name : "RIVAL"} next ${info.kit} · $${Number(info.price).toFixed(2)}/kWh · fades M${String(info.until).padStart(2, "0")}</p>`;
+    return `<p class="intel-line">DETECTOR · ${rival ? rival.name : "RIVAL"} next ${info.kit} · $${Number(info.price).toFixed(2)}/kWh · pulse ${left} MO · refresh free</p>`;
   }
 
   function skirmishHtml() {
@@ -1810,12 +2056,24 @@
     const rival = RIVALS[sk.rival];
     const label = sk.kind === "amenity" ? "AMENITY RACE" : "PRICE WAR";
     const name = CITY_BY_ID[sk.city].name.toUpperCase();
-    return `<div class="skirmish" data-kind="${sk.kind}">
-      <div class="skirmish-hd"><b>${label}</b><span>${name} · ${Math.max(0, sk.left)} MO</span></div>
+    return `<div class="skirmish" data-kind="${sk.kind}" data-push="1">
+      <div class="skirmish-hd"><b>${label}</b><span>${name} · ${Math.max(0, sk.left)} MO · P</span></div>
       <div class="skirmish-track you"><i style="width:${sk.you}%"></i></div>
       <div class="skirmish-track them"><i style="width:${sk.them}%"></i></div>
       <div class="skirmish-lbl"><span>ZAPS ${sk.you}</span><span>${rival ? rival.name : "RIVAL"} ${sk.them}</span></div>
     </div>`;
+  }
+
+  function crewReadText() {
+    const list = crews();
+    const respondN = list.filter((c) => c.task === "respond").length;
+    const scoutN = list.filter((c) => c.task === "scout").length;
+    if (respondN === 1 && scoutN === 0) return "1 ON CALL";
+    if (respondN > 1 && scoutN === 0) return `${respondN} ON CALL`;
+    if ((state.idleMonths || 0) >= 2 && idleCrewCount() > 0 && scoutN === 0) return "IDLE";
+    if (scoutN && respondN) return `${respondN} CALL · ${scoutN} SCOUT`;
+    if (scoutN) return `${scoutN} SCOUT · ${crewCap()} RAISE`;
+    return `${crewsBusy()}/${crewCap()}`;
   }
 
   function renderOps() {
@@ -1824,12 +2082,13 @@
     normalizeOps();
     const obj = state.objective;
     const posture = state.crewPosture;
-    const cap = crewCap();
-    const busy = crewsBusy();
     const scoutCity = selected && CITY_BY_ID[selected] ? CITY_BY_ID[selected].name.toUpperCase() : "CITY";
     const block = selected ? scoutBlock(selected) : "PICK A CITY";
+    const flightHere = selected ? scoutFlight(selected) : null;
+    const pulseHere = selected ? pulseMonths(selected) : 0;
     let scoutText = `SCOUT ${scoutCity} · $40K`;
-    if (state.scout && state.scout.left > 0) scoutText = `SCOUT OUT · ${state.scout.left} MO`;
+    if (flightHere) scoutText = `SCOUT OUT · ${flightHere.left} MO`;
+    else if (pulseHere) scoutText = `REFRESH ${scoutCity} · FREE`;
     else if (block) scoutText = `SCOUT · ${block}`;
     const pct = obj && obj.total ? Math.max(8, Math.round((Math.max(0, obj.left) / obj.total) * 100)) : 0;
     const holdBit = obj && obj.kind === "hold" ? ` · ${obj.streak || 0}/${obj.need || 3} MO AT ${obj.shown != null ? obj.shown : "—"}%` : "";
@@ -1847,7 +2106,7 @@
       <div class="crew-fork">
         <button type="button" data-posture="raise" class="${posture === "raise" ? "on" : ""}">RAISE</button>
         <button type="button" data-posture="respond" class="${posture === "respond" ? "on" : ""}">RESPOND</button>
-        <span class="crew-read">${posture === "respond" ? "1 ON CALL" : state.idleMonths >= 2 ? "IDLE" : `${busy}/${cap}`}</span>
+        <span class="crew-read">${crewReadText()}</span>
         <button type="button" id="btn-scout"${block ? " disabled" : ""}>${scoutText}</button>
       </div>`;
   }
@@ -1861,13 +2120,17 @@
       const posture = e.target.closest("[data-posture]");
       if (posture) {
         const next = posture.getAttribute("data-posture") === "respond" ? "respond" : "raise";
-        state.crewPosture = next;
-        if (next === "respond") state.idleMonths = 0;
+        setCrewPosture(next);
+        const cap = crewCap();
         log(next === "respond"
-          ? "Crew posture RESPOND. One crew stays on call — build cap is 2, contested share holds firmer."
-          : "Crew posture RAISE. All three crews can build. Idle crews give rivals the month.", "deal");
-        toast(next === "respond" ? "RESPOND · 1 crew on call. Build cap 2." : "RAISE · all 3 crews can build.", "deal");
+          ? "Crew posture RESPOND. One crew stays on call — build cap drops, contested share holds firmer."
+          : "Crew posture RAISE. Crews not out scouting can build. Idle crews give rivals the month.", "deal");
+        toast(next === "respond" ? `RESPOND · 1 crew on call. Build cap ${cap}.` : "RAISE · crews can build.", "deal");
         renderAll();
+        return;
+      }
+      if (e.target.closest("[data-push]")) {
+        pushSkirmish();
         return;
       }
       if (e.target.closest("#btn-scout")) launchScout(selected);
@@ -1888,7 +2151,6 @@
     lastNet = income - opex;
     state.cash += lastNet;
 
-    const crewsWorked = crewsBusy() > 0 || state.crewPosture === "respond";
     for (const job of state.queue) job.left -= 1;
     queuePulse = Date.now();
     const done = state.queue.filter((j) => j.left <= 0);
@@ -1899,7 +2161,7 @@
     for (const r of activeRivals()) rivalAct(r.id);
 
     state.month += 1;
-    tickIdleCrews(crewsWorked);
+    tickIdleCrews();
     tickTurtlePressure();
     tickSkirmish();
     tickObjective();
@@ -2556,6 +2818,7 @@
       btn.title = `${meta.name}, ${meta.state}`;
       btn.tabIndex = 0;
       btn.addEventListener("click", (ev) => {
+        if (ev.target.closest(".crew-token")) return;
         ev.preventDefault();
         enterSite(meta.id);
       });
@@ -2585,6 +2848,24 @@
         ? `${meta.name.toUpperCase()} ★`
         : meta.name.toUpperCase();
       btn.append(label);
+      const pulse = pulseMonths(meta.id);
+      if (pulse > 0) {
+        btn.classList.add("scouted");
+        const radar = document.createElement("span");
+        radar.className = "scout-radar";
+        radar.style.opacity = String(pulseAlpha(meta.id));
+        radar.innerHTML = "<i></i><i></i>";
+        const pin = document.createElement("span");
+        pin.className = "scout-pin";
+        pin.textContent = `DET ${pulse}`;
+        btn.append(radar, pin);
+      }
+      if (meta.id === "phoenix") {
+        const holder = document.createElement("div");
+        holder.className = "crew-tokens map";
+        holder.innerHTML = crewTokenMarkup();
+        btn.append(holder);
+      }
       layer.appendChild(btn);
     }
   }
@@ -3251,7 +3532,8 @@
       drawDcCanopy(occ) +
       drawDcRow(occ) +
       ghostCaptions(occ) +
-      slotPickHits(occ);
+      slotPickHits(occ) +
+      skirmishLaneSvg(city);
     return overlaySvg(any ? "site-compound" : "site-compound empty-board", inner);
   }
 
@@ -3280,6 +3562,77 @@
       `<polygon points="26,136 72,136 84,110 38,110"/>` +
       `<polygon points="176,112 214,112 226,90 188,90"/>` +
       `</g></svg>`
+    );
+  }
+
+  function crewTokenMarkup() {
+    const list = crews();
+    const builds = playerBuilds();
+    const raisers = list.filter((c) => c.task === "raise");
+    const idleIds = new Set(raisers.slice(builds).map((c) => c.id));
+    return list.map((c) => {
+      const label = c.task === "respond" ? "CALL" : c.task === "scout" ? "SCOUT" : "RAISE";
+      const idle = idleIds.has(c.id) ? " idle" : "";
+      const picked = crewPick === c.id ? " picked" : "";
+      const where = c.task === "scout" && c.city && CITY_BY_ID[c.city]
+        ? ` title="SCOUT ${CITY_BY_ID[c.city].name}"`
+        : "";
+      return `<button type="button" class="crew-token task-${c.task}${idle}${picked}" data-crew="${c.id}"${where}><i>${c.id}</i><b>${label}</b></button>`;
+    }).join("");
+  }
+
+  function crewYardHtml(city) {
+    if (!city || rivalSite(city)) return "";
+    return `<div class="crew-tokens yard">${crewTokenMarkup()}</div>`;
+  }
+
+  function scoutYardHtml(city) {
+    const left = pulseMonths(city.id);
+    if (!left) return "";
+    const info = state.intel[city.id];
+    const rival = info && RIVALS[info.rival];
+    return `<div class="scout-detector" style="opacity:${pulseAlpha(city.id).toFixed(2)}">
+      <i class="ring"></i><i class="ring late"></i>
+      <b>SCOUTED</b>
+      <em>${rival ? rival.name : "DET"} · ${left} MO</em>
+    </div>`;
+  }
+
+  function skirmishBannerHtml(city) {
+    const sk = state.skirmish;
+    if (!sk || sk.city !== city.id) return "";
+    const rival = RIVALS[sk.rival];
+    const label = sk.kind === "amenity" ? "AMENITY RACE" : "PRICE WAR";
+    return `<button type="button" class="lane-banner" data-push="1">${label} · ZAPS ${sk.you} · ${rival ? rival.name : "RIVAL"} ${sk.them} · PUSH P</button>`;
+  }
+
+  function skirmishLaneSvg(city) {
+    const sk = state.skirmish;
+    if (!sk || !city || sk.city !== city.id) return "";
+    const rival = RIVALS[sk.rival];
+    const lane = gridQuad(1.02, 2.08, 3.86, 0.7);
+    const total = Math.max(1, (sk.you || 0) + (sk.them || 0));
+    const t = Math.min(0.9, Math.max(0.1, (sk.you || 0) / total));
+    const youPart = subQuad(lane, 0, 0, 1, t);
+    const themPart = subQuad(lane, 0, t, 1, 1);
+    const seamA = quadPoint(lane, 0, t);
+    const seamB = quadPoint(lane, 1, t);
+    const midYou = quadPoint(lane, 0.5, t * 0.42);
+    const midThem = quadPoint(lane, 0.5, t + (1 - t) * 0.58);
+    const titleAt = quadPoint(lane, 0.5, 0.5);
+    const label = sk.kind === "amenity" ? "AMENITY RACE" : "PRICE WAR";
+    const themColor = rival ? rival.color : PAL.amber;
+    const themName = rival ? rival.name : "RIVAL";
+    return (
+      `<g class="skirmish-lane" data-kind="${sk.kind}">` +
+      `<polygon class="lane-you" points="${svgPts(youPart)}" fill="#E63225" />` +
+      `<polygon class="lane-them" points="${svgPts(themPart)}" fill="${themColor}" />` +
+      `<polyline class="lane-seam" points="${seamA[0].toFixed(2)},${seamA[1].toFixed(2)} ${seamB[0].toFixed(2)},${seamB[1].toFixed(2)}" />` +
+      `<polygon class="lane-hit" data-push="1" points="${svgPts(insetQuad(lane, -0.06))}" />` +
+      `<text class="lane-tag" x="${midYou[0].toFixed(2)}" y="${midYou[1].toFixed(2)}" text-anchor="middle">ZAPS ${sk.you}</text>` +
+      `<text class="lane-tag" x="${midThem[0].toFixed(2)}" y="${midThem[1].toFixed(2)}" text-anchor="middle">${themName} ${sk.them}</text>` +
+      `<text class="lane-title" x="${titleAt[0].toFixed(2)}" y="${(titleAt[1] - 3.4).toFixed(2)}" text-anchor="middle">${label} · P</text>` +
+      `</g>`
     );
   }
 
@@ -3341,6 +3694,19 @@
     if (!yard || yard.dataset.inspectBound) return;
     yard.dataset.inspectBound = "1";
     yard.addEventListener("click", (e) => {
+      const crewBtn = e.target.closest("[data-crew]");
+      if (crewBtn && state) {
+        e.preventDefault();
+        e.stopPropagation();
+        cycleCrew(Number(crewBtn.getAttribute("data-crew")), siteView || selected);
+        return;
+      }
+      if (e.target.closest("[data-push]") && state) {
+        e.preventDefault();
+        e.stopPropagation();
+        pushSkirmish();
+        return;
+      }
       const place = e.target.closest("[data-place]");
       if (place && hoverKit && siteView) {
         e.preventDefault();
@@ -3454,7 +3820,10 @@
     stack.classList.toggle("yard-flash", Boolean(flashing));
     stack.classList.toggle("hold", Boolean(yardFlash && yardFlash.hold && yardFlash.city === city.id));
     stack.classList.toggle("kit-complete", popping);
-    stack.innerHTML = yardArtHtml(city, meta, { banner: true });
+    stack.innerHTML = yardArtHtml(city, meta, { banner: true })
+      + scoutYardHtml(city)
+      + crewYardHtml(city)
+      + skirmishBannerHtml(city);
   }
 
   function clampCam() {
@@ -3538,7 +3907,7 @@
     stage.dataset.bound = "1";
     stage.addEventListener("pointerdown", (e) => {
       if (e.button !== 0) return;
-      if (e.target.closest(".map-tools") || e.target.closest(".site-overlay")) return;
+      if (e.target.closest(".map-tools") || e.target.closest(".site-overlay") || e.target.closest(".crew-token")) return;
       mapDrag = { id: e.pointerId, x: e.clientX, y: e.clientY, ox: mapCam.x, oy: mapCam.y, moved: false };
       stage.setPointerCapture(e.pointerId);
       stage.classList.add("panning");
@@ -3566,7 +3935,7 @@
       endDrag(e);
       if (dragged || lastPan) return;
       if (siteView) return;
-      if (e.target.closest(".map-tools") || e.target.closest(".site-overlay")) return;
+      if (e.target.closest(".map-tools") || e.target.closest(".site-overlay") || e.target.closest(".crew-token")) return;
       const city = cityAtClient(e.clientX, e.clientY);
       if (city) enterSite(city.id);
     });
@@ -3587,6 +3956,13 @@
       const r = stage.getBoundingClientRect();
       zoomAt(r.width / 2, r.height / 2, mapCam.scale / 1.2);
     });
+    stage.addEventListener("click", (e) => {
+      const crewBtn = e.target.closest(".crew-tokens.map [data-crew]");
+      if (!crewBtn || !state) return;
+      e.preventDefault();
+      e.stopPropagation();
+      cycleCrew(Number(crewBtn.getAttribute("data-crew")), selected || "phoenix");
+    });
     $("btn-exit-site")?.addEventListener("click", exitSite);
     $("btn-exit-site-overlay")?.addEventListener("click", exitSite);
     bindYardFrame();
@@ -3595,6 +3971,10 @@
     if (intel && !intel.dataset.bound) {
       intel.dataset.bound = "1";
       intel.addEventListener("click", (e) => {
+        if (e.target.closest("[data-push]") && state?.skirmish) {
+          pushSkirmish();
+          return;
+        }
         const chip = e.target.closest("[data-threat]");
         if (!chip || !siteView || !state) return;
         answerThreat(state.cities[siteView]);
@@ -3770,7 +4150,11 @@
     setStat("stat-cash", money(state.cash), state.cash < 0);
     setStat("stat-share", `${Math.round(track.share * 100)}%`);
     setStat("stat-cities", `${track.cities}/16`);
-    setStat("stat-crews", `${crewsBusy()}/${crewCap()}`, crewsBusy() >= crewCap() || (state.idleMonths || 0) >= 2);
+    setStat(
+      "stat-crews",
+      `${MAX_CREWS - idleCrewCount()}/${MAX_CREWS}`,
+      idleCrewCount() > 0 && (state.idleMonths || 0) >= 2
+    );
     setStat("stat-net", money(lastNet), lastNet < 0);
     const camp = $("hud-campaign");
     if (camp) {
@@ -4003,6 +4387,11 @@
     if (name === "crew" || name === "posture") {
       state.month = 3;
       state.crewPosture = "respond";
+      state.crews = [
+        { id: 1, task: "respond", city: null },
+        { id: 2, task: "raise", city: null },
+        { id: 3, task: "raise", city: null },
+      ];
       state.forkShown = true;
       state.pendingFork = null;
       state.objective = {
@@ -4013,8 +4402,9 @@
         left: 2,
         total: 3,
       };
+      crewPick = 1;
       selected = "phoenix";
-      return null;
+      return "phoenix";
     }
     if (name === "scout" || name === "intel") {
       state.month = 5;
@@ -4024,7 +4414,8 @@
       state.cities.vegas.sites.voltspan.dc = 2;
       state.cities.vegas.price.zaps = 0.4;
       state.cities.vegas.price.voltspan = 0.36;
-      state.intel.vegas = { rival: "voltspan", kit: "LOUNGE", price: 0.34, until: 9 };
+      state.intel.vegas = { rival: "voltspan", kit: "LOUNGE", price: 0.34, until: 8 };
+      state.intel.la = { rival: "voltspan", kit: "MCS", price: 0.41, until: 6 };
       state.objective = {
         id: "lounge-vegas",
         kind: "lounge",
@@ -4038,6 +4429,19 @@
       selected = "vegas";
       return "vegas";
     }
+    if (name === "scout-map" || name === "pulse") {
+      state.month = 5;
+      state.forkShown = true;
+      state.pendingFork = null;
+      z("vegas").dc = 2;
+      state.cities.vegas.sites.voltspan.dc = 2;
+      state.cities.vegas.price.zaps = 0.4;
+      state.cities.vegas.price.voltspan = 0.36;
+      state.intel.vegas = { rival: "voltspan", kit: "LOUNGE", price: 0.34, until: 8 };
+      state.intel.la = { rival: "voltspan", kit: "MCS", price: 0.41, until: 6 };
+      selected = "phoenix";
+      return null;
+    }
     if (name === "skirmish" || name === "war") {
       state.month = 6;
       state.forkShown = true;
@@ -4049,6 +4453,11 @@
       state.cities.vegas.price.zaps = 0.37;
       state.cities.vegas.price.voltspan = 0.43;
       state.crewPosture = "respond";
+      state.crews = [
+        { id: 1, task: "respond", city: null },
+        { id: 2, task: "raise", city: null },
+        { id: 3, task: "raise", city: null },
+      ];
       state.skirmish = { city: "vegas", rival: "voltspan", kind: "price", you: 62, them: 41, left: 2 };
       state.objective = {
         id: "hold-vegas",
@@ -4113,9 +4522,14 @@
         e.preventDefault();
         setSpeed(state.speed ? 0 : 1);
       }
-      if (e.key === "1") setSpeed(1);
-      if (e.key === "2") setSpeed(2);
-      if (e.key === "4") setSpeed(4);
+      if (onBoard && siteView && !typing && (e.key === "1" || e.key === "2" || e.key === "3")) {
+        e.preventDefault();
+        cycleCrew(Number(e.key), siteView);
+      } else {
+        if (e.key === "1") setSpeed(1);
+        if (e.key === "2") setSpeed(2);
+        if (e.key === "4") setSpeed(4);
+      }
       if (e.key === "Escape") {
         if (siteView) {
           exitSite();
@@ -4135,14 +4549,18 @@
       }
       if ((e.key === "r" || e.key === "R") && selected) {
         e.preventDefault();
-        state.crewPosture = state.crewPosture === "respond" ? "raise" : "respond";
-        if (state.crewPosture === "respond") state.idleMonths = 0;
-        toast(state.crewPosture === "respond" ? "RESPOND · 1 crew on call. Build cap 2." : "RAISE · all 3 crews can build.", "deal");
+        const next = state.crewPosture === "respond" ? "raise" : "respond";
+        setCrewPosture(next);
+        toast(next === "respond" ? `RESPOND · 1 crew on call. Build cap ${crewCap()}.` : "RAISE · crews can build.", "deal");
         renderAll();
       }
       if ((e.key === "s" || e.key === "S") && selected) {
         e.preventDefault();
         launchScout(selected);
+      }
+      if ((e.key === "p" || e.key === "P") && state.skirmish) {
+        e.preventDefault();
+        pushSkirmish();
       }
       if ((e.key === "[" || e.key === "]") && selected) {
         const city = state.cities[selected];
@@ -4190,7 +4608,7 @@
   }
 
   window.__EMPIRE_SMOKE__ = {
-    build: "rts-yard-18",
+    build: "rts-yard-19",
     hitR: CITY_HIT_R,
     goldilocks: 0.76,
     nearestCity,
@@ -4218,13 +4636,23 @@
     objective: () => state.objective,
     crewPosture: () => state.crewPosture,
     setPosture: (p) => {
-      state.crewPosture = p === "respond" ? "respond" : "raise";
+      setCrewPosture(p === "respond" ? "respond" : "raise");
       renderAll();
     },
     scoutBlock: (id) => scoutBlock(id || selected),
     launchScout: (id) => launchScout(id || selected),
     intel: (id) => state.intel[id] || null,
     skirmish: () => state.skirmish,
+    pulse: (id) => pulseMonths(id),
+    scoutPrice: (id) => (pulseMonths(id) > 0 && !scoutFlight(id) ? 0 : SCOUT_COST),
+    flights: () => inFlight().map((s) => ({ city: s.city, left: s.left })),
+    finishScouts: () => {
+      tickScout();
+      renderAll();
+    },
+    pushSkirmish: () => pushSkirmish(),
+    crews: () => crews().map((c) => ({ id: c.id, task: c.task, city: c.city })),
+    cycleCrew: (id, city) => cycleCrew(id, city || siteView || selected),
     crewCap,
     completeToasts: () => {
       toast("DC CHARGER COMPLETE · Flagstaff", "good");

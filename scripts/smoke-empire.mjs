@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* rts-yard-18: ops arcs, crew fork, scout, skirmish, polish, cache. */
+/* rts-yard-19: scout pulse, yard skirmish lane, crew tokens. */
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,13 +16,13 @@ const fail = (msg) => {
 };
 const ok = (msg) => console.log(`OK   ${msg}`);
 
-if (!html.includes('content="rts-yard-18"') || !html.includes("styles.css?v=rts-yard-18") || !html.includes("game.js?v=rts-yard-18")) {
-  fail("index.html cache is not rts-yard-18");
-} else ok("index.html cache rts-yard-18");
+if (!html.includes('content="rts-yard-19"') || !html.includes("styles.css?v=rts-yard-19") || !html.includes("game.js?v=rts-yard-19")) {
+  fail("index.html cache is not rts-yard-19");
+} else ok("index.html cache rts-yard-19");
 
-if (!game.includes("rts-yard-18") || !css.includes("rts-yard-18") || !review.includes("rts-yard-18")) {
-  fail("game/styles/REVIEW cache is not rts-yard-18");
-} else ok("game/styles/REVIEW cache rts-yard-18");
+if (!game.includes("rts-yard-19") || !css.includes("rts-yard-19") || !review.includes("rts-yard-19")) {
+  fail("game/styles/REVIEW cache is not rts-yard-19");
+} else ok("game/styles/REVIEW cache rts-yard-19");
 
 if (!game.includes("function placementRead") || !game.includes("COMPLETES CANOPY") || !html.includes("site-consequence")) {
   fail("hover consequence line missing");
@@ -237,6 +237,18 @@ if (!game.includes("function tickSkirmish") || !game.includes("PRICE WAR") || !c
   fail("contested skirmish meter missing");
 } else ok("skirmish meter");
 
+if (!game.includes("function pulseMonths") || !game.includes("scout-detector") || !game.includes("REFRESH")) {
+  fail("scout pulse missing");
+} else ok("scout detector pulse");
+
+if (!game.includes("function skirmishLaneSvg") || !game.includes('data-push="1"') || !css.includes(".skirmish-lane")) {
+  fail("spatial skirmish lane missing");
+} else ok("yard skirmish lane");
+
+if (!game.includes("function cycleCrew") || !game.includes("data-crew") || !css.includes(".crew-token")) {
+  fail("crew tokens missing");
+} else ok("selectable crew tokens");
+
 if (!game.includes('type: "pressure"') || !game.includes("function pressureRivalClaim")) {
   fail("corridor pressure must race empty dirt, not seize a held pad");
 } else ok("corridor pressure race");
@@ -257,6 +269,7 @@ const stills = [
   ["docs/shots/yard-objective.png", 350000],
   ["docs/shots/yard-crew.png", 350000],
   ["docs/shots/yard-scout.png", 350000],
+  ["docs/shots/yard-scout-map.png", 350000],
   ["docs/shots/yard-skirmish.png", 350000],
 ];
 for (const [rel, min] of stills) {
@@ -268,7 +281,7 @@ if (!process.exitCode) ok("fresh empty/ghosts/event stills are checked in");
 if (!review.includes("yard-ghosts.png") || !review.includes("yard-event.png") || !review.includes("yard-pad.png")) {
   fail("REVIEW must list yard-ghosts / yard-event / yard-pad stills");
 } else ok("REVIEW lists refreshed stills");
-if (!review.includes("yard-objective.png") || !review.includes("yard-crew.png") || !review.includes("yard-scout.png") || !review.includes("yard-skirmish.png")) {
+if (!review.includes("yard-objective.png") || !review.includes("yard-crew.png") || !review.includes("yard-scout.png") || !review.includes("yard-skirmish.png") || !review.includes("yard-scout-map.png")) {
   fail("REVIEW must list objective / crew / scout / skirmish stills");
 } else ok("REVIEW lists ops stills");
 
