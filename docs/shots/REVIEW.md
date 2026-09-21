@@ -2,6 +2,8 @@
 
 Replay stills (paused board, no title): `?shot=board` · `?shot=empty` (Flagstaff dirt) · `?shot=raising` · `?shot=full` · `?shot=rival` (LA blocked tray) · `?shot=contested` (Vegas share meters) · `?shot=event` (MATCH/HOLD field call) · `?showcase=1`.
 
+Checked-in frames: `board.png` · `yard-empty.png` · `yard-raising.png` · `yard-full.png` · `yard-rival.png` · `yard-contested.png`.
+
 ## Visual (Terminal Electromat)
 
 Yards are miniature Electromat compounds, not generic RTS cubes.
