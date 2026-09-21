@@ -1579,13 +1579,13 @@
   }
 
   const TRACK_GATES = [
-    { id: "maj4", field: "majority", at: 4, bonus: 140000, label: "MAJORITY 4" },
-    { id: "maj8", field: "majority", at: 8, bonus: 240000, label: "MAJORITY 8" },
-    { id: "maj12", field: "majority", at: 12, bonus: 400000, label: "MAJORITY 12" },
-    { id: "st3", field: "states", at: 3, bonus: 120000, label: "STATES 3" },
-    { id: "st7", field: "states", at: 7, bonus: 320000, label: "STATES 7" },
-    { id: "mcs2", field: "mcs", at: 2, bonus: 140000, label: "MCS 2" },
-    { id: "mcs4", field: "mcs", at: 4, bonus: 280000, label: "MCS 4" },
+    { id: "maj4", field: "majority", at: 4, bonus: 140000, label: "MAJORITY 4/12" },
+    { id: "maj8", field: "majority", at: 8, bonus: 240000, label: "MAJORITY 8/12" },
+    { id: "maj12", field: "majority", at: 12, bonus: 400000, label: "MAJORITY 12/12" },
+    { id: "st3", field: "states", at: 3, bonus: 120000, label: "STATES 3/7" },
+    { id: "st7", field: "states", at: 7, bonus: 320000, label: "STATES 7/7" },
+    { id: "mcs2", field: "mcs", at: 2, bonus: 140000, label: "MCS 2/4" },
+    { id: "mcs4", field: "mcs", at: 4, bonus: 280000, label: "MCS 4/4" },
   ];
 
   const CHAIN_LABEL = {
