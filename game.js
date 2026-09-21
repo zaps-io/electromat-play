@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-yard-14 */
+/* empire-build: rts-yard-15 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -22,7 +22,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-yard-14";
+  const SPRITE_V = "rts-yard-15";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -43,7 +43,7 @@
     voltspan: "240 / 204",
     rival: "240 / 167",
   };
-  const KIT_V = "rts-yard-14";
+  const KIT_V = "rts-yard-15";
   const KIT_SPRITES = {
     dc: `assets/sprites/kit-dc.png?v=${KIT_V}`,
     mcs: `assets/sprites/kit-mcs.png?v=${KIT_V}`,
@@ -342,7 +342,7 @@
       nextDeal: 48 + Math.floor(Math.random() * 20),
       pendingDeal: null,
       pendingEvent: null,
-      nextEvent: 4 + Math.floor(Math.random() * 3),
+      nextEvent: 2 + Math.floor(Math.random() * 2),
       warFired: false,
       over: null,
     };
@@ -393,9 +393,22 @@
     return 0;
   }
 
+  function corridorPull(city, faction) {
+    const meta = CITY_BY_ID[city.id];
+    if (!meta) return 1;
+    let n = 0;
+    for (const nid of meta.neighbors) {
+      const neighbor = state.cities[nid];
+      if (neighbor && hasCap(neighbor.sites[faction])) n += 1;
+    }
+    return 1 + Math.min(0.16, n * 0.04);
+  }
+
   function recomputeShare(city) {
     const attr = {};
     let sum = 0;
+    const contested = hasCap(city.sites[YOU]) && rivalHolders(city).length > 0;
+    const exp = contested ? 1.85 : 1.4;
     for (const f of factionIds()) {
       const site = city.sites[f];
       if (!hasCap(site)) {
@@ -407,8 +420,9 @@
       const a =
         capacity(site) *
         amenity(site) *
-        Math.pow(0.48 / price, 1.4) *
-        war;
+        Math.pow(0.48 / price, exp) *
+        war *
+        corridorPull(city, f);
       attr[f] = a;
       sum += a;
     }
@@ -479,11 +493,23 @@
     const host = $("toasts");
     if (!host) return;
     const el = document.createElement("div");
-    el.className = `toast ${kind}`;
+    el.className = `toast ${kind} pop-in`;
     el.textContent = msg;
     host.appendChild(el);
-    setTimeout(() => el.remove(), 4200);
-    while (host.children.length > 1) host.firstElementChild.remove();
+    setTimeout(() => el.remove(), 4600);
+    while (host.children.length > 3) host.firstElementChild.remove();
+  }
+
+  function setStat(id, value, warn) {
+    const el = $(id);
+    if (!el) return;
+    if (el.textContent !== value) {
+      el.textContent = value;
+      el.classList.remove("tick");
+      void el.offsetWidth;
+      el.classList.add("tick");
+    }
+    if (warn != null) el.classList.toggle("warn", Boolean(warn));
   }
 
   function flashShare(city, from, to) {
@@ -591,6 +617,7 @@
     });
     if (faction === YOU) {
       log(`${spec.name} queued in ${CITY_BY_ID[cityId].name} · ${spec.months} mo · ${money(cost)}`);
+      toast(`${spec.name} raising · ${CITY_BY_ID[cityId].name}`, "good");
     }
     renderAll();
     return true;
@@ -612,7 +639,7 @@
         city: job.city,
         type: job.type,
         slot: Math.max(0, site[job.type] - 1),
-        until: Date.now() + 1600,
+        until: Date.now() + 1900,
       });
       toast(`${BUILD[job.type].name} online in ${CITY_BY_ID[job.city].name}.`, "good");
     }
@@ -647,21 +674,28 @@
       const score = (id, city) =>
         CITY_BY_ID[id].demand * (1.15 - (city.share[rid] || 0)) -
         capacity(city.sites[rid]) * 20 +
-        (hasCap(city.sites[YOU]) ? 30 : 0);
+        (hasCap(city.sites[YOU]) ? 55 : 0);
       return score(b, cb) - score(a, ca);
     });
 
     const targetId = targets[0];
     if (!targetId) return;
-    const site = state.cities[targetId].sites[rid];
+    const city = state.cities[targetId];
+    const site = city.sites[rid];
     const budget = rivalCash(rid);
+    const fighting = hasCap(city.sites[YOU]);
     let type = "dc";
-    if (hasCap(site) && site.dc >= 2 && site.mcs < 2) type = "mcs";
+    if (fighting && hasCap(site) && !site.lounge) type = "lounge";
+    else if (fighting && hasCap(site) && !site.market && site.lounge) type = "market";
+    else if (hasCap(site) && site.dc >= 2 && site.mcs < 2) type = "mcs";
     else if (hasCap(site) && !site.lounge && site.dc >= 2) type = "lounge";
     else if (hasCap(site) && !site.bess && state.month > 10) type = "bess";
     else if (hasCap(site) && !site.market && site.lounge) type = "market";
     if (budget > BUILD[type].cost && state.queue.filter((q) => q.faction === rid).length < 2) {
       enqueue(type, targetId, rid);
+    }
+    if (fighting && Math.random() < 0.28) {
+      city.price[rid] = Math.max(0.28, +(city.price[rid] - 0.01).toFixed(2));
     }
     maybeRivalWar(rid, targetId);
   }
@@ -715,11 +749,50 @@
     return true;
   }
 
+  function tryAmenityEvent() {
+    const spots = CITIES.filter((c) => {
+      const city = state.cities[c.id];
+      const rival = strongestRival(city);
+      return (
+        hasCap(city.sites[YOU]) &&
+        rival &&
+        city.sites[rival.id].lounge &&
+        !city.sites[YOU].lounge
+      );
+    });
+    if (!spots.length || Math.random() > 0.55) return false;
+    const meta = spots[Math.floor(Math.random() * spots.length)];
+    const city = state.cities[meta.id];
+    const rival = strongestRival(city);
+    state.pendingEvent = { type: "amenity", city: meta.id, rival: rival.id };
+    log(`${rival.name} lounge is drawing share in ${meta.name}.`, "deal");
+    toast(`${rival.name} LOUNGE · ${meta.name}`, "deal");
+    return true;
+  }
+
+  function tryPoachEvent() {
+    const spots = CITIES.filter((c) => {
+      const city = state.cities[c.id];
+      return hasCap(city.sites[YOU]) && rivalHolders(city).length && (city.share[YOU] || 0) >= 0.62;
+    });
+    if (!spots.length || Math.random() > 0.58) return false;
+    const meta = spots[Math.floor(Math.random() * spots.length)];
+    const city = state.cities[meta.id];
+    const rival = strongestRival(city);
+    if (!rival) return false;
+    city.price[rival.id] = Math.max(0.28, +(city.price[rival.id] - 0.02).toFixed(2));
+    state.pendingEvent = { type: "poach", city: meta.id, rival: rival.id, cut: 0.02 };
+    log(`${rival.name} poaches ${meta.name} with a corridor rate.`, "deal");
+    toast(`${rival.name} POACHES · ${meta.name}`, "bad");
+    return true;
+  }
+
   function maybeFieldCall() {
     if (state.over || state.pendingDeal || state.pendingEvent) return;
-    if (state.month < (state.nextEvent || 5)) return;
-    const fired = tryUndercutEvent() || tryStrainEvent();
-    state.nextEvent = state.month + (fired ? 6 + Math.floor(Math.random() * 5) : 3 + Math.floor(Math.random() * 3));
+    if (state.month < (state.nextEvent || 2)) return;
+    const fired =
+      tryUndercutEvent() || tryStrainEvent() || tryAmenityEvent() || tryPoachEvent();
+    state.nextEvent = state.month + (fired ? 2 + Math.floor(Math.random() * 3) : 1 + Math.floor(Math.random() * 2));
   }
 
   function fieldCallSpec(ev) {
@@ -770,6 +843,64 @@
         decline() {
           log(`Waited out strain in ${meta.name}. Grid stays tight.`, "bad");
           toast(`${meta.name} grid still strained.`, "bad");
+        },
+      };
+    }
+    if (ev.type === "amenity") {
+      const meta = CITY_BY_ID[ev.city];
+      const rival = RIVALS[ev.rival];
+      const city = state.cities[ev.city];
+      const canLounge = canDeploy("lounge", ev.city);
+      return {
+        kicker: "FIELD CALL",
+        title: `${rival.name} LOUNGE`,
+        body: `${rival.name} opened a lounge in ${meta.name}. Match the amenity on your pad, or hold and bleed share. Their dirt stays theirs.`,
+        yes: canLounge ? "QUEUE LOUNGE" : "CUT PRICE",
+        no: "HOLD RATE",
+        accept() {
+          const before = Math.round((city.share[YOU] || 0) * 100);
+          if (canLounge) {
+            enqueue("lounge", ev.city);
+            log(`Lounge queued in ${meta.name} to match ${rival.name}.`, "deal");
+            toast(`Lounge raising in ${meta.name}.`, "good");
+          } else {
+            city.price[YOU] = Math.max(0.28, +(city.price[YOU] - 0.03).toFixed(2));
+            recomputeShare(city);
+            flashShare(city, before, Math.round((city.share[YOU] || 0) * 100));
+            log(`Cut ${meta.name} to match ${rival.name} lounge pull.`, "deal");
+          }
+        },
+        decline() {
+          recomputeShare(city);
+          const sh = Math.round((city.share[YOU] || 0) * 100);
+          log(`Held amenities in ${meta.name}. ${rival.name} lounge keeps the pull · share ${sh}%.`, "bad");
+          toast(`Held ${meta.name}. Share ${sh}%.`, "bad");
+        },
+      };
+    }
+    if (ev.type === "poach") {
+      const meta = CITY_BY_ID[ev.city];
+      const rival = RIVALS[ev.rival];
+      const city = state.cities[ev.city];
+      const posted = (city.price[ev.rival] || 0.42).toFixed(2);
+      return {
+        kicker: "FIELD CALL",
+        title: `${rival.name} POACHES`,
+        body: `${rival.name} posted $${posted}/kWh on the ${meta.name} corridor. Match the poach or hold your rate.`,
+        yes: "MATCH PRICE",
+        no: "HOLD RATE",
+        accept() {
+          const before = Math.round((city.share[YOU] || 0) * 100);
+          city.price[YOU] = Math.max(0.28, +(city.price[YOU] - (ev.cut || 0.02)).toFixed(2));
+          recomputeShare(city);
+          flashShare(city, before, Math.round((city.share[YOU] || 0) * 100));
+          log(`Matched ${rival.name} poach in ${meta.name}.`, "deal");
+        },
+        decline() {
+          recomputeShare(city);
+          const sh = Math.round((city.share[YOU] || 0) * 100);
+          log(`Held ${meta.name}. ${rival.name} keeps the poach · share ${sh}%.`, "bad");
+          toast(`Held ${meta.name}. Share ${sh}%.`, "bad");
         },
       };
     }
@@ -854,13 +985,29 @@
     sheet.classList.remove("hidden");
   }
 
-  function checkEnd() {
-    const citiesHeld = presenceCount(YOU);
-    const statesHeld = new Set(
+  function winProgress() {
+    const cities = presenceCount(YOU);
+    const states = new Set(
       CITIES.filter((c) => hasCap(state.cities[c.id].sites[YOU])).map((c) => c.state)
     ).size;
-    const mcsCities = CITIES.filter((c) => state.cities[c.id].sites[YOU].mcs > 0).length;
+    const mcs = CITIES.filter((c) => state.cities[c.id].sites[YOU].mcs > 0).length;
     const majority = CITIES.filter((c) => (state.cities[c.id].share[YOU] || 0) >= 0.5).length;
+    return {
+      majority,
+      needMajority: 12,
+      states,
+      needStates: 7,
+      mcs,
+      needMcs: 4,
+      cities,
+      cash: state.cash,
+      needCash: 25000000,
+      share: continentalShare(),
+    };
+  }
+
+  function checkEnd() {
+    const { cities: citiesHeld, states: statesHeld, mcs: mcsCities, majority } = winProgress();
 
     if (majority >= 12 || (statesHeld >= 7 && mcsCities >= 4 && citiesHeld >= 10) || state.cash >= 25000000) {
       state.over = "win";
@@ -918,6 +1065,7 @@
     maybeFieldCall();
     checkEnd();
     renderAll();
+    if (state.pendingEvent) openDealSheet();
     persistQuiet();
   }
 
@@ -943,7 +1091,7 @@
     if (state.nextDeal == null) state.nextDeal = state.month + 48;
     if (state.pendingDeal === undefined) state.pendingDeal = null;
     if (state.pendingEvent === undefined) state.pendingEvent = null;
-    if (state.nextEvent == null) state.nextEvent = state.month + 4;
+    if (state.nextEvent == null) state.nextEvent = state.month + 2;
     if (state.warFired == null) state.warFired = false;
     if (Array.isArray(state.queue)) {
       state.queue = state.queue.filter((q) => {
@@ -1114,7 +1262,8 @@
     const flash = city.shareFlash && city.shareFlash.until > Date.now();
     const themName = rival ? rival.name : "OPEN";
     const themColor = rival ? rival.color : PAL.steel;
-    return `<div class="share-duel${flash ? " flash" : ""}" data-city="${city.id}">
+    const heat = city.war > 0 ? " heat" : "";
+    return `<div class="share-duel${flash ? " flash" : ""}${heat}" data-city="${city.id}">
       <div class="share-head"><span>ZAPS ${youPct}%</span><span>${themName} ${themPct}%</span></div>
       <div class="share-bar" role="img" aria-label="Zaps ${youPct} percent, ${themName} ${themPct} percent">
         <i class="you" style="width:${youPct}%"></i>
@@ -1349,13 +1498,14 @@
     for (let i = 0; i < 2; i += 1) {
       const px = p.flT[0] + 4 + i * 14;
       const py = p.flT[1] + 3.2;
-      g += `<rect x="${px}" y="${py}" width="11" height="8.4" fill="${live ? "#1a2830" : "#16161c"}"/>`;
+      g += `<rect x="${px}" y="${py}" width="11" height="8.4" fill="${live ? "#2a2018" : "#16161c"}"/>`;
       if (live) {
-        g += `<rect x="${px + 1}" y="${py + 1}" width="9" height="3.2" fill="#2a4048" opacity="0.9"/>`;
-        g += `<rect x="${px + 1}" y="${py + 4.6}" width="9" height="2.8" fill="${PAL.cream}" opacity="0.35"/>`;
+        g += `<rect x="${px + 1}" y="${py + 1.4}" width="9" height="3.4" fill="${PAL.amber}" opacity="0.28"/>`;
+        g += `<rect x="${px + 1}" y="${py + 5}" width="9" height="2.4" fill="${PAL.cream}" opacity="0.22"/>`;
       }
     }
-    const roof = isoBox(x - 3, y - bodyH, 42, 24, 2.8, live, null, live ? SURF.cream : SURF.charcoal);
+    g += `<rect x="${p.flT[0] + 30}" y="${p.flT[1] + 3.4}" width="3.2" height="2.2" fill="${PAL.red}"/>`;
+    const roof = isoBox(x - 3, y - bodyH, 42, 24, 2.2, live, null, live ? SURF.alum : SURF.charcoal);
     g += roof.g;
     if (raising) g += scaffold(x, y, 36, 20, 16);
     return g;
@@ -1367,13 +1517,15 @@
     const spots = columns || [0.08, 0.36, 0.64, 0.92];
     const post = live ? SURF.alum : SURF.charcoal;
     spots.forEach((t) => {
-      g += isoBox(x + w * t, y - 1, 2.2, 2, colH, live, null, post).g;
+      g += isoBox(x + w * t, y - 1, 1.8, 1.8, colH, live, null, post).g;
     });
-    const roof = isoBox(x - 3, y - lift, w + 6, d, 2.6, live, null, live ? SURF.cream : SURF.charcoal);
+    const roof = isoBox(x - 3, y - lift, w + 6, d, 2.1, live, null, live ? SURF.cream : SURF.charcoal);
     g += roof.g;
     const { p } = roof;
     if (live) {
-      g += `<path d="M${p.flT.join(" ")} L${p.frT.join(" ")} L${p.brT.join(" ")} L${p.blT.join(" ")} Z" fill="none" stroke="${PAL.cyan}" stroke-width="1.45"/>`;
+      g += `<path d="M${p.flT.join(" ")} L${p.frT.join(" ")} L${p.brT.join(" ")} L${p.blT.join(" ")} Z" fill="none" stroke="${PAL.cyan}" stroke-width="1.2"/>`;
+      const top = [p.flT, p.frT, p.brT, p.blT];
+      g += cofferGrid(top, Math.max(2, spots.length), 2);
     }
     return g;
   }
@@ -1711,6 +1863,51 @@
     return pts.map((p) => [p[0] + (cx - p[0]) * t, p[1] + (cy - p[1]) * t]);
   }
 
+  function lerp2(a, b, t) {
+    return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+  }
+
+  function quadPoint(pts, u, v) {
+    const a = lerp2(pts[0], pts[1], u);
+    const b = lerp2(pts[3], pts[2], u);
+    return lerp2(a, b, v);
+  }
+
+  function subQuad(pts, u0, v0, u1, v1) {
+    return [
+      quadPoint(pts, u0, v0),
+      quadPoint(pts, u1, v0),
+      quadPoint(pts, u1, v1),
+      quadPoint(pts, u0, v1),
+    ];
+  }
+
+  function cofferGrid(top, cols, rows) {
+    let g = "";
+    const padU = 0.06;
+    const padV = 0.1;
+    const uSpan = (1 - padU * 2) / cols;
+    const vSpan = (1 - padV * 2) / rows;
+    for (let r = 0; r < rows; r += 1) {
+      for (let c = 0; c < cols; c += 1) {
+        const u0 = padU + c * uSpan + 0.012;
+        const v0 = padV + r * vSpan + 0.02;
+        const cell = subQuad(top, u0, v0, u0 + uSpan - 0.024, v0 + vSpan - 0.04);
+        g += `<polygon class="site-coffer" points="${svgPts(cell)}" />`;
+        g += `<polygon class="site-coffer-glow" points="${svgPts(insetQuad(cell, 0.22))}" />`;
+      }
+    }
+    return g;
+  }
+
+  function cylPost(c, r, w, d, h, tone) {
+    const foot = insetQuad(gridQuad(c, r, w, d), 0);
+    const body = isoPrism(foot, h, tone);
+    let g = body.g;
+    g += faceRect(body, 0.08, 0.08, 0.28, 0.84, "rgba(245,240,232,0.28)");
+    return g;
+  }
+
   function ghostTone(kind) {
     if (kind === "lounge") {
       return { top: "#c8c2b4", front: "#9a9488", side: "#7a7468", edge: "rgba(245,240,232,0.95)" };
@@ -1933,16 +2130,18 @@
     const ghost = Boolean(occ.raising.bess);
     const job = ghost ? slotJob(occ, "bess", 0) : null;
     const tone = ghost ? ghostTone("bess") : SURF.charcoal;
-    const h = growH(9.8, ghost, job?.pct);
+    const h = growH(8.4, ghost, job?.pct);
     let g = "";
-    SLOTS.bess.forEach((slot) => {
-      const plinth = isoPrism(insetQuad(gridQuad(slot.c + 0.2, slot.r + 0.2, 0.6, 0.6), 0.02), 1.05, ghost ? ghostTone("bess") : SURF.concrete);
-      const box = isoPrism(insetQuad(gridQuad(slot.c + 0.26, slot.r + 0.26, 0.48, 0.48), 0.02), h, tone);
+    SLOTS.bess.forEach((slot, i) => {
+      const plinth = isoPrism(insetQuad(gridQuad(slot.c + 0.16, slot.r + 0.18, 0.68, 0.64), 0.02), 0.85, ghost ? ghostTone("bess") : SURF.concrete);
+      const box = isoPrism(insetQuad(gridQuad(slot.c + 0.22, slot.r + 0.22, 0.56, 0.56), 0.02), h, tone);
       g += plinth.g + box.g;
-      g += `<polygon class="site-bess-cap" points="${svgPts(insetQuad(box.top, 0.14))}" />`;
-      g += faceRect(box, 0.16, 0.1, 0.2, 0.07, PAL.amber);
-      g += faceRect(box, 0.16, 0.32, 0.68, 0.1, ghost ? "#243038" : "#141418");
-      g += faceRect(box, 0.16, 0.5, 0.68, 0.1, ghost ? "#243038" : "#141418");
+      g += `<polygon class="site-bess-cap" points="${svgPts(insetQuad(box.top, 0.16))}" />`;
+      g += faceRect(box, 0.12, 0.08, 0.76, 0.07, PAL.amber);
+      g += faceRect(box, 0.14, 0.28, 0.72, 0.08, ghost ? "#243038" : "#141418");
+      g += faceRect(box, 0.14, 0.42, 0.72, 0.08, ghost ? "#243038" : "#141418");
+      g += faceRect(box, 0.14, 0.56, 0.72, 0.08, ghost ? "#243038" : "#141418");
+      if (!ghost && i === 1) g += faceRect(box, 0.72, 0.1, 0.14, 0.1, PAL.red);
     });
     return wrapBldg("kit-bess", ghost, g, slotPop(occ, "bess", 0), job?.preview);
   }
@@ -1953,90 +2152,101 @@
     const live = occ.live.mcs;
     const raising = occ.raising.mcs;
     const bayGhost = raising && live < 1;
-    const roofTone = bayGhost ? ghostTone("mcs") : SURF.charcoal;
-    const postTone = bayGhost ? ghostTone("mcs") : SURF.steel;
-    const lift = 12.6;
-    const bay = insetQuad(gridQuad(0.12, 1.1, 0.76, 1.8), 0.02);
+    const roofTone = bayGhost ? ghostTone("mcs") : SURF.alum;
+    const postTone = bayGhost ? ghostTone("mcs") : SURF.alum;
+    const lift = 11.4;
+    const bay = insetQuad(gridQuad(0.08, 1.08, 0.84, 1.84), 0.02);
     let g = "";
+    const cab = isoPrism(insetQuad(gridQuad(0.14, 1.22, 0.52, 1.56), 0.02), growH(6.2, bayGhost, 0.7), bayGhost ? ghostTone("mcs") : SURF.charcoal);
+    g += cab.g;
+    g += faceRect(cab, 0.1, 0.12, 0.8, 0.1, PAL.amber);
+    g += faceRect(cab, 0.1, 0.3, 0.8, 0.12, bayGhost ? "#2a2020" : "#141418");
+    g += faceRect(cab, 0.1, 0.5, 0.8, 0.12, bayGhost ? "#2a2020" : "#141418");
+    g += faceRect(cab, 0.72, 0.14, 0.16, 0.1, PAL.red);
     [
-      [0.1, 1.1],
-      [0.1, 2.74],
+      [0.1, 1.12],
+      [0.1, 2.72],
     ].forEach(([c, r]) => {
-      const p = isoPrism(insetQuad(gridQuad(c, r, 0.2, 0.16), 0), lift, postTone);
-      g += p.g;
-      g += faceRect(p, 0.04, 0.2, 0.92, 0.08, PAL.red);
+      g += cylPost(c, r, 0.16, 0.14, lift, postTone);
     });
     for (let i = 0; i < n; i += 1) {
       const ghost = raising && i >= live;
       const job = ghost ? slotJob(occ, "mcs", i - live) : null;
       const tone = ghost ? ghostTone("mcs") : SURF.charcoal;
-      const h = growH(8.8, ghost, job?.pct);
-      const foot = insetQuad(gridQuad(0.28, 1.28 + i * 0.78, 0.42, 0.4), 0.02);
+      const h = growH(10.6, ghost, job?.pct);
+      const foot = insetQuad(gridQuad(0.36, 1.22 + i * 0.82, 0.48, 0.52), 0.02);
       const body = isoPrism(foot, h, tone);
       let unit = body.g;
-      unit += faceRect(body, 0.14, 0.12, 0.7, 0.5, ghost ? "#2a2020" : "#1a1a20");
-      unit += faceRect(body, 0.18, 0.16, 0.6, 0.1, PAL.amber);
-      unit += faceRect(body, 0.22, 0.3, 0.18, 0.07, PAL.red);
-      unit += `<polygon class="site-dc-ring" points="${svgPts(insetQuad(foot, -0.12))}" />`;
+      unit += faceRect(body, 0.12, 0.1, 0.76, 0.58, ghost ? "#2a2020" : "#1a1a20");
+      unit += faceRect(body, 0.16, 0.14, 0.66, 0.1, PAL.amber);
+      unit += faceRect(body, 0.2, 0.3, 0.22, 0.08, PAL.red);
+      unit += `<polygon class="site-mcs-ring" points="${svgPts(insetQuad(foot, -0.1))}" />`;
       g += wrapBldg("kit-mcs-unit", ghost, unit, slotPop(occ, "mcs", i), job?.preview);
     }
-    const roof = isoPrism(liftPts(bay, lift), 1.55, roofTone);
+    const roof = isoPrism(liftPts(bay, lift), 1.15, roofTone);
     g += roof.g;
     g += `<polygon class="site-mcs-edge" points="${svgPts(insetQuad(roof.top, 0.08))}" />`;
+    g += `<polygon class="site-roof-under" points="${svgPts(insetQuad(roof.top, 0.18))}" />`;
     return wrapBldg("kit-mcs", bayGhost, g, slotPop(occ, "mcs", 0) && live >= 1, occ.preview === "mcs" && live < 1);
   }
 
   function drawDcUnit(slot, ghost, job, pop) {
-    const tone = ghost ? ghostTone("dc") : SURF.charcoal;
-    const cap = ghost ? ghostTone("dc") : SURF.alum;
-    const h = growH(12.4, ghost, job?.pct);
-    const foot = insetQuad(gridQuad(slot.c + 0.3, slot.r + 0.16, 0.4, 0.34), 0);
+    const tone = ghost ? ghostTone("dc") : SURF.alum;
+    const h = growH(16.8, ghost, job?.pct);
+    const foot = insetQuad(gridQuad(slot.c + 0.34, slot.r + 0.42, 0.32, 0.38), 0);
     const body = isoPrism(foot, h, tone);
-    const hat = isoPrism(liftPts(insetQuad(foot, 0.12), h), ghost ? 0.7 : 0.55, cap);
+    const hat = isoPrism(liftPts(insetQuad(foot, 0.08), h), ghost ? 0.7 : 0.55, ghost ? ghostTone("dc") : SURF.alum);
     let unit = body.g + hat.g;
-    unit += faceRect(body, 0.12, 0.1, 0.76, 0.62, ghost ? "#243038" : "#121217");
-    unit += faceRect(body, 0.16, 0.14, 0.66, 0.08, PAL.amber);
-    unit += faceRect(body, 0.2, 0.28, 0.2, 0.07, PAL.red);
-    unit += `<polygon class="site-dc-ring" points="${svgPts(insetQuad(foot, -0.2))}" />`;
-    const hook = insetQuad(gridQuad(slot.c + 0.6, slot.r + 0.3, 0.08, 0.06), 0);
-    const holster = isoPrism(liftPts(hook, h * 0.52), 1.05, ghost ? ghostTone("dc") : SURF.charcoal);
-    unit += holster.g;
+    unit += faceRect(body, 0.1, 0.07, 0.8, 0.72, ghost ? "#243038" : "#1E1E24");
+    unit += faceRect(body, 0.16, 0.1, 0.68, 0.12, PAL.amber);
+    unit += faceRect(body, 0.22, 0.26, 0.24, 0.09, PAL.red);
+    unit += `<polygon class="site-dc-ring" points="${svgPts(insetQuad(foot, -0.18))}" />`;
+    const leftHook = insetQuad(gridQuad(slot.c + 0.26, slot.r + 0.54, 0.08, 0.08), 0);
+    const rightHook = insetQuad(gridQuad(slot.c + 0.66, slot.r + 0.54, 0.08, 0.08), 0);
+    const holsterL = isoPrism(liftPts(leftHook, h * 0.48), 1.2, ghost ? ghostTone("dc") : SURF.charcoal);
+    const holsterR = isoPrism(liftPts(rightHook, h * 0.48), 1.2, ghost ? ghostTone("dc") : SURF.charcoal);
+    unit += holsterL.g + holsterR.g;
     if (!ghost) {
-      const a = holster.seT;
-      unit += `<path class="site-dc-cable" d="M${a[0].toFixed(2)} ${a[1].toFixed(2)} Q${(a[0] + 2.1).toFixed(2)} ${(a[1] + 3.4).toFixed(2)} ${(a[0] + 0.8).toFixed(2)} ${(a[1] + 5.6).toFixed(2)}" />`;
+      const a = holsterL.sw;
+      const b = holsterR.se;
+      unit += `<path class="site-dc-cable" d="M${a[0].toFixed(2)} ${a[1].toFixed(2)} Q${(a[0] - 1.8).toFixed(2)} ${(a[1] + 2.4).toFixed(2)} ${(a[0] - 0.3).toFixed(2)} ${(a[1] + 4.4).toFixed(2)}" />`;
+      unit += `<path class="site-dc-cable" d="M${b[0].toFixed(2)} ${b[1].toFixed(2)} Q${(b[0] + 2.0).toFixed(2)} ${(b[1] + 2.2).toFixed(2)} ${(b[0] + 0.4).toFixed(2)} ${(b[1] + 4.2).toFixed(2)}" />`;
     }
     return wrapBldg("kit-dc-unit", ghost, unit, pop, job?.preview);
   }
 
+  function drawDcCanopy(occ) {
+    const live = occ.live.dc;
+    if (live < 1) return "";
+    const lift = 15.6;
+    let g = "";
+    for (let i = 0; i <= live; i += 1) {
+      g += cylPost(1 + i - 0.03, 1.02, 0.07, 0.08, lift, SURF.alum);
+    }
+    const street = insetQuad(gridQuad(1.0, 0.96, live + 0.02, 0.42), 0);
+    const roof = isoPrism(liftPts(street, lift), 0.62, SURF.cream);
+    g += roof.g;
+    g += `<polygon class="site-roof-deck" points="${svgPts(roof.top)}" />`;
+    g += cofferGrid(roof.top, Math.max(3, live * 2), 1);
+    const fascia = [
+      lerp2(roof.swT, roof.seT, 0.03),
+      lerp2(roof.swT, roof.seT, 0.97),
+      lerp2(roof.sw, roof.se, 0.97),
+      lerp2(roof.sw, roof.se, 0.03),
+    ];
+    g += `<polygon class="site-roof-fascia" points="${svgPts(fascia)}" />`;
+    return wrapBldg("kit-dc-canopy", false, g);
+  }
+
   function drawDcRow(occ) {
     if (occ.dc < 1) return "";
-    const n = occ.dc;
-    const live = occ.live.dc;
-    const lift = 12.2;
     let g = "";
-    for (let i = 0; i < n; i += 1) {
+    for (let i = 0; i < occ.dc; i += 1) {
       const slot = SLOTS.dc[i];
       if (!slot) continue;
-      const ghost = i >= live;
-      const job = ghost ? slotJob(occ, "dc", i - live) : null;
+      const ghost = i >= occ.live.dc;
+      const job = ghost ? slotJob(occ, "dc", i - occ.live.dc) : null;
       g += drawDcUnit(slot, ghost, job, slotPop(occ, "dc", i));
-    }
-    if (live >= 1) {
-      for (let i = 0; i <= live; i += 1) {
-        const foot = insetQuad(gridQuad(1 + i - 0.05, 1.08, 0.1, 0.1), 0);
-        const post = isoPrism(foot, lift, SURF.alum);
-        g += post.g;
-        g += faceRect(post, 0.02, 0.18, 0.96, 0.08, PAL.red);
-      }
-      const street = insetQuad(gridQuad(1.08, 1.08, live - 0.16, 0.52), 0);
-      const roof = isoPrism(liftPts(street, lift), 1.35, SURF.cream);
-      g += roof.g;
-      g += `<polygon class="site-roof-deck" points="${svgPts(roof.top)}" />`;
-      g += `<polygon class="site-roof-under" points="${svgPts(insetQuad(roof.top, 0.14))}" />`;
-      for (let i = 1; i < live; i += 1) {
-        const seam = insetQuad(gridQuad(1 + i - 0.015, 1.06, 0.03, 0.68), 0);
-        g += `<polygon class="site-roof-seam" points="${svgPts(liftPts(seam, lift + 1.35))}" />`;
-      }
     }
     return wrapBldg("kit-dc", false, g);
   }
@@ -2046,17 +2256,27 @@
     const ghost = Boolean(occ.raising.lounge);
     const job = ghost ? slotJob(occ, "lounge", 0) : null;
     const tone = ghost ? ghostTone("lounge") : SURF.cream;
-    const h = growH(7.4, ghost, job?.pct);
-    const foot = insetQuad(gridQuad(0.18, 3.16, 1.64, 0.58), 0.02);
-    const patio = isoPrism(insetQuad(gridQuad(0.36, 3.6, 0.8, 0.24), 0), 0.75, ghost ? ghostTone("lounge") : SURF.concrete);
+    const h = growH(9.2, ghost, job?.pct);
+    const foot = insetQuad(gridQuad(0.12, 3.08, 1.76, 0.72), 0.02);
+    const patio = isoPrism(insetQuad(gridQuad(0.28, 3.56, 0.96, 0.3), 0), 0.7, ghost ? ghostTone("lounge") : SURF.concrete);
+    const planter = isoPrism(insetQuad(gridQuad(1.54, 3.6, 0.24, 0.2), 0), 1.2, ghost ? ghostTone("lounge") : SURF.alum);
     const body = isoPrism(foot, h, tone);
-    let g = patio.g + body.g;
-    g += faceRect(body, 0.08, 0.16, 0.34, 0.42, ghost ? "#243038" : "#1a2830");
-    g += faceRect(body, 0.5, 0.16, 0.34, 0.42, ghost ? "#243038" : "#1a2830");
-    g += faceRect(body, 0.86, 0.2, 0.07, 0.16, PAL.red);
-    const roof = isoPrism(liftPts(insetQuad(foot, -0.06), h + 0.7), 1.2, tone);
+    let g = patio.g + planter.g + body.g;
+    g += faceRect(body, 0.88, 0.12, 0.08, 0.16, PAL.red);
+    const roof = isoPrism(liftPts(insetQuad(foot, -0.08), h + 0.55), 1.05, ghost ? tone : SURF.alum);
     g += roof.g;
-    if (!ghost) g += `<polygon class="site-lounge-edge" points="${svgPts(insetQuad(roof.top, 0.1))}" />`;
+    if (!ghost) {
+      g += `<polygon class="site-lounge-edge" points="${svgPts(insetQuad(roof.top, 0.1))}" />`;
+      g += cofferGrid(roof.top, 3, 1);
+    }
+    const front = [body.swT, body.seT, body.se, body.sw];
+    const glass = ghost ? "#243038" : "#1a1410";
+    g += `<polygon class="site-portal" points="${svgPts(subQuad(front, 0.07, 0.16, 0.42, 0.84))}" fill="${glass}" />`;
+    g += `<polygon class="site-portal" points="${svgPts(subQuad(front, 0.5, 0.16, 0.85, 0.84))}" fill="${glass}" />`;
+    if (!ghost) {
+      g += `<polygon class="site-portal-glow" points="${svgPts(subQuad(front, 0.1, 0.22, 0.39, 0.48))}" />`;
+      g += `<polygon class="site-portal-glow" points="${svgPts(subQuad(front, 0.53, 0.22, 0.82, 0.48))}" />`;
+    }
     return wrapBldg("kit-lounge", ghost, g, slotPop(occ, "lounge", 0), job?.preview);
   }
 
@@ -2066,16 +2286,15 @@
     const job = ghost ? slotJob(occ, "market", 0) : null;
     const tone = ghost ? ghostTone("market") : SURF.charcoal;
     const awn = ghost ? ghostTone("lounge") : SURF.cream;
-    const h = growH(6.6, ghost, job?.pct);
-    const foot = insetQuad(gridQuad(2.22, 3.22, 1.56, 0.52), 0.02);
+    const h = growH(7.8, ghost, job?.pct);
+    const foot = insetQuad(gridQuad(2.28, 3.22, 1.44, 0.52), 0.02);
     const body = isoPrism(foot, h, tone);
     let g = body.g;
-    g += faceRect(body, 0.1, 0.16, 0.32, 0.36, ghost ? "#2a2418" : "#141c20");
-    g += faceRect(body, 0.14, 0.28, 0.24, 0.12, PAL.amber);
-    g += faceRect(body, 0.72, 0.2, 0.12, 0.18, PAL.red);
-    const roofFoot = liftPts(insetQuad(foot, -0.04), h);
-    g += pitchedRoof(roofFoot, 5.2, { ...tone, top: awn.top, front: awn.front, edge: tone.edge }).g;
-    const awning = isoPrism(liftPts(insetQuad(gridQuad(2.14, 3.48, 1.72, 0.34), 0), h * 0.62), 0.85, awn);
+    const front = [body.swT, body.seT, body.se, body.sw];
+    g += `<polygon class="site-market-board" points="${svgPts(subQuad(front, 0.1, 0.18, 0.62, 0.72))}" />`;
+    if (!ghost) g += `<polygon class="site-portal-glow" points="${svgPts(subQuad(front, 0.16, 0.32, 0.56, 0.52))}" />`;
+    g += faceRect(body, 0.76, 0.16, 0.14, 0.16, PAL.red);
+    const awning = isoPrism(liftPts(insetQuad(gridQuad(2.2, 3.52, 1.58, 0.22), 0), h * 0.7), 0.7, awn);
     g += awning.g;
     return wrapBldg("kit-market", ghost, g, slotPop(occ, "market", 0), job?.preview);
   }
@@ -2088,9 +2307,10 @@
       plazaGeom(occ) +
       drawBess(occ) +
       drawMcs(occ) +
-      drawDcRow(occ) +
       drawLounge(occ) +
       drawMarket(occ) +
+      drawDcCanopy(occ) +
+      drawDcRow(occ) +
       ghostCaptions(occ);
     return overlaySvg("site-compound", inner);
   }
@@ -2209,7 +2429,7 @@
         intel.innerHTML = `${shareDuelHtml(city)}<p>RIVAL SITE · ${rival ? rival.name : "They"} hold this pad. Compete on price and empty dirt — you cannot seize the compound.</p>`;
       } else if (contested) {
         intel.className = "site-intel contested";
-        intel.innerHTML = `${shareDuelHtml(city)}<p>CONTESTED · ${rival ? rival.name : "A rival"} shares this market. Adjust price. Their dirt stays theirs.</p>`;
+        intel.innerHTML = `${shareDuelHtml(city)}<p>CONTESTED · ${rival ? rival.name : "A rival"} shares this market. Price and amenities move share. Their dirt stays theirs.</p>`;
       } else {
         intel.className = "site-intel hidden";
         intel.innerHTML = "";
@@ -2381,6 +2601,15 @@
     const kind = mapSpriteKind(city, meta);
     $("insp-phase").textContent = inspectorPhase(kind, city);
     const you = city.sites[YOU];
+    const triad = $("insp-triad");
+    if (triad) {
+      const charge = hasCap(you);
+      const relax = you.lounge > 0;
+      triad.innerHTML =
+        `<span class="${charge ? "on" : ""}">CHARGE</span>` +
+        `<span class="${relax ? "on" : ""}">RELAX</span>` +
+        `<span class="on">DEPART</span>`;
+    }
     $("insp-blurb").textContent = inspectorBlurb(city, meta, kind);
 
     $("insp-compound").innerHTML = compoundMarkup(city, meta);
@@ -2521,13 +2750,26 @@
   function renderHud() {
     const y = Math.floor((state.month - 1) / 12) + 1;
     const m = ((state.month - 1) % 12) + 1;
-    $("stat-date").textContent = `Y${y} M${String(m).padStart(2, "0")}`;
-    $("stat-cash").textContent = money(state.cash);
-    $("stat-cash").style.color = state.cash < 0 ? PAL.amber : "";
-    $("stat-share").textContent = `${Math.round(continentalShare() * 100)}%`;
-    $("stat-cities").textContent = `${presenceCount(YOU)}/16`;
-    $("stat-crews").textContent = `${crewsBusy()}/${MAX_CREWS}`;
-    $("stat-net").textContent = money(lastNet);
+    const track = winProgress();
+    setStat("stat-date", `Y${y} M${String(m).padStart(2, "0")}`);
+    setStat("stat-cash", money(state.cash), state.cash < 0);
+    setStat("stat-share", `${Math.round(track.share * 100)}%`);
+    setStat("stat-cities", `${track.cities}/16`);
+    setStat("stat-crews", `${crewsBusy()}/${MAX_CREWS}`, crewsBusy() >= MAX_CREWS);
+    setStat("stat-net", money(lastNet), lastNet < 0);
+    const camp = $("hud-campaign");
+    if (camp) {
+      const majPct = Math.min(100, Math.round((track.majority / track.needMajority) * 100));
+      camp.innerHTML =
+        `<div class="camp-bar" role="img" aria-label="Continental share ${Math.round(track.share * 100)} percent">` +
+        `<i style="width:${Math.round(track.share * 100)}%"></i></div>` +
+        `<div class="camp-goals">` +
+        `<span${track.majority >= track.needMajority ? ' class="hot"' : ""}>MAJORITY ${track.majority}/${track.needMajority}</span>` +
+        `<span${track.states >= track.needStates ? ' class="hot"' : ""}>STATES ${track.states}/${track.needStates}</span>` +
+        `<span${track.mcs >= track.needMcs ? ' class="hot"' : ""}>MCS ${track.mcs}/${track.needMcs}</span>` +
+        `<span class="camp-fill">${majPct}%</span>` +
+        `</div>`;
+    }
     renderDealChrome();
   }
 
@@ -2763,7 +3005,7 @@
   }
 
   window.__EMPIRE_SMOKE__ = {
-    build: "rts-yard-14",
+    build: "rts-yard-15",
     hitR: CITY_HIT_R,
     goldilocks: 0.76,
     nearestCity,

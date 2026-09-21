@@ -1,4 +1,4 @@
-/* empire-build: rts-yard-14 */
+/* empire-build: rts-yard-15 */
 :root {
   --red: #e63225;
   --charcoal: #1e1e24;
@@ -244,11 +244,56 @@ button {
   overflow: visible;
 }
 
+.hud-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.28rem;
+  min-width: 0;
+}
+
 .hud-stats {
   display: flex;
   gap: 1.15rem;
   justify-content: center;
   flex-wrap: wrap;
+}
+
+.hud-campaign {
+  width: min(100%, 520px);
+}
+
+.camp-bar {
+  height: 5px;
+  background: #16161c;
+  border: 1px solid rgba(232, 154, 46, 0.28);
+  overflow: hidden;
+}
+
+.camp-bar i {
+  display: block;
+  height: 100%;
+  background: var(--amber);
+  transition: width 0.55s ease;
+}
+
+.camp-goals {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.55rem;
+  margin-top: 0.18rem;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  color: var(--amber);
+}
+
+.camp-goals .hot {
+  color: var(--cream);
+}
+
+.camp-fill {
+  color: var(--steel);
 }
 
 .stat-label {
@@ -263,6 +308,24 @@ button {
   font-family: "Share Tech Mono", monospace;
   font-size: 1rem;
   color: var(--cream);
+}
+
+.stat-value.tick {
+  animation: stat-tick 0.55s ease;
+}
+
+.stat-value.warn {
+  color: var(--amber);
+}
+
+@keyframes stat-tick {
+  0% {
+    color: var(--amber);
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .hud-controls {
@@ -728,12 +791,12 @@ button {
 
 @keyframes kit-pop {
   0% {
-    transform: scale(0.52);
-    filter: brightness(2.2);
+    transform: scale(0.4);
+    filter: brightness(2.8);
   }
-  42% {
-    transform: scale(1.16);
-    filter: brightness(1.4);
+  36% {
+    transform: scale(1.22);
+    filter: brightness(1.55);
   }
   100% {
     transform: scale(1);
@@ -780,11 +843,39 @@ button {
 }
 
 .site-tile.kind-dc {
-  fill: #42424c;
+  fill: #3a3a44;
 }
 
 .site-tile.odd.kind-dc {
   fill: #26262e;
+}
+
+.site-tile.kind-lounge {
+  fill: #d8d0c4;
+}
+
+.site-tile.odd.kind-lounge {
+  fill: #c4bcae;
+}
+
+.site-tile.kind-market {
+  fill: #4a4036;
+}
+
+.site-tile.odd.kind-market {
+  fill: #3a322c;
+}
+
+.site-tile.kind-bess {
+  fill: #2c3236;
+}
+
+.site-tile.odd.kind-bess {
+  fill: #22282c;
+}
+
+.site-tile.kind-mcs {
+  fill: #3a3234;
 }
 
 .site-tile.reserved {
@@ -876,7 +967,7 @@ button {
 .site-dc-cable {
   fill: none;
   stroke: #1a1a1e;
-  stroke-width: 0.45;
+  stroke-width: 0.7;
 }
 
 .site-stall-hash {
@@ -890,21 +981,59 @@ button {
 }
 
 .site-bess-cap {
-  fill: #00d4f5;
-  opacity: 0.85;
+  fill: #e89a2e;
+  opacity: 0.72;
 }
 
-.site-mcs-edge,
-.site-lounge-edge {
+.site-mcs-edge {
   fill: none;
   stroke: #00d4f5;
-  stroke-width: 0.35;
+  stroke-width: 0.32;
 }
 
-.site-dc-ring {
+.site-lounge-edge {
+  fill: none;
+  stroke: #c8c2b6;
+  stroke-width: 0.32;
+}
+
+.site-dc-ring,
+.site-mcs-ring {
   fill: none;
   stroke: #00d4f5;
   stroke-width: 0.28;
+}
+
+.site-coffer {
+  fill: rgba(28, 26, 22, 0.55);
+  stroke: rgba(184, 188, 192, 0.55);
+  stroke-width: 0.14;
+}
+
+.site-coffer-glow {
+  fill: rgba(232, 196, 140, 0.42);
+  stroke: none;
+}
+
+.site-portal {
+  stroke: #8a8478;
+  stroke-width: 0.22;
+}
+
+.site-portal-glow {
+  fill: rgba(232, 154, 46, 0.42);
+  stroke: none;
+}
+
+.site-market-board {
+  fill: #141418;
+  stroke: #e89a2e;
+  stroke-width: 0.22;
+}
+
+.site-roof-fascia {
+  fill: #e63225;
+  opacity: 0.85;
 }
 
 .site-curb-face {
@@ -981,14 +1110,14 @@ button {
 }
 
 .site-roof-under {
-  fill: rgba(232, 154, 46, 0.16);
+  fill: rgba(232, 154, 46, 0.2);
   stroke: none;
 }
 
 .site-roof-deck {
   fill: #f5f0e8;
   stroke: #00d4f5;
-  stroke-width: 0.55;
+  stroke-width: 0.48;
 }
 
 .site-overlay-svg.raising {
@@ -1111,11 +1240,35 @@ button {
 }
 
 .insp-phase {
-  margin: 0 0 0.45rem;
+  margin: 0 0 0.35rem;
   font-family: "Share Tech Mono", monospace;
   font-size: 0.68rem;
   letter-spacing: 0.16em;
   color: var(--amber);
+}
+
+.insp-triad {
+  display: flex;
+  gap: 0.35rem;
+  margin: 0 0 0.45rem;
+}
+
+.insp-triad span {
+  flex: 1;
+  padding: 0.22rem 0.2rem;
+  text-align: center;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  color: var(--steel);
+  background: #16161c;
+  border: 1px solid var(--line);
+}
+
+.insp-triad span.on {
+  color: var(--amber);
+  border-color: rgba(232, 154, 46, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(232, 154, 46, 0.18);
 }
 
 .insp-compound {
@@ -1184,11 +1337,11 @@ button {
 }
 
 .insp-queue .job.focus {
-  color: var(--cyan);
+  color: var(--amber);
 }
 
 .insp-queue .job.focus .bar > span {
-  background: var(--cyan);
+  background: var(--amber);
 }
 
 .deals-badge {
@@ -1235,6 +1388,21 @@ button {
   font-size: 0.74rem;
   color: var(--cream);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.toast.pop-in {
+  animation: toast-pop 0.38s ease-out;
+}
+
+@keyframes toast-pop {
+  0% {
+    transform: translateX(16px);
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
 }
 
 .toast.good {
@@ -1332,16 +1500,23 @@ button {
   overflow: hidden;
 }
 
-.share-bar i.you {
+.share-bar i.you,
+.share-bar i.them {
   display: block;
   height: 100%;
+  transition: width 0.45s ease;
+}
+
+.share-bar i.you {
   background: var(--red);
 }
 
 .share-bar i.them {
-  display: block;
-  height: 100%;
   background: var(--them, var(--cyan));
+}
+
+.share-duel.heat .share-bar {
+  box-shadow: 0 0 0 1px rgba(232, 154, 46, 0.45);
 }
 
 .share-duel.flash .share-bar i.you {
@@ -1395,8 +1570,8 @@ button {
   gap: 0.65rem;
   align-items: center;
   padding: 0.4rem 0.75rem;
-  background: var(--charcoal);
-  border-top: 1px solid var(--line);
+  background: #1a1a20;
+  border-top: 1px solid rgba(232, 154, 46, 0.22);
 }
 
 .tray-label {
@@ -1436,8 +1611,8 @@ button {
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  background: #2a2a32;
-  border: 1px solid var(--line);
+  background: #222228;
+  border: 1px solid rgba(232, 154, 46, 0.18);
   color: var(--cream);
   padding: 0.35rem 0.5rem;
   min-width: 0;
@@ -1446,12 +1621,13 @@ button {
 }
 
 .deploy.live {
-  border-color: rgba(0, 212, 245, 0.5);
-  background: #303038;
+  border-color: rgba(232, 154, 46, 0.55);
+  background: #2a2a32;
 }
 
 .deploy.live:hover {
-  border-color: var(--cyan);
+  border-color: var(--amber);
+  box-shadow: 0 0 0 1px rgba(232, 154, 46, 0.28);
 }
 
 .deploy.raising {
@@ -1460,9 +1636,9 @@ button {
 }
 
 .deploy.selected {
-  border-color: var(--cyan);
-  box-shadow: 0 0 0 2px rgba(0, 212, 245, 0.55);
-  background: #323844;
+  border-color: var(--amber);
+  box-shadow: 0 0 0 2px rgba(232, 154, 46, 0.45);
+  background: #2e2a24;
 }
 
 .deploy img {
@@ -1498,7 +1674,7 @@ button {
 }
 
 .deploy .ready {
-  color: var(--cyan);
+  color: var(--amber);
   letter-spacing: 0.08em;
 }
 
