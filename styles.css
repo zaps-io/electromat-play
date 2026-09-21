@@ -967,7 +967,7 @@ button {
 .site-dc-cable {
   fill: none;
   stroke: #1a1a1e;
-  stroke-width: 0.45;
+  stroke-width: 0.7;
 }
 
 .site-stall-hash {
@@ -1005,14 +1005,30 @@ button {
 }
 
 .site-coffer {
-  fill: rgba(30, 30, 36, 0.32);
-  stroke: rgba(184, 188, 192, 0.45);
-  stroke-width: 0.12;
+  fill: rgba(28, 26, 22, 0.55);
+  stroke: rgba(184, 188, 192, 0.55);
+  stroke-width: 0.14;
 }
 
 .site-coffer-glow {
-  fill: rgba(232, 210, 160, 0.28);
+  fill: rgba(232, 196, 140, 0.42);
   stroke: none;
+}
+
+.site-portal {
+  stroke: #8a8478;
+  stroke-width: 0.22;
+}
+
+.site-portal-glow {
+  fill: rgba(232, 154, 46, 0.42);
+  stroke: none;
+}
+
+.site-market-board {
+  fill: #141418;
+  stroke: #e89a2e;
+  stroke-width: 0.22;
 }
 
 .site-roof-fascia {

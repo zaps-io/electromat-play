@@ -2192,58 +2192,61 @@
 
   function drawDcUnit(slot, ghost, job, pop) {
     const tone = ghost ? ghostTone("dc") : SURF.alum;
-    const h = growH(14.2, ghost, job?.pct);
-    const foot = insetQuad(gridQuad(slot.c + 0.36, slot.r + 0.18, 0.28, 0.26), 0);
+    const h = growH(16.8, ghost, job?.pct);
+    const foot = insetQuad(gridQuad(slot.c + 0.34, slot.r + 0.42, 0.32, 0.38), 0);
     const body = isoPrism(foot, h, tone);
-    const hat = isoPrism(liftPts(insetQuad(foot, 0.1), h), ghost ? 0.55 : 0.42, ghost ? ghostTone("dc") : SURF.alum);
+    const hat = isoPrism(liftPts(insetQuad(foot, 0.08), h), ghost ? 0.7 : 0.55, ghost ? ghostTone("dc") : SURF.alum);
     let unit = body.g + hat.g;
-    unit += faceRect(body, 0.1, 0.08, 0.8, 0.68, ghost ? "#243038" : "#1E1E24");
-    unit += faceRect(body, 0.16, 0.12, 0.68, 0.1, PAL.amber);
-    unit += faceRect(body, 0.22, 0.26, 0.22, 0.08, PAL.red);
-    unit += `<polygon class="site-dc-ring" points="${svgPts(insetQuad(foot, -0.22))}" />`;
-    const leftHook = insetQuad(gridQuad(slot.c + 0.28, slot.r + 0.26, 0.07, 0.06), 0);
-    const rightHook = insetQuad(gridQuad(slot.c + 0.65, slot.r + 0.26, 0.07, 0.06), 0);
-    const holsterL = isoPrism(liftPts(leftHook, h * 0.5), 1.05, ghost ? ghostTone("dc") : SURF.charcoal);
-    const holsterR = isoPrism(liftPts(rightHook, h * 0.5), 1.05, ghost ? ghostTone("dc") : SURF.charcoal);
+    unit += faceRect(body, 0.1, 0.07, 0.8, 0.72, ghost ? "#243038" : "#1E1E24");
+    unit += faceRect(body, 0.16, 0.1, 0.68, 0.12, PAL.amber);
+    unit += faceRect(body, 0.22, 0.26, 0.24, 0.09, PAL.red);
+    unit += `<polygon class="site-dc-ring" points="${svgPts(insetQuad(foot, -0.18))}" />`;
+    const leftHook = insetQuad(gridQuad(slot.c + 0.26, slot.r + 0.54, 0.08, 0.08), 0);
+    const rightHook = insetQuad(gridQuad(slot.c + 0.66, slot.r + 0.54, 0.08, 0.08), 0);
+    const holsterL = isoPrism(liftPts(leftHook, h * 0.48), 1.2, ghost ? ghostTone("dc") : SURF.charcoal);
+    const holsterR = isoPrism(liftPts(rightHook, h * 0.48), 1.2, ghost ? ghostTone("dc") : SURF.charcoal);
     unit += holsterL.g + holsterR.g;
     if (!ghost) {
-      const a = holsterL.swT;
-      const b = holsterR.seT;
-      unit += `<path class="site-dc-cable" d="M${a[0].toFixed(2)} ${a[1].toFixed(2)} Q${(a[0] - 1.6).toFixed(2)} ${(a[1] + 3.2).toFixed(2)} ${(a[0] - 0.4).toFixed(2)} ${(a[1] + 5.2).toFixed(2)}" />`;
-      unit += `<path class="site-dc-cable" d="M${b[0].toFixed(2)} ${b[1].toFixed(2)} Q${(b[0] + 1.8).toFixed(2)} ${(b[1] + 3.0).toFixed(2)} ${(b[0] + 0.5).toFixed(2)} ${(b[1] + 5.1).toFixed(2)}" />`;
+      const a = holsterL.sw;
+      const b = holsterR.se;
+      unit += `<path class="site-dc-cable" d="M${a[0].toFixed(2)} ${a[1].toFixed(2)} Q${(a[0] - 1.8).toFixed(2)} ${(a[1] + 2.4).toFixed(2)} ${(a[0] - 0.3).toFixed(2)} ${(a[1] + 4.4).toFixed(2)}" />`;
+      unit += `<path class="site-dc-cable" d="M${b[0].toFixed(2)} ${b[1].toFixed(2)} Q${(b[0] + 2.0).toFixed(2)} ${(b[1] + 2.2).toFixed(2)} ${(b[0] + 0.4).toFixed(2)} ${(b[1] + 4.2).toFixed(2)}" />`;
     }
     return wrapBldg("kit-dc-unit", ghost, unit, pop, job?.preview);
   }
 
+  function drawDcCanopy(occ) {
+    const live = occ.live.dc;
+    if (live < 1) return "";
+    const lift = 15.6;
+    let g = "";
+    for (let i = 0; i <= live; i += 1) {
+      g += cylPost(1 + i - 0.03, 1.02, 0.07, 0.08, lift, SURF.alum);
+    }
+    const street = insetQuad(gridQuad(1.0, 0.96, live + 0.02, 0.42), 0);
+    const roof = isoPrism(liftPts(street, lift), 0.62, SURF.cream);
+    g += roof.g;
+    g += `<polygon class="site-roof-deck" points="${svgPts(roof.top)}" />`;
+    g += cofferGrid(roof.top, Math.max(3, live * 2), 1);
+    const fascia = [
+      lerp2(roof.swT, roof.seT, 0.03),
+      lerp2(roof.swT, roof.seT, 0.97),
+      lerp2(roof.sw, roof.se, 0.97),
+      lerp2(roof.sw, roof.se, 0.03),
+    ];
+    g += `<polygon class="site-roof-fascia" points="${svgPts(fascia)}" />`;
+    return wrapBldg("kit-dc-canopy", false, g);
+  }
+
   function drawDcRow(occ) {
     if (occ.dc < 1) return "";
-    const n = occ.dc;
-    const live = occ.live.dc;
-    const lift = 13.4;
     let g = "";
-    for (let i = 0; i < n; i += 1) {
+    for (let i = 0; i < occ.dc; i += 1) {
       const slot = SLOTS.dc[i];
       if (!slot) continue;
-      const ghost = i >= live;
-      const job = ghost ? slotJob(occ, "dc", i - live) : null;
+      const ghost = i >= occ.live.dc;
+      const job = ghost ? slotJob(occ, "dc", i - occ.live.dc) : null;
       g += drawDcUnit(slot, ghost, job, slotPop(occ, "dc", i));
-    }
-    if (live >= 1) {
-      for (let i = 0; i <= live; i += 1) {
-        g += cylPost(1 + i - 0.04, 1.06, 0.08, 0.1, lift, SURF.alum);
-      }
-      const street = insetQuad(gridQuad(1.02, 1.02, live - 0.04, 0.62), 0);
-      const roof = isoPrism(liftPts(street, lift), 1.05, SURF.cream);
-      g += roof.g;
-      g += `<polygon class="site-roof-deck" points="${svgPts(roof.top)}" />`;
-      g += cofferGrid(roof.top, Math.max(2, live), 2);
-      const fascia = [
-        lerp2(roof.swT, roof.seT, 0.04),
-        lerp2(roof.swT, roof.seT, 0.96),
-        lerp2(roof.sw, roof.se, 0.96),
-        lerp2(roof.sw, roof.se, 0.04),
-      ];
-      g += `<polygon class="site-roof-fascia" points="${svgPts(fascia)}" />`;
     }
     return wrapBldg("kit-dc", false, g);
   }
@@ -2253,25 +2256,26 @@
     const ghost = Boolean(occ.raising.lounge);
     const job = ghost ? slotJob(occ, "lounge", 0) : null;
     const tone = ghost ? ghostTone("lounge") : SURF.cream;
-    const h = growH(8.2, ghost, job?.pct);
-    const foot = insetQuad(gridQuad(0.14, 3.12, 1.72, 0.68), 0.02);
-    const patio = isoPrism(insetQuad(gridQuad(0.32, 3.58, 0.88, 0.28), 0), 0.7, ghost ? ghostTone("lounge") : SURF.concrete);
-    const planter = isoPrism(insetQuad(gridQuad(1.52, 3.62, 0.22, 0.18), 0), 1.15, ghost ? ghostTone("lounge") : SURF.alum);
+    const h = growH(9.2, ghost, job?.pct);
+    const foot = insetQuad(gridQuad(0.12, 3.08, 1.76, 0.72), 0.02);
+    const patio = isoPrism(insetQuad(gridQuad(0.28, 3.56, 0.96, 0.3), 0), 0.7, ghost ? ghostTone("lounge") : SURF.concrete);
+    const planter = isoPrism(insetQuad(gridQuad(1.54, 3.6, 0.24, 0.2), 0), 1.2, ghost ? ghostTone("lounge") : SURF.alum);
     const body = isoPrism(foot, h, tone);
     let g = patio.g + planter.g + body.g;
-    const glass = ghost ? "#243038" : "#2a2018";
-    g += faceRect(body, 0.08, 0.14, 0.36, 0.5, glass);
-    g += faceRect(body, 0.5, 0.14, 0.36, 0.5, glass);
-    if (!ghost) {
-      g += faceRect(body, 0.11, 0.2, 0.3, 0.18, "rgba(232,154,46,0.28)");
-      g += faceRect(body, 0.53, 0.2, 0.3, 0.18, "rgba(232,154,46,0.28)");
-    }
-    g += faceRect(body, 0.88, 0.16, 0.07, 0.14, PAL.red);
+    g += faceRect(body, 0.88, 0.12, 0.08, 0.16, PAL.red);
     const roof = isoPrism(liftPts(insetQuad(foot, -0.08), h + 0.55), 1.05, ghost ? tone : SURF.alum);
     g += roof.g;
     if (!ghost) {
       g += `<polygon class="site-lounge-edge" points="${svgPts(insetQuad(roof.top, 0.1))}" />`;
       g += cofferGrid(roof.top, 3, 1);
+    }
+    const front = [body.swT, body.seT, body.se, body.sw];
+    const glass = ghost ? "#243038" : "#1a1410";
+    g += `<polygon class="site-portal" points="${svgPts(subQuad(front, 0.07, 0.16, 0.42, 0.84))}" fill="${glass}" />`;
+    g += `<polygon class="site-portal" points="${svgPts(subQuad(front, 0.5, 0.16, 0.85, 0.84))}" fill="${glass}" />`;
+    if (!ghost) {
+      g += `<polygon class="site-portal-glow" points="${svgPts(subQuad(front, 0.1, 0.22, 0.39, 0.48))}" />`;
+      g += `<polygon class="site-portal-glow" points="${svgPts(subQuad(front, 0.53, 0.22, 0.82, 0.48))}" />`;
     }
     return wrapBldg("kit-lounge", ghost, g, slotPop(occ, "lounge", 0), job?.preview);
   }
@@ -2282,16 +2286,15 @@
     const job = ghost ? slotJob(occ, "market", 0) : null;
     const tone = ghost ? ghostTone("market") : SURF.charcoal;
     const awn = ghost ? ghostTone("lounge") : SURF.cream;
-    const h = growH(7.2, ghost, job?.pct);
-    const foot = insetQuad(gridQuad(2.22, 3.2, 1.56, 0.56), 0.02);
+    const h = growH(7.8, ghost, job?.pct);
+    const foot = insetQuad(gridQuad(2.28, 3.22, 1.44, 0.52), 0.02);
     const body = isoPrism(foot, h, tone);
     let g = body.g;
-    g += faceRect(body, 0.1, 0.14, 0.36, 0.4, ghost ? "#2a2418" : "#141418");
-    g += faceRect(body, 0.14, 0.22, 0.28, 0.16, PAL.amber);
-    g += faceRect(body, 0.74, 0.16, 0.12, 0.16, PAL.red);
-    const roofFoot = liftPts(insetQuad(foot, -0.04), h);
-    g += pitchedRoof(roofFoot, 4.4, { ...tone, top: awn.top, front: awn.front, edge: awn.edge }).g;
-    const awning = isoPrism(liftPts(insetQuad(gridQuad(2.14, 3.48, 1.72, 0.34), 0), h * 0.58), 0.75, awn);
+    const front = [body.swT, body.seT, body.se, body.sw];
+    g += `<polygon class="site-market-board" points="${svgPts(subQuad(front, 0.1, 0.18, 0.62, 0.72))}" />`;
+    if (!ghost) g += `<polygon class="site-portal-glow" points="${svgPts(subQuad(front, 0.16, 0.32, 0.56, 0.52))}" />`;
+    g += faceRect(body, 0.76, 0.16, 0.14, 0.16, PAL.red);
+    const awning = isoPrism(liftPts(insetQuad(gridQuad(2.2, 3.52, 1.58, 0.22), 0), h * 0.7), 0.7, awn);
     g += awning.g;
     return wrapBldg("kit-market", ghost, g, slotPop(occ, "market", 0), job?.preview);
   }
@@ -2304,9 +2307,10 @@
       plazaGeom(occ) +
       drawBess(occ) +
       drawMcs(occ) +
-      drawDcRow(occ) +
       drawLounge(occ) +
       drawMarket(occ) +
+      drawDcCanopy(occ) +
+      drawDcRow(occ) +
       ghostCaptions(occ);
     return overlaySvg("site-compound", inner);
   }
