@@ -1,4 +1,4 @@
-/* empire-build: rts-yard-17 */
+/* empire-build: rts-yard-18 */
 :root {
   --red: #e63225;
   --charcoal: #1e1e24;
@@ -228,7 +228,7 @@ button {
 /* BOARD */
 #board-screen {
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto auto 1fr auto;
   background: var(--ink);
 }
 
@@ -929,6 +929,160 @@ button {
   color: var(--cyan);
 }
 
+.ops-strip {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(160px, 0.7fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.32rem 0.85rem 0.38rem;
+  background: #141418;
+  border-bottom: 1px solid rgba(232, 154, 46, 0.32);
+}
+
+.ops-objective {
+  min-width: 0;
+}
+
+.ops-objective .kicker {
+  margin: 0;
+  font-size: 0.6rem;
+}
+
+.ops-objective b {
+  display: block;
+  font-family: Anton, sans-serif;
+  letter-spacing: 0.05em;
+  font-size: 0.92rem;
+  font-weight: 400;
+  color: var(--cream);
+  line-height: 1.05;
+}
+
+.ops-objective span {
+  display: block;
+  margin-top: 0.08rem;
+  color: var(--steel);
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ops-clock {
+  display: block;
+  height: 3px;
+  margin-top: 0.22rem;
+  background: #2a2418;
+}
+
+.ops-clock i {
+  display: block;
+  height: 100%;
+  background: var(--amber);
+}
+
+.ops-pressure {
+  display: block;
+  height: 2px;
+  margin-top: 2px;
+  background: var(--red);
+  max-width: 100%;
+}
+
+.ops-skirmish:empty {
+  display: none;
+}
+
+.crew-fork {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.crew-fork button {
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  background: #222228;
+  color: var(--cream);
+  border: 1px solid rgba(245, 240, 232, 0.18);
+  padding: 0.38rem 0.45rem;
+  cursor: pointer;
+}
+
+.crew-fork button.on {
+  background: var(--amber);
+  color: var(--charcoal);
+  border-color: var(--amber);
+}
+
+.crew-fork button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.crew-read {
+  min-width: 4.2rem;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  color: var(--amber);
+  text-align: center;
+}
+
+.skirmish {
+  min-width: 0;
+}
+
+.skirmish-hd,
+.skirmish-lbl {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.45rem;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  color: var(--cream);
+}
+
+.skirmish-hd b {
+  font-weight: 500;
+  color: var(--amber);
+}
+
+.skirmish-track {
+  height: 6px;
+  margin-top: 2px;
+  background: #121217;
+}
+
+.skirmish-track i {
+  display: block;
+  height: 100%;
+}
+
+.skirmish-track.you i {
+  background: var(--cyan);
+}
+
+.skirmish-track.them i {
+  background: var(--amber);
+}
+
+.intel-line {
+  margin: 0.35rem 0 0;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--cyan);
+}
+
+.site-intel .skirmish {
+  margin-top: 0.45rem;
+}
+
 .site-walk {
   fill: rgba(245, 240, 232, 0.1);
   stroke: rgba(245, 240, 232, 0.28);
@@ -1121,7 +1275,7 @@ button {
 
 .site-mcs-edge {
   fill: none;
-  stroke: #00d4f5;
+  stroke: #d8c4ff;
   stroke-width: 0.32;
 }
 
@@ -1131,10 +1285,15 @@ button {
   stroke-width: 0.32;
 }
 
-.site-dc-ring,
-.site-mcs-ring {
+.site-dc-ring {
   fill: none;
   stroke: #00d4f5;
+  stroke-width: 0.28;
+}
+
+.site-mcs-ring {
+  fill: none;
+  stroke: #d8c4ff;
   stroke-width: 0.28;
 }
 
@@ -1949,6 +2108,10 @@ button {
   }
 
   .hud {
+    grid-template-columns: 1fr;
+  }
+
+  .ops-strip {
     grid-template-columns: 1fr;
   }
 
