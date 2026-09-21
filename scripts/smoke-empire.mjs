@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* rts-yard-17: placement consequence, threat chips, build-order fork, cache. */
+/* rts-yard-18: ops arcs, crew fork, scout, skirmish, polish, cache. */
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,13 +16,13 @@ const fail = (msg) => {
 };
 const ok = (msg) => console.log(`OK   ${msg}`);
 
-if (!html.includes('content="rts-yard-17"') || !html.includes("styles.css?v=rts-yard-17") || !html.includes("game.js?v=rts-yard-17")) {
-  fail("index.html cache is not rts-yard-17");
-} else ok("index.html cache rts-yard-17");
+if (!html.includes('content="rts-yard-18"') || !html.includes("styles.css?v=rts-yard-18") || !html.includes("game.js?v=rts-yard-18")) {
+  fail("index.html cache is not rts-yard-18");
+} else ok("index.html cache rts-yard-18");
 
-if (!game.includes("rts-yard-17") || !css.includes("rts-yard-17") || !review.includes("rts-yard-17")) {
-  fail("game/styles/REVIEW cache is not rts-yard-17");
-} else ok("game/styles/REVIEW cache rts-yard-17");
+if (!game.includes("rts-yard-18") || !css.includes("rts-yard-18") || !review.includes("rts-yard-18")) {
+  fail("game/styles/REVIEW cache is not rts-yard-18");
+} else ok("game/styles/REVIEW cache rts-yard-18");
 
 if (!game.includes("function placementRead") || !game.includes("COMPLETES CANOPY") || !html.includes("site-consequence")) {
   fail("hover consequence line missing");
@@ -209,6 +209,38 @@ if (sheetAt < 0 || inspAt < 0 || sheetAt > inspAt) {
   fail("field-call sheet must live in the map column, not over the inspector");
 } else ok("field-call sheet is in the map column");
 
+if (!game.includes("function undercutCallOpen") || !game.includes("t.id === \"UNDERCUT\" && undercutCallOpen")) {
+  fail("undercut field-call must suppress the threat chip");
+} else ok("single undercut chrome");
+
+if (!game.includes("identical kit-complete toast already on screen")) {
+  fail("kit-complete toast is not deduped");
+} else ok("single kit-complete toast");
+
+if (!/#d8c4ff/.test(css) || /site-mcs-ring[\s\S]{0,80}#00d4f5/i.test(css) || /site-mcs-edge[\s\S]{0,80}#00d4f5/i.test(css)) {
+  fail("MCS ring/edge must use the violet ghost family, not cyan");
+} else ok("MCS ring/edge violet");
+
+if (!game.includes("function tickObjective") || !game.includes("HOLD 45%") || !html.includes("ops-strip")) {
+  fail("mid-game objective strip missing");
+} else ok("objective strip");
+
+if (!game.includes("crewPosture") || !game.includes('data-posture="respond"') || !css.includes(".crew-fork")) {
+  fail("crew raise/respond fork missing");
+} else ok("crew fork");
+
+if (!game.includes("function launchScout") || !game.includes("function intelHtml") || !css.includes(".intel-line")) {
+  fail("scout / intel missing");
+} else ok("scout intel");
+
+if (!game.includes("function tickSkirmish") || !game.includes("PRICE WAR") || !css.includes(".skirmish-track")) {
+  fail("contested skirmish meter missing");
+} else ok("skirmish meter");
+
+if (!game.includes('type: "pressure"') || !game.includes("function pressureRivalClaim")) {
+  fail("corridor pressure must race empty dirt, not seize a held pad");
+} else ok("corridor pressure race");
+
 if (!css.includes("map-stage:has(.site-overlay:not(.hidden)) .deal-sheet") || !/\.deal-sheet \{[\s\S]*?position:\s*absolute/.test(css)) {
   fail("field-call sheet must dock on the map stage");
 } else ok("field-call sheet docks on the map");
@@ -222,6 +254,10 @@ const stills = [
   ["docs/shots/yard-pad.png", 500000],
   ["docs/shots/yard-ghosts.png", 500000],
   ["docs/shots/yard-event.png", 500000],
+  ["docs/shots/yard-objective.png", 350000],
+  ["docs/shots/yard-crew.png", 350000],
+  ["docs/shots/yard-scout.png", 350000],
+  ["docs/shots/yard-skirmish.png", 350000],
 ];
 for (const [rel, min] of stills) {
   const p = join(root, rel);
@@ -232,6 +268,9 @@ if (!process.exitCode) ok("fresh empty/ghosts/event stills are checked in");
 if (!review.includes("yard-ghosts.png") || !review.includes("yard-event.png") || !review.includes("yard-pad.png")) {
   fail("REVIEW must list yard-ghosts / yard-event / yard-pad stills");
 } else ok("REVIEW lists refreshed stills");
+if (!review.includes("yard-objective.png") || !review.includes("yard-crew.png") || !review.includes("yard-scout.png") || !review.includes("yard-skirmish.png")) {
+  fail("REVIEW must list objective / crew / scout / skirmish stills");
+} else ok("REVIEW lists ops stills");
 
 if (process.exitCode) {
   console.error("smoke-empire failed");
