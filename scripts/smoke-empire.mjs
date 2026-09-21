@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* rts-yard-16: empty dirt pad, MCS ghost tone, field-call dock, cache. */
+/* rts-yard-17: placement consequence, threat chips, build-order fork, cache. */
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,13 +16,29 @@ const fail = (msg) => {
 };
 const ok = (msg) => console.log(`OK   ${msg}`);
 
-if (!html.includes('content="rts-yard-16"') || !html.includes("styles.css?v=rts-yard-16") || !html.includes("game.js?v=rts-yard-16")) {
-  fail("index.html cache is not rts-yard-16");
-} else ok("index.html cache rts-yard-16");
+if (!html.includes('content="rts-yard-17"') || !html.includes("styles.css?v=rts-yard-17") || !html.includes("game.js?v=rts-yard-17")) {
+  fail("index.html cache is not rts-yard-17");
+} else ok("index.html cache rts-yard-17");
 
-if (!game.includes("rts-yard-16") || !css.includes("rts-yard-16") || !review.includes("rts-yard-16")) {
-  fail("game/styles/REVIEW cache is not rts-yard-16");
-} else ok("game/styles/REVIEW cache rts-yard-16");
+if (!game.includes("rts-yard-17") || !css.includes("rts-yard-17") || !review.includes("rts-yard-17")) {
+  fail("game/styles/REVIEW cache is not rts-yard-17");
+} else ok("game/styles/REVIEW cache rts-yard-17");
+
+if (!game.includes("function placementRead") || !game.includes("COMPLETES CANOPY") || !html.includes("site-consequence")) {
+  fail("hover consequence line missing");
+} else ok("hover consequence line");
+
+if (!game.includes("function threatCall") || !game.includes("AMENITY GAP") || !css.includes(".threat-chip")) {
+  fail("contested threat chip missing");
+} else ok("contested threat chip");
+
+if (!game.includes("function offerBuildFork") || !game.includes("LOUNGE + MARKET") || !game.includes('path === "amenity"')) {
+  fail("build-order fork missing");
+} else ok("build-order fork");
+
+if (!css.includes("yard-flash") || !game.includes("COMPLETE ·")) {
+  fail("kit-complete pop / yard flash missing");
+} else ok("kit-complete pop + yard flash");
 
 if (!game.includes("const CITY_HIT_R = 70")) fail("CITY_HIT_R must stay 70");
 else ok("CITY_HIT_R = 70");
