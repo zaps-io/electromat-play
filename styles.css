@@ -1,4 +1,4 @@
-/* empire-build: rts-yard-13 */
+/* empire-build: rts-yard-14 */
 :root {
   --red: #e63225;
   --charcoal: #1e1e24;
@@ -682,6 +682,12 @@ button {
   overflow: visible;
 }
 
+.site-ghost-badge,
+.site-bldg.raising[data-inspect] {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
 .insp-compound svg.site-overlay-svg,
 .insp-yard svg.site-overlay-svg {
   position: absolute;
@@ -722,12 +728,12 @@ button {
 
 @keyframes kit-pop {
   0% {
-    transform: scale(0.7);
-    filter: brightness(1.85);
+    transform: scale(0.52);
+    filter: brightness(2.2);
   }
-  55% {
-    transform: scale(1.08);
-    filter: brightness(1.22);
+  42% {
+    transform: scale(1.16);
+    filter: brightness(1.4);
   }
   100% {
     transform: scale(1);
@@ -838,6 +844,11 @@ button {
 
 .site-ghost-badge.preview .site-ghost-plate {
   stroke: #e89a2e;
+}
+
+.site-ghost-badge.focus .site-ghost-plate {
+  stroke: #e89a2e;
+  stroke-width: 0.55;
 }
 
 .site-ghost-label {
@@ -982,6 +993,31 @@ button {
 
 .site-overlay-svg.raising {
   opacity: 1;
+}
+
+.site-intel {
+  flex: 0 0 auto;
+  padding: 0.4rem 1rem 0.45rem;
+  border-bottom: 1px solid var(--line);
+  background: rgba(18, 18, 23, 0.62);
+}
+
+.site-intel.rival {
+  border-bottom-color: rgba(232, 154, 46, 0.55);
+}
+
+.site-intel.contested {
+  border-bottom-color: rgba(0, 212, 245, 0.45);
+}
+
+.site-intel p {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  color: var(--steel);
+}
+
+.site-intel .share-duel {
+  margin: 0;
 }
 
 .site-raising {
@@ -1147,6 +1183,14 @@ button {
   background: var(--amber);
 }
 
+.insp-queue .job.focus {
+  color: var(--cyan);
+}
+
+.insp-queue .job.focus .bar > span {
+  background: var(--cyan);
+}
+
 .deals-badge {
   background: var(--amber);
   color: var(--charcoal);
@@ -1266,8 +1310,68 @@ button {
   font-weight: 500;
 }
 
+.share-duel {
+  margin: 0.65rem 0 0.55rem;
+}
+
+.share-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--cream);
+}
+
+.share-bar {
+  display: flex;
+  height: 8px;
+  margin-top: 0.28rem;
+  background: #2c2c34;
+  overflow: hidden;
+}
+
+.share-bar i.you {
+  display: block;
+  height: 100%;
+  background: var(--red);
+}
+
+.share-bar i.them {
+  display: block;
+  height: 100%;
+  background: var(--them, var(--cyan));
+}
+
+.share-duel.flash .share-bar i.you {
+  animation: share-flash 0.85s ease;
+}
+
+@keyframes share-flash {
+  0% {
+    filter: brightness(2.1);
+  }
+  100% {
+    filter: none;
+  }
+}
+
+.insp-rule {
+  margin: 0.45rem 0 0.7rem;
+  color: var(--amber);
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.74rem;
+  letter-spacing: 0.03em;
+}
+
 .price-row {
   margin: 0.8rem 0;
+}
+
+.price-row small {
+  color: var(--steel);
+  letter-spacing: 0.1em;
 }
 
 .price-row input {
@@ -1311,6 +1415,14 @@ button {
   font-size: 0.7rem;
   letter-spacing: 0.1em;
   color: var(--cream);
+}
+
+.tray-label em {
+  font-style: normal;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  color: var(--amber);
 }
 
 .tray-grid {

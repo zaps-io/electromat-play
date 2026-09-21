@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-yard-13 */
+/* empire-build: rts-yard-14 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -22,7 +22,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-yard-13";
+  const SPRITE_V = "rts-yard-14";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -43,7 +43,7 @@
     voltspan: "240 / 204",
     rival: "240 / 167",
   };
-  const KIT_V = "rts-yard-13";
+  const KIT_V = "rts-yard-14";
   const KIT_SPRITES = {
     dc: `assets/sprites/kit-dc.png?v=${KIT_V}`,
     mcs: `assets/sprites/kit-mcs.png?v=${KIT_V}`,
@@ -281,7 +281,9 @@
   let lastPan = false;
   let armedKit = null;
   let hoverKit = null;
+  let inspectJob = null;
   let pops = [];
+  let lastPriceToast = { city: "", at: 0, from: 0, to: 0 };
 
   function emptySite() {
     return { dc: 0, mcs: 0, bess: 0, lounge: 0, market: 0 };
@@ -339,6 +341,8 @@
       debtStreak: 0,
       nextDeal: 48 + Math.floor(Math.random() * 20),
       pendingDeal: null,
+      pendingEvent: null,
+      nextEvent: 4 + Math.floor(Math.random() * 3),
       warFired: false,
       over: null,
     };
@@ -346,6 +350,27 @@
 
   function hasCap(site) {
     return site.dc + site.mcs > 0;
+  }
+
+  function rivalHolders(city) {
+    return activeRivals().filter((r) => city.sites[r.id] && hasCap(city.sites[r.id]));
+  }
+
+  function playerClaiming(city) {
+    return (
+      hasCap(city.sites[YOU]) ||
+      jobsFor(city.id, YOU).some((j) => j.type === "dc" || j.type === "mcs")
+    );
+  }
+
+  // Rival holds the pad and Zaps has no live/raising claim.
+  // Empty dirt stays claimable. Contested (both present) stays your yard.
+  function rivalSite(city) {
+    return rivalHolders(city).length > 0 && !playerClaiming(city);
+  }
+
+  function contestedCity(city) {
+    return playerClaiming(city) && rivalHolders(city).length > 0;
   }
 
   function capacity(site) {
@@ -461,6 +486,39 @@
     while (host.children.length > 1) host.firstElementChild.remove();
   }
 
+  function flashShare(city, from, to) {
+    city.shareFlash = { from, to, until: Date.now() + 1400 };
+    const delta = to - from;
+    if (delta === 0) {
+      toast(`${CITY_BY_ID[city.id].name} share holds ${to}%`, "deal");
+      return;
+    }
+    toast(
+      `${CITY_BY_ID[city.id].name} share ${from}% → ${to}%`,
+      delta > 0 ? "good" : "bad"
+    );
+  }
+
+  function applyPlayerPrice(city, next, prevShare) {
+    const prev = prevShare != null ? prevShare : Math.round((city.share[YOU] || 0) * 100);
+    city.price[YOU] = Math.max(0.28, Math.min(0.58, +Number(next).toFixed(2)));
+    city.war = Math.max(city.war, 2);
+    recomputeShare(city);
+    const after = Math.round((city.share[YOU] || 0) * 100);
+    if (rivalHolders(city).length && hasCap(city.sites[YOU])) {
+      const now = Date.now();
+      const same =
+        lastPriceToast.city === city.id &&
+        now - lastPriceToast.at < 900 &&
+        lastPriceToast.from === prev &&
+        lastPriceToast.to === after;
+      if (!same) {
+        flashShare(city, prev, after);
+        lastPriceToast = { city: city.id, at: now, from: prev, to: after };
+      }
+    }
+  }
+
   function crewsBusy() {
     return state.queue.filter((q) => q.left > 0 && q.faction === YOU).length;
   }
@@ -489,6 +547,7 @@
     const city = state.cities[cityId];
     const spec = BUILD[type];
     const site = city.sites[YOU];
+    if (rivalSite(city)) return "RIVAL SITE";
     if (state.cash < deployCost(type, cityId)) return "NEED CASH";
     if (crewsBusy() >= MAX_CREWS) return "CREWS FULL";
     if (spec.unique && (site[type] > 0 || state.queue.some((q) => q.city === cityId && q.type === type && q.faction === YOU))) {
@@ -516,12 +575,19 @@
       state.cash -= cost;
       if (state.landOption) state.landOption = 0;
     }
+    const city = state.cities[cityId];
+    const claimEmpty =
+      faction === YOU &&
+      !hasCap(city.sites[YOU]) &&
+      !rivalSite(city) &&
+      (type === "dc" || type === "mcs");
     state.queue.push({
       faction,
       city: cityId,
       type,
       left: spec.months,
       cost,
+      claimEmpty,
     });
     if (faction === YOU) {
       log(`${spec.name} queued in ${CITY_BY_ID[cityId].name} · ${spec.months} mo · ${money(cost)}`);
@@ -532,6 +598,12 @@
 
   function finishBuild(job) {
     const city = state.cities[job.city];
+    if (job.faction === YOU && rivalSite(city) && !job.claimEmpty) {
+      state.cash += job.cost || 0;
+      log(`Crews cannot seize ${CITY_BY_ID[job.city].name} — rival compound.`, "bad");
+      toast(`RIVAL SITE · ${CITY_BY_ID[job.city].name} stays theirs.`, "bad");
+      return;
+    }
     const site = city.sites[job.faction];
     if (BUILD[job.type].unique) site[job.type] = 1;
     else site[job.type] += 1;
@@ -540,8 +612,9 @@
         city: job.city,
         type: job.type,
         slot: Math.max(0, site[job.type] - 1),
-        until: Date.now() + 1200,
+        until: Date.now() + 1600,
       });
+      toast(`${BUILD[job.type].name} online in ${CITY_BY_ID[job.city].name}.`, "good");
     }
     const who = job.faction === YOU ? "Zaps" : RIVALS[job.faction].name;
     log(`${who} brings ${BUILD[job.type].name} online in ${CITY_BY_ID[job.city].name}.`, job.faction === YOU ? "good" : "bad");
@@ -606,6 +679,101 @@
     const cityName = CITY_BY_ID[targetId].name;
     log(`${rival.name} opens a price war in ${cityName}.`, "deal");
     toast(`${rival.name} PRICE WAR · ${cityName}`, "bad");
+    if (!state.pendingDeal && !state.pendingEvent) {
+      state.pendingEvent = { type: "undercut", city: targetId, rival: rid, cut: 0.03, war: true };
+    }
+  }
+
+  function tryUndercutEvent() {
+    const spots = CITIES.filter((c) => {
+      const city = state.cities[c.id];
+      return hasCap(city.sites[YOU]) && rivalHolders(city).length;
+    });
+    if (!spots.length || Math.random() > 0.62) return false;
+    const meta = spots[Math.floor(Math.random() * spots.length)];
+    const city = state.cities[meta.id];
+    const rival = strongestRival(city);
+    if (!rival) return false;
+    const cut = 0.03;
+    city.price[rival.id] = Math.max(0.28, +(city.price[rival.id] - cut).toFixed(2));
+    state.pendingEvent = { type: "undercut", city: meta.id, rival: rival.id, cut };
+    log(`${rival.name} undercuts in ${meta.name}.`, "deal");
+    toast(`${rival.name} UNDERCUTS · ${meta.name}`, "bad");
+    return true;
+  }
+
+  function tryStrainEvent() {
+    const strained = CITIES.filter((c) => {
+      const city = state.cities[c.id];
+      return hasCap(city.sites[YOU]) && !city.sites[YOU].bess && CITY_BY_ID[c.id].demand >= 80;
+    });
+    if (!strained.length || Math.random() > 0.5) return false;
+    const meta = strained[Math.floor(Math.random() * strained.length)];
+    state.pendingEvent = { type: "strain", city: meta.id };
+    log(`Grid strain in ${meta.name}. Desk wants a call.`, "deal");
+    toast(`GRID STRAIN · ${meta.name}`, "deal");
+    return true;
+  }
+
+  function maybeFieldCall() {
+    if (state.over || state.pendingDeal || state.pendingEvent) return;
+    if (state.month < (state.nextEvent || 5)) return;
+    const fired = tryUndercutEvent() || tryStrainEvent();
+    state.nextEvent = state.month + (fired ? 6 + Math.floor(Math.random() * 5) : 3 + Math.floor(Math.random() * 3));
+  }
+
+  function fieldCallSpec(ev) {
+    if (!ev) return null;
+    if (ev.type === "undercut") {
+      const meta = CITY_BY_ID[ev.city];
+      const rival = RIVALS[ev.rival];
+      const city = state.cities[ev.city];
+      const posted = (city.price[ev.rival] || 0.42).toFixed(2);
+      return {
+        kicker: ev.war ? "PRICE WAR" : "FIELD CALL",
+        title: `${rival.name} UNDERCUTS`,
+        body: `${rival.name} just posted $${posted}/kWh in ${meta.name}. Match the cut or hold rate and give share. You cannot take their pad.`,
+        yes: "MATCH PRICE",
+        no: "HOLD RATE",
+        accept() {
+          const before = Math.round((city.share[YOU] || 0) * 100);
+          city.price[YOU] = Math.max(0.28, +(city.price[YOU] - (ev.cut || 0.03)).toFixed(2));
+          recomputeShare(city);
+          const after = Math.round((city.share[YOU] || 0) * 100);
+          flashShare(city, before, after);
+          log(`Matched ${rival.name} in ${meta.name}. Share ${before}% → ${after}%.`, "deal");
+        },
+        decline() {
+          recomputeShare(city);
+          const sh = Math.round((city.share[YOU] || 0) * 100);
+          log(`Held rate in ${meta.name}. ${rival.name} keeps the cut · share ${sh}%.`, "bad");
+          toast(`Held ${meta.name}. Share ${sh}%.`, "bad");
+        },
+      };
+    }
+    if (ev.type === "strain") {
+      const meta = CITY_BY_ID[ev.city];
+      const city = state.cities[ev.city];
+      return {
+        kicker: "FIELD CALL",
+        title: "GRID STRAIN",
+        body: `${meta.name} is pulling hard without BESS. Raise price to shed load, or wait it out. Rival dirt stays theirs.`,
+        yes: "RAISE PRICE",
+        no: "WAIT IT OUT",
+        accept() {
+          const before = city.price[YOU];
+          city.price[YOU] = Math.min(0.58, +(city.price[YOU] + 0.04).toFixed(2));
+          recomputeShare(city);
+          log(`Raised ${meta.name} ${before.toFixed(2)} → ${city.price[YOU].toFixed(2)}/kWh to shed load.`, "deal");
+          toast(`${meta.name} ${city.price[YOU].toFixed(2)}/kWh · load shed.`, "deal");
+        },
+        decline() {
+          log(`Waited out strain in ${meta.name}. Grid stays tight.`, "bad");
+          toast(`${meta.name} grid still strained.`, "bad");
+        },
+      };
+    }
+    return null;
   }
 
   function maybeDeal() {
@@ -623,49 +791,61 @@
   function renderDealChrome() {
     const badge = $("btn-deals");
     if (!badge || !state) return;
-    const hot = Boolean(state.pendingDeal);
+    const hot = Boolean(state.pendingDeal || state.pendingEvent);
     badge.classList.toggle("hidden", !hot);
     badge.classList.toggle("hot", hot);
+    badge.textContent = state.pendingEvent ? "CALL" : "DEALS";
     if (!hot) $("deal-sheet").classList.add("hidden");
+  }
+
+  function activeChoice() {
+    if (state?.pendingEvent) {
+      const spec = fieldCallSpec(state.pendingEvent);
+      if (spec) return { spec, clear: () => { state.pendingEvent = null; } };
+    }
+    if (state?.pendingDeal && DEALS[state.pendingDeal]) {
+      return {
+        spec: { kicker: "INCOMING DEAL", ...DEALS[state.pendingDeal] },
+        clear: () => { state.pendingDeal = null; },
+      };
+    }
+    return null;
   }
 
   function openDealSheet() {
     const sheet = $("deal-sheet");
-    if (!state?.pendingDeal) {
+    const choice = activeChoice();
+    if (!choice) {
       sheet.classList.add("hidden");
       return;
     }
-    const deal = DEALS[state.pendingDeal];
-    if (!deal) {
-      state.pendingDeal = null;
-      sheet.classList.add("hidden");
-      return;
-    }
+    const { spec } = choice;
     sheet.innerHTML = "";
     const k = document.createElement("p");
     k.className = "kicker";
-    k.textContent = "INCOMING DEAL";
+    k.textContent = spec.kicker || "INCOMING DEAL";
     const h = document.createElement("h3");
-    h.textContent = deal.title;
+    h.textContent = spec.title;
     const p = document.createElement("p");
-    p.textContent = deal.body;
+    p.textContent = spec.body;
     const row = document.createElement("div");
     row.className = "modal-actions";
     const yes = document.createElement("button");
     yes.className = "btn-primary";
-    yes.textContent = deal.yes;
+    yes.textContent = spec.yes;
     yes.addEventListener("click", () => {
-      deal.accept();
-      state.pendingDeal = null;
+      spec.accept();
+      choice.clear();
       sheet.classList.add("hidden");
       renderAll();
     });
     const no = document.createElement("button");
     no.className = "btn-ghost";
-    no.textContent = deal.no;
+    no.textContent = spec.no;
     no.addEventListener("click", () => {
-      log(`Passed: ${deal.title}.`);
-      state.pendingDeal = null;
+      if (spec.decline) spec.decline();
+      else log(`Passed: ${spec.title}.`);
+      choice.clear();
       sheet.classList.add("hidden");
       renderAll();
     });
@@ -735,6 +915,7 @@
       log(`P&L ${money(lastNet)} · cash ${money(state.cash)}`);
     }
     maybeDeal();
+    maybeFieldCall();
     checkEnd();
     renderAll();
     persistQuiet();
@@ -761,7 +942,20 @@
     state = JSON.parse(raw);
     if (state.nextDeal == null) state.nextDeal = state.month + 48;
     if (state.pendingDeal === undefined) state.pendingDeal = null;
+    if (state.pendingEvent === undefined) state.pendingEvent = null;
+    if (state.nextEvent == null) state.nextEvent = state.month + 4;
     if (state.warFired == null) state.warFired = false;
+    if (Array.isArray(state.queue)) {
+      state.queue = state.queue.filter((q) => {
+        if (q.faction !== YOU) return true;
+        const city = state.cities[q.city];
+        if (city && rivalSite(city) && !q.claimEmpty) {
+          state.cash += q.cost || 0;
+          return false;
+        }
+        return true;
+      });
+    }
     selected = hasCap(state.cities.phoenix.sites[YOU])
       ? "phoenix"
       : CITIES.find((c) => hasCap(state.cities[c.id].sites[YOU]))?.id || "phoenix";
@@ -789,7 +983,9 @@
     lastNet = 0;
     armedKit = null;
     hoverKit = null;
+    inspectJob = null;
     pops = [];
+    lastPriceToast = { city: "", at: 0, from: 0, to: 0 };
     siteView = null;
     showBoard();
     bindMapControls();
@@ -880,7 +1076,9 @@
     return "dirt";
   }
 
-  function inspectorPhase(kind) {
+  function inspectorPhase(kind, city) {
+    if (city && contestedCity(city)) return "CONTESTED";
+    if (city && rivalSite(city)) return "RIVAL SITE";
     if (kind === "hq") return "ZAPS HQ";
     if (kind === "tucson" || kind === "vegas" || kind === "plaza") return "ZAPS YARD";
     if (kind === "voltspan") return "VOLTSPAN COMPOUND";
@@ -893,19 +1091,36 @@
     const you = city.sites[YOU];
     const neighbors = meta.neighbors.map((id) => CITY_BY_ID[id].name).join(", ");
     const land = meta.land.toFixed(2);
+    const rival = strongestRival(city);
+    if (rivalSite(city)) {
+      return `${rival ? rival.name : "A rival"} holds this pad. You cannot deploy here. Compete on price and empty dirt — not their compound.`;
+    }
+    if (contestedCity(city)) {
+      return `Contested with ${rival ? rival.name : "a rival"}. Your price ${city.price[YOU].toFixed(2)}/kWh · share ${Math.round((city.share[YOU] || 0) * 100)}%. Cut price or hold — do not seize their pad.`;
+    }
     if (kind === "hq" || kind === "tucson" || kind === "vegas" || kind === "plaza") {
       return `Your price ${city.price[YOU].toFixed(2)}/kWh. Share ${Math.round((city.share[YOU] || 0) * 100)}%. Grid ${you.bess ? "STABLE" : "STRAINED"}. Crews ${crewsBusy()}/${MAX_CREWS}.`;
-    }
-    if (kind === "voltspan") {
-      return `Voltspan compound. Land multiplier ${land}. Neighbors: ${neighbors}.`;
-    }
-    if (kind === "rival") {
-      return `Rival depot. Land multiplier ${land}. Neighbors: ${neighbors}.`;
     }
     if (kind === "dirt") {
       return `Raising. Land multiplier ${land}. Neighbors: ${neighbors}.`;
     }
     return `Unbuilt dirt. Land multiplier ${land}. Neighbors: ${neighbors}. Drop a pad to raise a compound.`;
+  }
+
+  function shareDuelHtml(city) {
+    const rival = strongestRival(city);
+    const youPct = Math.round((city.share[YOU] || 0) * 100);
+    const themPct = rival ? Math.round((city.share[rival.id] || 0) * 100) : 0;
+    const flash = city.shareFlash && city.shareFlash.until > Date.now();
+    const themName = rival ? rival.name : "OPEN";
+    const themColor = rival ? rival.color : PAL.steel;
+    return `<div class="share-duel${flash ? " flash" : ""}" data-city="${city.id}">
+      <div class="share-head"><span>ZAPS ${youPct}%</span><span>${themName} ${themPct}%</span></div>
+      <div class="share-bar" role="img" aria-label="Zaps ${youPct} percent, ${themName} ${themPct} percent">
+        <i class="you" style="width:${youPct}%"></i>
+        <i class="them" style="width:${themPct}%;--them:${themColor}"></i>
+      </div>
+    </div>`;
   }
 
   function strongestRival(city) {
@@ -1347,7 +1562,14 @@
         const bits = [];
         if (youSite.dc) bits.push(`${youSite.dc} DC`);
         if (youSite.mcs) bits.push(`${youSite.mcs} MCS`);
+        if (contestedCity(city)) bits.push("CONTESTED");
         kit.textContent = bits.join(" · ");
+        btn.append(kit);
+      } else if (rivalSite(city)) {
+        const kit = document.createElement("span");
+        const rival = strongestRival(city);
+        kit.className = "city-kit rival-tag";
+        kit.textContent = rival ? rival.name : "RIVAL";
         btn.append(kit);
       }
       const label = document.createElement("span");
@@ -1547,7 +1769,9 @@
     if (ghost) bits.push("raising");
     if (preview) bits.push("preview");
     if (pop) bits.push("pop");
-    return `<g class="${bits.join(" ")}">${inner}</g>`;
+    const kind = (cls || "").replace(/^kit-/, "").replace(/-unit$/, "");
+    const inspect = ghost && !preview ? ` data-inspect="${kind}"` : "";
+    return `<g class="${bits.join(" ")}"${inspect}>${inner}</g>`;
   }
 
   function occupiedTiles(occ) {
@@ -1632,8 +1856,10 @@
     const cx = (q[0][0] + q[1][0] + q[2][0] + q[3][0]) / 4;
     const cy = Math.min(q[0][1], q[1][1], q[2][1], q[3][1]) - 4.4;
     const count = job?.preview ? "SET" : `${job?.left ?? ""} MO`;
+    const inspect = job?.preview ? "" : ` data-inspect="${(title.split(" ")[0] || "").toLowerCase()}"`;
+    const focus = inspectJob && title.toLowerCase().startsWith(inspectJob) ? " focus" : "";
     return (
-      `<g class="site-ghost-badge${job?.preview ? " preview" : ""}">` +
+      `<g class="site-ghost-badge${job?.preview ? " preview" : ""}${focus}"${inspect}>` +
       `<rect class="site-ghost-plate" x="${(cx - 6.8).toFixed(2)}" y="${(cy - 5.0).toFixed(2)}" width="13.6" height="6.5" rx="0.7"/>` +
       `<text class="site-ghost-label" x="${cx.toFixed(2)}" y="${(cy - 1.2).toFixed(2)}" text-anchor="middle">${title}</text>` +
       `<text class="site-ghost-count" x="${cx.toFixed(2)}" y="${(cy + 2.2).toFixed(2)}" text-anchor="middle">${count}</text>` +
@@ -1921,6 +2147,31 @@
     stack.style.maxWidth = `${Math.round(w)}px`;
   }
 
+  function inspectRaising(type) {
+    if (!type || !BUILD[type]) return;
+    inspectJob = type;
+    const job = siteView ? jobList(siteView, type)[0] : null;
+    if (job) {
+      toast(`${BUILD[type].name} raising · ${job.left} mo left. Click the queue to keep it in view.`, "deal");
+    } else {
+      toast(`${BUILD[type].name} — no live job on this pad.`, "deal");
+    }
+    renderInspector();
+    renderSiteYard();
+  }
+
+  function bindYardInspect() {
+    const yard = $("site-yard");
+    if (!yard || yard.dataset.inspectBound) return;
+    yard.dataset.inspectBound = "1";
+    yard.addEventListener("click", (e) => {
+      const hit = e.target.closest("[data-inspect]");
+      if (!hit) return;
+      const type = hit.getAttribute("data-inspect");
+      if (type) inspectRaising(type);
+    });
+  }
+
   function bindYardFrame() {
     const yard = $("site-yard");
     if (!yard || yard.dataset.frameBound) return;
@@ -1943,7 +2194,33 @@
     const kind = mapSpriteKind(city, meta);
     const baseKind = yardBaseKind(city, meta);
     $("site-overlay-kicker").textContent = `${meta.name.toUpperCase()} // SITE`;
-    $("site-overlay-type").textContent = SITE_TYPE_NAME[kind] || "SITE";
+    const sealed = rivalSite(city);
+    const contested = contestedCity(city);
+    $("site-overlay-type").textContent = sealed
+      ? "RIVAL SITE"
+      : contested
+        ? "CONTESTED"
+        : SITE_TYPE_NAME[kind] || "SITE";
+    const intel = $("site-overlay-intel");
+    if (intel) {
+      const rival = strongestRival(city);
+      if (sealed) {
+        intel.className = "site-intel rival";
+        intel.innerHTML = `${shareDuelHtml(city)}<p>RIVAL SITE · ${rival ? rival.name : "They"} hold this pad. Compete on price and empty dirt — you cannot seize the compound.</p>`;
+      } else if (contested) {
+        intel.className = "site-intel contested";
+        intel.innerHTML = `${shareDuelHtml(city)}<p>CONTESTED · ${rival ? rival.name : "A rival"} shares this market. Adjust price. Their dirt stays theirs.</p>`;
+      } else {
+        intel.className = "site-intel hidden";
+        intel.innerHTML = "";
+      }
+    }
+    const note = document.querySelector(".site-overlay-note");
+    if (note) {
+      note.textContent = sealed
+        ? "Rival compound. Tray shows RIVAL SITE — kit will not land here. ESC or EXIT returns to the Western Interconnect."
+        : "Kit ghosts show a countdown and fill as crews work. Click a raising job to inspect. Complete pops in place. ESC or EXIT returns to the Western Interconnect.";
+    }
     const stack = $("site-stack");
     if (!stack) return;
     const site = city.sites[YOU];
@@ -1998,6 +2275,7 @@
   function exitSite() {
     siteView = null;
     hoverKit = null;
+    inspectJob = null;
     mapCam = { ...interconnectCam };
     clampCam();
     renderAll();
@@ -2091,6 +2369,7 @@
     $("btn-exit-site")?.addEventListener("click", exitSite);
     $("btn-exit-site-overlay")?.addEventListener("click", exitSite);
     bindYardFrame();
+    bindYardInspect();
   }
 
   function renderInspector() {
@@ -2100,7 +2379,7 @@
     $("insp-kicker").textContent = `${meta.state} // BASE`;
     $("insp-name").textContent = meta.name;
     const kind = mapSpriteKind(city, meta);
-    $("insp-phase").textContent = inspectorPhase(kind);
+    $("insp-phase").textContent = inspectorPhase(kind, city);
     const you = city.sites[YOU];
     $("insp-blurb").textContent = inspectorBlurb(city, meta, kind);
 
@@ -2116,11 +2395,14 @@
         .map((j) => {
           const spec = BUILD[j.type];
           const pct = Math.max(6, Math.round(((spec.months - j.left) / spec.months) * 100));
-          return `<div class="job"><span>${spec.name}</span><span>${j.left} MO</span><div class="bar"><span style="width:${pct}%"></span></div></div>`;
+          const focus = inspectJob === j.type ? " focus" : "";
+          return `<div class="job${focus}" data-job="${j.type}"><span>${spec.name}</span><span>${j.left} MO</span><div class="bar"><span style="width:${pct}%"></span></div></div>`;
         })
         .join("");
     }
 
+    const sealed = rivalSite(city);
+    const contested = contestedCity(city);
     const rows = [
       ["Demand", meta.demand],
       ["Truck", meta.truck],
@@ -2132,7 +2414,14 @@
       ["Income/mo", money(cityIncome(city, YOU) - cityOpex(city, YOU))],
     ];
     let html = `<div class="insp-grid">${rows.map(([k, v]) => `<div>${k}<br><b>${v}</b></div>`).join("")}</div>`;
-    html += `<div class="price-row"><label>Price ${city.price[YOU].toFixed(2)} / kWh</label><input id="price-slider" type="range" min="0.28" max="0.58" step="0.01" value="${city.price[YOU]}"></div>`;
+    if (sealed || contested || rivalHolders(city).length) {
+      html += shareDuelHtml(city);
+    }
+    if (sealed) {
+      html += `<p class="insp-rule">RIVAL SITE · kit stays in the tray. Win this market from yards you already hold.</p>`;
+    } else {
+      html += `<div class="price-row"><label>Price ${city.price[YOU].toFixed(2)} / kWh <small>[ ]</small></label><input id="price-slider" type="range" min="0.28" max="0.58" step="0.01" value="${city.price[YOU]}"></div>`;
+    }
     html += `<div class="factions">`;
     for (const f of factionIds()) {
       if (!hasCap(city.sites[f]) && f !== YOU) continue;
@@ -2144,9 +2433,21 @@
     $("insp-body").innerHTML = html;
     const slider = $("price-slider");
     if (slider) {
-      slider.addEventListener("change", () => {
+      slider.addEventListener("input", () => {
+        if (city._shareBefore == null) city._shareBefore = Math.round((city.share[YOU] || 0) * 100);
+        const label = slider.closest(".price-row")?.querySelector("label");
         city.price[YOU] = Number(slider.value);
-        city.war = Math.max(city.war, 2);
+        recomputeShare(city);
+        if (label) {
+          label.innerHTML = `Price ${city.price[YOU].toFixed(2)} / kWh <small>[ ]</small>`;
+        }
+        const duel = $("insp-body").querySelector(".share-duel");
+        if (duel) duel.outerHTML = shareDuelHtml(city);
+      });
+      slider.addEventListener("change", () => {
+        const prev = city._shareBefore;
+        city._shareBefore = null;
+        applyPlayerPrice(city, Number(slider.value), prev);
         renderAll();
       });
     }
@@ -2158,9 +2459,17 @@
     const target = CITY_BY_ID[selected];
     const label = $("tray-label");
     if (label) {
-      label.innerHTML = target
-        ? `DEPLOY<span>${target.name.toUpperCase()}</span>`
-        : "DEPLOY";
+      const city = selected ? state.cities[selected] : null;
+      if (city && rivalSite(city)) {
+        const rival = strongestRival(city);
+        label.innerHTML = `RIVAL<span>${target.name.toUpperCase()}</span><em>${rival ? rival.name : "HELD"}</em>`;
+      } else if (city && contestedCity(city)) {
+        label.innerHTML = `CONTESTED<span>${target.name.toUpperCase()}</span>`;
+      } else {
+        label.innerHTML = target
+          ? `DEPLOY<span>${target.name.toUpperCase()}</span>`
+          : "DEPLOY";
+      }
     }
     for (const spec of Object.values(BUILD)) {
       const cost = selected ? deployCost(spec.id, selected) : spec.cost;
@@ -2338,6 +2647,27 @@
       selected = "phoenix";
       return "phoenix";
     }
+    if (name === "rival" || name === "rival-blocked") {
+      selected = "la";
+      return "la";
+    }
+    if (name === "contested") {
+      z("vegas").dc = 2;
+      state.cities.vegas.sites.voltspan.dc = 2;
+      state.cities.vegas.price.zaps = 0.4;
+      state.cities.vegas.price.voltspan = 0.36;
+      selected = "vegas";
+      return "vegas";
+    }
+    if (name === "event" || name === "undercut" || name === "choice") {
+      z("vegas").dc = 2;
+      state.cities.vegas.sites.voltspan.dc = 2;
+      state.cities.vegas.price.zaps = 0.42;
+      state.cities.vegas.price.voltspan = 0.33;
+      state.pendingEvent = { type: "undercut", city: "vegas", rival: "voltspan", cut: 0.03 };
+      selected = "vegas";
+      return "vegas";
+    }
     return null;
   }
 
@@ -2377,7 +2707,9 @@
       b.addEventListener("click", () => setSpeed(Number(b.dataset.speed)));
     });
     document.addEventListener("keydown", (e) => {
-      if (e.code === "Space" && state && !$("board-screen").classList.contains("hidden")) {
+      const onBoard = state && !$("board-screen").classList.contains("hidden");
+      const typing = e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA");
+      if (e.code === "Space" && onBoard) {
         e.preventDefault();
         setSpeed(state.speed ? 0 : 1);
       }
@@ -2392,7 +2724,24 @@
         hideModal();
         $("deal-sheet").classList.add("hidden");
       }
-      if ((e.key === "d" || e.key === "D") && state?.pendingDeal) openDealSheet();
+      if ((e.key === "d" || e.key === "D") && (state?.pendingDeal || state?.pendingEvent)) openDealSheet();
+      if (!onBoard || typing || state.over) return;
+      const kitKey = { c: "dc", m: "mcs", b: "bess", l: "lounge", k: "market" }[e.key.toLowerCase()];
+      if (kitKey && selected) {
+        e.preventDefault();
+        armedKit = kitKey;
+        if (canDeploy(kitKey, selected)) enqueue(kitKey, selected);
+        else renderTray();
+      }
+      if ((e.key === "[" || e.key === "]") && selected) {
+        const city = state.cities[selected];
+        if (!rivalSite(city)) {
+          e.preventDefault();
+          const step = e.key === "]" ? 0.01 : -0.01;
+          applyPlayerPrice(city, city.price[YOU] + step);
+          renderAll();
+        }
+      }
     });
 
     const params = new URLSearchParams(location.search);
@@ -2409,11 +2758,12 @@
       renderAll();
       const site = params.get("site") || shotCity;
       if (site && CITY_BY_ID[site]) enterSite(site);
+      if (state.pendingEvent || state.pendingDeal) openDealSheet();
     }
   }
 
   window.__EMPIRE_SMOKE__ = {
-    build: "rts-yard-13",
+    build: "rts-yard-14",
     hitR: CITY_HIT_R,
     goldilocks: 0.76,
     nearestCity,
@@ -2424,6 +2774,13 @@
     getSelected: () => selected,
     slots: SLOTS,
     grid: { cols: GRID.cols, rows: GRID.rows },
+    blockedReason,
+    canDeploy,
+    rivalSite: (id) => rivalSite(state.cities[id]),
+    contestedCity: (id) => contestedCity(state.cities[id]),
+    enterSite,
+    enqueue,
+    applyPlayerPrice: (id, price) => applyPlayerPrice(state.cities[id], price),
   };
 
   boot();

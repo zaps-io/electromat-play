@@ -42,15 +42,61 @@
           };
           const flag = smoke.nearestCity(400, 370);
           const tuc = smoke.nearestCity(455, 545);
+          const flagDeployed = after.queue.some((q) => q.city === "flagstaff" && q.type === "dc");
+
+          smoke.enterSite("la");
+          await wait(150);
+          const laWhy = smoke.blockedReason("dc", "la");
+          const laCan = smoke.canDeploy("dc", "la");
+          const laQueued = smoke.enqueue("dc", "la");
+          const laJobs = smoke.getState().queue.filter((q) => q.city === "la" && q.faction === "zaps");
+          const laBtn = d.querySelector('[data-kit="dc"]');
+          const laChip = laBtn ? laBtn.textContent : "";
+          const dallasWhy = smoke.blockedReason("dc", "dallas");
+          const denverWhy = smoke.blockedReason("mcs", "denver");
+          const flagWhy = smoke.blockedReason("dc", "flagstaff");
+          const flagStillOpen = flagWhy !== "RIVAL SITE";
+
           const ok =
             before.site === "flagstaff" &&
             after.site === "flagstaff" &&
             after.selected === "flagstaff" &&
             after.paused === true &&
-            after.queue.some((q) => q.city === "flagstaff" && q.type === "dc") &&
+            flagDeployed &&
             flag.id === "flagstaff" &&
-            tuc.id === "tucson";
-          report({ ok, before, after, flag: flag.id, tucson: tuc.id, hits: { flagstaff: flag.id, tucson: tuc.id } });
+            tuc.id === "tucson" &&
+            laWhy === "RIVAL SITE" &&
+            laCan === false &&
+            laQueued === false &&
+            laJobs.length === 0 &&
+            /RIVAL SITE/.test(laChip) &&
+            dallasWhy === "RIVAL SITE" &&
+            denverWhy === "RIVAL SITE" &&
+            flagStillOpen &&
+            smoke.rivalSite("la") === true &&
+            smoke.rivalSite("flagstaff") === false;
+
+          report({
+            ok,
+            before,
+            after,
+            flag: flag.id,
+            tucson: tuc.id,
+            hits: { flagstaff: flag.id, tucson: tuc.id },
+            ownership: {
+              laWhy,
+              laCan,
+              laQueued,
+              laJobs: laJobs.length,
+              laChip,
+              dallasWhy,
+              denverWhy,
+              flagWhy,
+              flagStillOpen,
+              rivalLa: smoke.rivalSite("la"),
+              rivalFlag: smoke.rivalSite("flagstaff"),
+            },
+          });
         } catch (err) {
           report({ ok: false, error: String(err && err.stack ? err.stack : err) });
         }

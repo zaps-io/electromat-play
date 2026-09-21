@@ -1,40 +1,45 @@
-# Empire graphics review — rts-yard-13
+# Empire playtest — rts-yard-14
 
-Stills: `board.png` · `yard-empty.png` · `yard-dc2-raising.png` · `yard-raising.png` · `yard-full.png` · `inspector.png`
+Replay stills (paused board, no title): `?shot=rival` (LA blocked tray) · `?shot=empty` (Flagstaff DC) · `?shot=contested` (Vegas share meters) · `?shot=event` (MATCH/HOLD field call) · `?shot=raising` · `?shot=board` · `?showcase=1`.
 
-Replay: `?shot=board` · `?shot=empty` · `?shot=dc2-raising` / `?shot=raising-ghosts` · `?shot=raising` · `?shot=full` · `?shot=start` · `?showcase=1`.
+## Ownership (Victor)
 
-## AoE polish
+Rival yards are **not** claimable dirt. VOLTSPAN / GRIDHAWK / ARCWAY compounds stay theirs. Deploying a pad on Los Angeles, Dallas, Denver, San Diego, El Paso, or Salt Lake City is blocked. The tray wears an amber **RIVAL SITE** why-chip and short copy. Empty Flagstaff / Tucson / Vegas still take a DC kit.
 
-- **Silhouettes.** DC is a slim Zeus pedestal under a cream canopy. MCS is a charcoal hangar with red-banded posts. BESS is a cyan-capped cabinet row. Lounge is a cream glass pavilion. Market is a pitched kiosk with a cream awning. Ghosts keep those rooflines and tint instead of sharing one cyan cube.
-- **Construction.** Raising tiles fill with remaining-month progress. Each ghost wears a countdown badge (`DC 1` / `2 MO`). Finished kit pops in place. Hovering a ready tray item previews the next chess cell.
-- **Tray.** Selected kit gets a cyan frame. Disabled reasons are amber chips (`NEED PAD`, `CREWS FULL`) — not faded 42% text. Five-column grid at 1280×800; the note hides so labels do not clip.
-- **Map.** Nearest-stamp hits stay radius 70. Flagstaff / Tucson cannot be stolen by the Phoenix HQ photo. Default zoom remains the full interconnect. EXIT shows `ESC`; Esc still closes the yard.
+Contested means both already have a live (or raising) pad. You keep building on **your** yard and fight on price/share. You do not seize their compound.
 
-## Framing
+## Interactivity
 
-Goldilocks yard scale **unchanged**: full pad + a bit of sand margin, about **76% of the yard box** (cap 800).
+- **Price.** On a shared market, moving your $/kWh updates the Zaps vs rival share meters live and toasts the shift (`Vegas share 41% → 48%`). `[` `]` nudge a cent.
+- **Contested view.** Site overlay + inspector show dual share meters. Rival-only sites show 0 / 100 and hide the slider.
+- **Field calls.** Not log spam: rival undercut → MATCH / HOLD; grid strain (no BESS, high demand) → RAISE PRICE / WAIT. Badge reads **CALL**. Rare deals still use **DEALS**.
+- **Construction.** Ghosts keep countdowns. Click a raising badge to inspect the job. Finished kit pops harder and toasts online.
+- **Hotkeys.** `C` DC · `M` MCS · `B` BESS · `L` lounge · `K` market. Empty sites stay live in the tray.
 
-## Grow grid (hold)
+## Framing (hold)
 
-```
-        c0     c1     c2     c3     c4
-   r0  BESS   BESS   BESS   BESS    —      rear cabinets
-   r1  MCS    DC0    DC1    DC2    DC3     kit rank
-   r2  MCS    aisle  aisle  aisle  aisle   drive
-   r3  LNG    LNG    MKT    MKT     —      civic
-```
+Goldilocks yard scale **unchanged**: full pad + a bit of sand margin, about **76% of the yard box** (cap 800). Chessboard snap, nearest-city hits (r=70), pause-on-new-game, EXIT/Esc, official 1.8KB wordmarks, economy core numbers.
+
+## Playtest notes
+
+1. Open `?shot=rival` — LA overlay reads RIVAL SITE, every tray tile is amber `RIVAL SITE`, DC click does not enqueue.
+2. Open `?shot=empty` — Flagstaff dirt, DC is live, click queues a 2-month raise.
+3. Open `?shot=contested` — Vegas meters Zaps vs VOLTSPAN; drag price, share toast/flash.
+4. Open `?shot=event` — FIELD CALL sheet, MATCH PRICE vs HOLD RATE.
+5. Phoenix still starts paused. Esc still exits the yard.
 
 ## Verdict
 
 | Bar | Grade | Evidence |
 |---|---|---|
-| Instant-read kit | **RAISE** | Distinct rooflines / colors on yard and ghosts |
-| Raising feedback | **RAISE** | Tile fill + countdown badge + complete pop |
-| Tray at 1280×800 | **RAISE** | Selected frame, why-chips, no wrap clip |
+| Rival pad seizure | **FIX** | LA/Dallas/Denver tray = RIVAL SITE; enqueue no-ops |
+| Empty claim | **HOLD** | Flagstaff DC still deploys |
+| Contested share | **RAISE** | Dual meters + price toast |
+| Decision events | **RAISE** | Undercut / strain field calls |
+| Construction pop | **HOLD+** | Click-inspect + louder pop |
 | Flagstaff after Phoenix | **HOLD** | Distance pick, radius 70 |
 | Explore without the year racing | **HOLD** | Boot paused; 1× is slow |
 | Yard framing | **HOLD** | Stack still ~76% of yard (cap 800) |
 | Brand | **HOLD** | Official cream/red wordmarks |
 
-Economy untouched. Night Shift untouched. Cache `rts-yard-13`.
+Economy untouched except share reacting to the price you already set. Night Shift untouched. Cache `rts-yard-14`.
