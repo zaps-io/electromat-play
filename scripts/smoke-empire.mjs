@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* rts-yard-14: rival ownership block, contested share, field calls, cache. */
+/* rts-yard-15: terminal kit, contested depth, field calls, campaign track, cache. */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,13 +16,13 @@ const fail = (msg) => {
 };
 const ok = (msg) => console.log(`OK   ${msg}`);
 
-if (!html.includes('content="rts-yard-14"') || !html.includes("styles.css?v=rts-yard-14") || !html.includes("game.js?v=rts-yard-14")) {
-  fail("index.html cache is not rts-yard-14");
-} else ok("index.html cache rts-yard-14");
+if (!html.includes('content="rts-yard-15"') || !html.includes("styles.css?v=rts-yard-15") || !html.includes("game.js?v=rts-yard-15")) {
+  fail("index.html cache is not rts-yard-15");
+} else ok("index.html cache rts-yard-15");
 
-if (!game.includes("rts-yard-14") || !css.includes("rts-yard-14") || !review.includes("rts-yard-14")) {
-  fail("game/styles/REVIEW cache is not rts-yard-14");
-} else ok("game/styles/REVIEW cache rts-yard-14");
+if (!game.includes("rts-yard-15") || !css.includes("rts-yard-15") || !review.includes("rts-yard-15")) {
+  fail("game/styles/REVIEW cache is not rts-yard-15");
+} else ok("game/styles/REVIEW cache rts-yard-15");
 
 if (!game.includes("const CITY_HIT_R = 70")) fail("CITY_HIT_R must stay 70");
 else ok("CITY_HIT_R = 70");
@@ -137,6 +137,42 @@ if (!game.includes('name === "rival"') || !game.includes('name === "contested"')
 if (!html.includes("Rival compounds stay theirs")) {
   fail("briefing should state rival pads are sealed");
 } else ok("briefing ownership line");
+
+if (!game.includes("function cofferGrid") || !css.includes(".site-coffer") || !game.includes("cylPost")) {
+  fail("terminal canopy coffers / columns missing");
+} else ok("cream canopy coffers + cylindrical posts");
+
+if (!game.includes("holsterL") || !game.includes("holsterR") || !game.includes("site-dc-cable")) {
+  fail("Slim Zeus DC row missing twin holsters");
+} else ok("Slim Zeus DC row with twin holsters");
+
+if (!css.includes(".site-lounge-edge") || !css.includes("#c8c2b6")) {
+  fail("lounge must stay cream/amber, not cyan structure");
+} else ok("lounge pavilion without forced cyan");
+
+if (!game.includes("function winProgress") || !html.includes("hud-campaign") || !css.includes(".camp-bar")) {
+  fail("campaign win track missing");
+} else ok("HUD campaign track / winProgress");
+
+if (!game.includes('type: "amenity"') || !game.includes('type: "poach"') || !game.includes("QUEUE LOUNGE")) {
+  fail("amenity / poach field calls missing");
+} else ok("amenity + poach field calls");
+
+if (!game.includes("if (state.pendingEvent) openDealSheet()")) {
+  fail("field calls must auto-open the sheet");
+} else ok("field calls auto-open");
+
+if (!html.includes("insp-triad") || !game.includes("CHARGE") || !css.includes(".insp-triad")) {
+  fail("CHARGE / RELAX / DEPART triad missing");
+} else ok("inspector CHARGE / RELAX / DEPART");
+
+if (!game.includes("corridorPull") || !game.includes("contested ? 1.85")) {
+  fail("contested price elasticity / corridor pull missing");
+} else ok("contested markets pull harder on price");
+
+if (!css.includes("toast-pop") || !css.includes("stat-tick") || !css.includes("transition: width 0.45s ease")) {
+  fail("audio-less juice animations missing");
+} else ok("toast / stat / meter juice");
 
 if (process.exitCode) {
   console.error("smoke-empire failed");

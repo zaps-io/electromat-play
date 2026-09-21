@@ -18,13 +18,13 @@ Palette: `#E63225` identity · `#1E1E24` charcoal · `#E89A2E` amber (informatio
 
 1. Open the public link and click **OPEN THE BOARD**.
 2. Read the Phoenix briefing, then enter the continent.
-3. Click a city to zoom the yard to town scale. Compounds are 3/4-overhead RTS bases: Dispenser 1000 pedestals under a canopy, Power Cabinet 1500 cubes, DCC, rectifiers, BESS farm, lounge pavilion. The yard grows as kit lands.
+3. Click a city to zoom the yard to town scale. Compounds are miniature Electromat stations: Slim Zeus rows under a coffered cream canopy, MCS truck island, BESS farm, lounge pavilion, market kiosk. The yard grows as kit lands.
 4. Empty dirt can be claimed. Rival compounds (VOLTSPAN, GRIDHAWK, ARCWAY) stay theirs — compete on price and share, do not build on their pad.
 5. The calendar **starts paused**. Speed it with PAUSE / 1× / 2× / 4× (or keys `Space`, `1`, `2`, `4`). 1× is a slow read-the-UI month. `C` `M` `B` `L` `K` deploy kit; `[` `]` nudge price.
 6. SAVE / LOAD writes this browser’s `localStorage`.
-7. Field calls (undercut / grid strain) ask MATCH or HOLD. Rare deals still use the **DEALS** badge — never a modal stack.
+7. Field calls (undercut / grid strain / amenity / poach) ask MATCH, HOLD, or QUEUE LOUNGE. Rare deals still use the **DEALS** badge — never a modal stack.
 
-Win by majority share in 12 cities, by holding all seven states with MCS in four cities, or by filling the treasury.
+Win by majority share in 12 cities, by holding all seven states with MCS in four cities, or by filling the treasury. The HUD campaign track shows how close you are.
 
 ## Local
 

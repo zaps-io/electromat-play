@@ -15,8 +15,8 @@
       href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Share+Tech+Mono&display=swap"
       rel="stylesheet"
     />
-    <meta name="empire-build" content="rts-yard-14" />
-    <link rel="stylesheet" href="styles.css?v=rts-yard-14" />
+    <meta name="empire-build" content="rts-yard-15" />
+    <link rel="stylesheet" href="styles.css?v=rts-yard-15" />
   </head>
   <body>
     <section id="title-screen" class="screen" data-screen="title">
@@ -56,8 +56,8 @@
         </p>
         <ul>
           <li>Deploy DC chargers, MCS, BESS, lounges, and markets.</li>
-          <li>Each city grows a visible compound as kit lands on the pad.</li>
-          <li>Win share with price, speed, and amenities — not slogans.</li>
+          <li>Each city grows a visible Electromat — Slim Zeus row, canopy, lounge pavilion.</li>
+          <li>Win share with price, field calls, and amenities — not slogans.</li>
           <li>Rival compounds stay theirs. You cannot deploy on their pad.</li>
         </ul>
         <p class="briefing-rivals">
@@ -81,31 +81,34 @@
           />
           <span class="empire-word">EMPIRE</span>
         </div>
-        <div class="hud-stats">
-          <div class="stat">
-            <span class="stat-label">MONTH</span>
-            <span id="stat-date" class="stat-value">Y1 M01</span>
+        <div class="hud-center">
+          <div class="hud-stats">
+            <div class="stat">
+              <span class="stat-label">MONTH</span>
+              <span id="stat-date" class="stat-value">Y1 M01</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">CASH</span>
+              <span id="stat-cash" class="stat-value">$0</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">SHARE</span>
+              <span id="stat-share" class="stat-value">0%</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">CITIES</span>
+              <span id="stat-cities" class="stat-value">1/16</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">CREWS</span>
+              <span id="stat-crews" class="stat-value">0/3</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">NET</span>
+              <span id="stat-net" class="stat-value">$0</span>
+            </div>
           </div>
-          <div class="stat">
-            <span class="stat-label">CASH</span>
-            <span id="stat-cash" class="stat-value">$0</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">SHARE</span>
-            <span id="stat-share" class="stat-value">0%</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">CITIES</span>
-            <span id="stat-cities" class="stat-value">1/16</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">CREWS</span>
-            <span id="stat-crews" class="stat-value">0/3</span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">NET</span>
-            <span id="stat-net" class="stat-value">$0</span>
-          </div>
+          <div class="hud-campaign" id="hud-campaign" aria-label="Campaign progress"></div>
         </div>
         <div class="hud-controls">
           <button id="btn-deals" class="deals-badge hidden" type="button">DEALS</button>
@@ -172,6 +175,7 @@
           <p class="kicker" id="insp-kicker">SELECT A CITY</p>
           <h2 id="insp-name">Continent</h2>
           <p id="insp-phase" class="insp-phase">PHASE HQ</p>
+          <div id="insp-triad" class="insp-triad" aria-hidden="true"></div>
           <p id="insp-blurb" class="insp-blurb">
             Click a city. The compound is dirt until you drop a pad. Each deploy
             raises a building you can read from the map.
@@ -201,6 +205,6 @@
       <div class="modal-card" id="modal-card"></div>
     </div>
 
-    <script src="game.js?v=rts-yard-14"></script>
+    <script src="game.js?v=rts-yard-15"></script>
   </body>
 </html>
