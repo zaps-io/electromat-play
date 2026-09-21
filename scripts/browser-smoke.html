@@ -121,6 +121,20 @@
           await wait(40);
           const detector = d.querySelector(".scout-detector");
           const pin = d.querySelector('.city-node[data-city="phoenix"].scouted .scout-pin');
+          const echoTucson = smoke.echo("tucson");
+          const dallasFog = d.querySelector('.city-node[data-city="dallas"].fogged');
+          const laFog = d.querySelector('.city-node[data-city="la"].fogged');
+          const tucsonIntel = d.querySelector('.city-node[data-city="tucson"].intel-near');
+          const hop = d.querySelectorAll(".corridor-hop").length;
+          const tug = d.querySelector('.city-node[data-city="vegas"] .pin-tug');
+          const youBeforePin = smoke.skirmish() ? smoke.skirmish().you : 0;
+          if (tug) tug.click();
+          const youAfterPin = smoke.skirmish() ? smoke.skirmish().you : youBeforePin;
+          const assigned = smoke.assignWaypoint("flagstaff");
+          const crewAfter = smoke.crews()[0];
+          const flagPip = d.querySelector('.city-node[data-city="flagstaff"] .crew-token');
+          const tucsonPip = d.querySelector('.city-node[data-city="tucson"] .crew-token');
+          const phxPips = d.querySelectorAll('.city-node[data-city="phoenix"] .crew-token').length;
 
           const ok =
             before.site === "flagstaff" &&
@@ -140,8 +154,8 @@
             flagStillOpen &&
             smoke.rivalSite("la") === true &&
             smoke.rivalSite("flagstaff") === false &&
-            smoke.build === "rts-yard-19" &&
-            buildName === "rts-yard-19" &&
+            smoke.build === "rts-yard-20" &&
+            buildName === "rts-yard-20" &&
             smoke.goldilocks === 0.76 &&
             smartAfterOne === 1 &&
             /est\./.test(read) &&
@@ -170,7 +184,20 @@
             laCrews === 0 &&
             detector &&
             pin &&
-            /SCOUTED|DET/.test((detector.textContent || "") + (pin.textContent || ""));
+            /SCOUTED|DET/.test((detector.textContent || "") + (pin.textContent || "")) &&
+            echoTucson > 0 &&
+            Boolean(dallasFog) &&
+            Boolean(laFog) &&
+            Boolean(tucsonIntel) &&
+            hop > 0 &&
+            Boolean(tug) &&
+            youAfterPin > youBeforePin &&
+            assigned === true &&
+            crewAfter.task === "respond" &&
+            crewAfter.city === "flagstaff" &&
+            Boolean(flagPip) &&
+            Boolean(tucsonPip) &&
+            phxPips === 1;
 
           report({
             ok,
@@ -206,6 +233,9 @@
             },
             skirmishPush: { pushed, youAfter, lane: Boolean(lane) },
             crews: { crewTokens, cycled, crew1, laCrews, detector: Boolean(detector), pin: pin ? pin.textContent : "" },
+            fog: { echoTucson, dallasFog: Boolean(dallasFog), laFog: Boolean(laFog), tucsonIntel: Boolean(tucsonIntel), hop },
+            pinFight: { tug: Boolean(tug), youBeforePin, youAfterPin },
+            waypoint: { assigned, crewAfter, flagPip: Boolean(flagPip), tucsonPip: Boolean(tucsonPip), phxPips },
             buildName,
           });
         } catch (err) {
