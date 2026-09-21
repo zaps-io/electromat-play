@@ -1,8 +1,6 @@
 # Empire playtest — rts-yard-14
 
-Stills: `board.png` · `yard-empty.png` · `rival-blocked.png` · `contested-share.png` · `field-call.png`
-
-Replay: `?shot=board` · `?shot=empty` · `?shot=rival` · `?shot=contested` · `?shot=event` · `?shot=raising` · `?showcase=1`.
+Replay stills (paused board, no title): `?shot=rival` (LA blocked tray) · `?shot=empty` (Flagstaff DC) · `?shot=contested` (Vegas share meters) · `?shot=event` (MATCH/HOLD field call) · `?shot=raising` · `?shot=board` · `?showcase=1`.
 
 ## Ownership (Victor)
 
