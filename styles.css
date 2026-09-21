@@ -900,8 +900,8 @@ button {
 }
 
 .site-tile-reserve.kind-mcs {
-  stroke: #a78bfa;
-  fill: rgba(167, 139, 250, 0.16);
+  stroke: #c4a8ff;
+  fill: rgba(196, 168, 255, 0.22);
 }
 
 .site-tile-reserve.kind-lounge {
@@ -925,7 +925,7 @@ button {
 }
 
 .site-tile-progress.kind-mcs {
-  fill: rgba(167, 139, 250, 0.34);
+  fill: rgba(196, 168, 255, 0.4);
 }
 
 .site-tile-progress.kind-lounge {
@@ -1093,7 +1093,7 @@ button {
 }
 
 .site-stall.mcs {
-  stroke: rgba(167, 139, 250, 0.7);
+  stroke: rgba(196, 168, 255, 0.85);
 }
 
 .site-equip {

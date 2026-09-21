@@ -1919,8 +1919,8 @@
       return { top: "#6a5a48", front: "#4a3e34", side: "#3a322c", edge: "rgba(232,154,46,0.95)" };
     }
     if (kind === "mcs") {
-      // Violet — distinct from cyan DC/BESS and amber MARKET, never error-red.
-      return { top: "#56486a", front: "#3c324c", side: "#2e283c", edge: "rgba(167,139,250,0.95)" };
+      // Electric violet — distinct from cyan DC/BESS and amber MARKET, never error-red.
+      return { top: "#9a86c8", front: "#7a68b0", side: "#645694", edge: "rgba(216,196,255,1)" };
     }
     if (kind === "bess") {
       return { top: "#3a4a52", front: "#2a383e", side: "#222e34", edge: "rgba(0,212,245,0.95)" };
