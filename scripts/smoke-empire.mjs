@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* rts-yard-16: empty dirt pad, MCS ghost tone, field-call dock, cache. */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -200,6 +200,22 @@ if (!css.includes("map-stage:has(.site-overlay:not(.hidden)) .deal-sheet") || !/
 if (!css.includes(".price-row") || !/price-row \{[\s\S]*?position:\s*sticky/.test(css) || !html.includes("[ ] price")) {
   fail("inspector price / [ ] hotkeys must stay pinned visible");
 } else ok("inspector price row stays sticky with [ ] hotkeys");
+
+const stills = [
+  ["docs/shots/yard-empty.png", 500000],
+  ["docs/shots/yard-pad.png", 500000],
+  ["docs/shots/yard-ghosts.png", 500000],
+  ["docs/shots/yard-event.png", 500000],
+];
+for (const [rel, min] of stills) {
+  const p = join(root, rel);
+  if (!existsSync(p)) fail(`${rel} missing`);
+  else if (statSync(p).size < min) fail(`${rel} looks like a stale flag-era still (${statSync(p).size} bytes)`);
+}
+if (!process.exitCode) ok("fresh empty/ghosts/event stills are checked in");
+if (!review.includes("yard-ghosts.png") || !review.includes("yard-event.png") || !review.includes("yard-pad.png")) {
+  fail("REVIEW must list yard-ghosts / yard-event / yard-pad stills");
+} else ok("REVIEW lists refreshed stills");
 
 if (process.exitCode) {
   console.error("smoke-empire failed");

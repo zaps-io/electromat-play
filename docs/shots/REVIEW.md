@@ -2,7 +2,7 @@
 
 Replay stills (paused board, no title): `?shot=board` · `?shot=empty` (Flagstaff dirt chessboard) · `?shot=ghosts` (MCS violet + BESS/MARKET) · `?shot=raising` · `?shot=full` · `?shot=rival` (LA blocked tray) · `?shot=contested` (Vegas share meters) · `?shot=event` (MATCH/HOLD field call, inspector price visible) · `?showcase=1`.
 
-Checked-in frames: `board.png` · `yard-empty.png` · `yard-raising.png` · `yard-full.png` · `yard-rival.png` · `yard-contested.png`.
+Checked-in frames: `board.png` · `yard-empty.png` · `yard-pad.png` · `yard-ghosts.png` · `yard-event.png` · `yard-raising.png` · `yard-full.png` · `yard-rival.png` · `yard-contested.png`.
 
 ## Visual (Terminal Electromat)
 
