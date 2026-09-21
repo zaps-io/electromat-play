@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-yard-15 */
+/* empire-build: rts-yard-16 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -22,7 +22,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-yard-15";
+  const SPRITE_V = "rts-yard-16";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -43,7 +43,7 @@
     voltspan: "240 / 204",
     rival: "240 / 167",
   };
-  const KIT_V = "rts-yard-15";
+  const KIT_V = "rts-yard-16";
   const KIT_SPRITES = {
     dc: `assets/sprites/kit-dc.png?v=${KIT_V}`,
     mcs: `assets/sprites/kit-mcs.png?v=${KIT_V}`,
@@ -982,6 +982,7 @@
     });
     row.append(yes, no);
     sheet.append(k, h, p, row);
+    sheet.classList.toggle("field-call", Boolean(state.pendingEvent));
     sheet.classList.remove("hidden");
   }
 
@@ -1755,8 +1756,10 @@
   }
 
   function yardBaseKind(city, meta) {
-    if (playerYard(city)) return "dirt";
-    return overlayBaseKind(mapSpriteKind(city, meta));
+    // Claimable empties and Zaps yards share the dirt chessboard.
+    // Rival compounds keep their photos. Do not paint a survey-flag hero.
+    if (rivalSite(city)) return overlayBaseKind(mapSpriteKind(city, meta));
+    return "dirt";
   }
 
   function jobList(cityId, type) {
@@ -1916,7 +1919,8 @@
       return { top: "#6a5a48", front: "#4a3e34", side: "#3a322c", edge: "rgba(232,154,46,0.95)" };
     }
     if (kind === "mcs") {
-      return { top: "#5a4848", front: "#3e3234", side: "#32282a", edge: "rgba(230,50,37,0.9)" };
+      // Violet — distinct from cyan DC/BESS and amber MARKET, never error-red.
+      return { top: "#56486a", front: "#3c324c", side: "#2e283c", edge: "rgba(167,139,250,0.95)" };
     }
     if (kind === "bess") {
       return { top: "#3a4a52", front: "#2a383e", side: "#222e34", edge: "rgba(0,212,245,0.95)" };
@@ -2302,9 +2306,8 @@
   function kitLayersHtml(city) {
     const occ = kitOccupancy(city);
     const any = occ.dc + occ.mcs + occ.bess + occ.lounge + occ.market;
-    if (!any) return "";
     const inner =
-      plazaGeom(occ) +
+      (any ? plazaGeom(occ) : boardEtch()) +
       drawBess(occ) +
       drawMcs(occ) +
       drawLounge(occ) +
@@ -2312,7 +2315,7 @@
       drawDcCanopy(occ) +
       drawDcRow(occ) +
       ghostCaptions(occ);
-    return overlaySvg("site-compound", inner);
+    return overlaySvg(any ? "site-compound" : "site-compound empty-board", inner);
   }
 
   function siteRaisingBanner(cityId) {
@@ -2420,7 +2423,7 @@
       ? "RIVAL SITE"
       : contested
         ? "CONTESTED"
-        : SITE_TYPE_NAME[kind] || "SITE";
+        : SITE_TYPE_NAME[baseKind] || SITE_TYPE_NAME[kind] || "SITE";
     const intel = $("site-overlay-intel");
     if (intel) {
       const rival = strongestRival(city);
@@ -2889,6 +2892,16 @@
       selected = "phoenix";
       return "phoenix";
     }
+    if (name === "ghosts" || name === "raising-mcs" || name === "mcs-ghost") {
+      z("flagstaff").dc = 2;
+      state.queue.push(
+        { faction: YOU, city: "flagstaff", type: "mcs", left: 3, cost: 0 },
+        { faction: YOU, city: "flagstaff", type: "bess", left: 4, cost: 0 },
+        { faction: YOU, city: "flagstaff", type: "market", left: 2, cost: 0 }
+      );
+      selected = "flagstaff";
+      return "flagstaff";
+    }
     if (name === "rival" || name === "rival-blocked") {
       selected = "la";
       return "la";
@@ -3005,7 +3018,7 @@
   }
 
   window.__EMPIRE_SMOKE__ = {
-    build: "rts-yard-15",
+    build: "rts-yard-16",
     hitR: CITY_HIT_R,
     goldilocks: 0.76,
     nearestCity,
