@@ -136,6 +136,18 @@
           const tucsonPip = d.querySelector('.city-node[data-city="tucson"] .crew-token');
           const phxPips = d.querySelectorAll('.city-node[data-city="phoenix"] .crew-token').length;
 
+          const cashPx = parseFloat(getComputedStyle(d.querySelector("#stat-cash")).fontSize);
+          const sharePx = parseFloat(getComputedStyle(d.querySelector("#stat-share")).fontSize);
+          const nextLine = (d.querySelector(".ops-objective b") || {}).textContent || "";
+          const mcsBefore = smoke.deployCost("mcs", "flagstaff");
+          const edictOk = smoke.acceptEdict("corridor");
+          const mcsAfter = smoke.deployCost("mcs", "flagstaff");
+          smoke.grantObjective({ kind: "expand", title: "CLAIM A NEIGHBOR" });
+          smoke.grantObjective({ kind: "hold", title: "HOLD SHARE" });
+          const streakNow = smoke.getState().streak;
+          const multNow = smoke.streakMult();
+          const gradeNow = smoke.campaignGrade();
+
           const ok =
             before.site === "flagstaff" &&
             after.site === "flagstaff" &&
@@ -154,8 +166,16 @@
             flagStillOpen &&
             smoke.rivalSite("la") === true &&
             smoke.rivalSite("flagstaff") === false &&
-            smoke.build === "rts-yard-20" &&
-            buildName === "rts-yard-20" &&
+            smoke.build === "rts-yard-21" &&
+            buildName === "rts-yard-21" &&
+            cashPx > sharePx &&
+            cashPx >= 28 &&
+            /NEXT ·/.test(nextLine) &&
+            edictOk === true &&
+            mcsAfter === Math.round(mcsBefore * 0.8) &&
+            streakNow === 2 &&
+            multNow === 2 &&
+            Boolean(gradeNow.letter) &&
             smoke.goldilocks === 0.76 &&
             smartAfterOne === 1 &&
             /est\./.test(read) &&
@@ -237,6 +257,9 @@
             pinFight: { tug: Boolean(tug), youBeforePin, youAfterPin },
             waypoint: { assigned, crewAfter, flagPip: Boolean(flagPip), tucsonPip: Boolean(tucsonPip), phxPips },
             buildName,
+            plate: { cashPx, sharePx, nextLine },
+            edict: { edictOk, mcsBefore, mcsAfter },
+            streak: { streakNow, multNow, grade: gradeNow },
           });
         } catch (err) {
           report({ ok: false, error: String(err && err.stack ? err.stack : err) });

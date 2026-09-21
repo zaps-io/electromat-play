@@ -23,8 +23,10 @@ Palette: `#E63225` identity · `#1E1E24` charcoal · `#E89A2E` amber (informatio
 5. The calendar **starts paused**. Speed it with PAUSE / 1× / 2× / 4× (or keys `Space`, `1`, `2`, `4`). 1× is a slow read-the-UI month. `C` `M` `B` `L` `K` deploy kit; `[` `]` nudge price.
 6. SAVE / LOAD writes this browser’s `localStorage`.
 7. Field calls (undercut / grid strain / amenity / poach) ask MATCH, HOLD, or QUEUE LOUNGE. Rare deals still use the **DEALS** badge — never a modal stack.
+8. Every two months an **EDICT** offers three exclusive strategy cards (corridor subsidy, amenity push, or reserve crews). Pick one. Rivals answer. The others expire.
+9. Clear objectives in a chain to raise the streak multiplier on the plate. Majority, states, and MCS milestones pay a cash bonus. Month 6 and each year-end post a grade from A to D.
 
-Win by majority share in 12 cities, by holding all seven states with MCS in four cities, or by filling the treasury. The HUD campaign track shows how close you are.
+Win by majority share in 12 cities, by holding all seven states with MCS in four cities, or by filling the treasury. The plate shows cash, continental share, the month, free crews, and the streak. The track under it shows the next unlock.
 
 ## Local
 
