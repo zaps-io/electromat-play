@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* rts-yard-19: scout pulse, yard skirmish lane, crew tokens. */
+/* rts-yard-20: interconnect fog, map-pin fight, crew waypoint. */
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,13 +16,13 @@ const fail = (msg) => {
 };
 const ok = (msg) => console.log(`OK   ${msg}`);
 
-if (!html.includes('content="rts-yard-19"') || !html.includes("styles.css?v=rts-yard-19") || !html.includes("game.js?v=rts-yard-19")) {
-  fail("index.html cache is not rts-yard-19");
-} else ok("index.html cache rts-yard-19");
+if (!html.includes('content="rts-yard-20"') || !html.includes("styles.css?v=rts-yard-20") || !html.includes("game.js?v=rts-yard-20")) {
+  fail("index.html cache is not rts-yard-20");
+} else ok("index.html cache rts-yard-20");
 
-if (!game.includes("rts-yard-19") || !css.includes("rts-yard-19") || !review.includes("rts-yard-19")) {
-  fail("game/styles/REVIEW cache is not rts-yard-19");
-} else ok("game/styles/REVIEW cache rts-yard-19");
+if (!game.includes("rts-yard-20") || !css.includes("rts-yard-20") || !review.includes("rts-yard-20")) {
+  fail("game/styles/REVIEW cache is not rts-yard-20");
+} else ok("game/styles/REVIEW cache rts-yard-20");
 
 if (!game.includes("function placementRead") || !game.includes("COMPLETES CANOPY") || !html.includes("site-consequence")) {
   fail("hover consequence line missing");
@@ -249,6 +249,22 @@ if (!game.includes("function cycleCrew") || !game.includes("data-crew") || !css.
   fail("crew tokens missing");
 } else ok("selectable crew tokens");
 
+if (!game.includes("function echoMonths") || !game.includes("intel-near") || !css.includes(".intel-glow") || !css.includes(".city-node.fogged")) {
+  fail("detector hop / rival fog missing");
+} else ok("detector 1-hop glow + muted unknown rivals");
+
+if (!game.includes("pin-tug") || !css.includes(".pin-tug") || !game.includes("pin-fight")) {
+  fail("map-pin skirmish tug missing");
+} else ok("contested map-pin tug");
+
+if (!game.includes("function assignWaypoint") || !game.includes("function crewHome") || !game.includes("CLICK A CITY")) {
+  fail("crew select → waypoint missing");
+} else ok("crew select then city waypoint");
+
+if (!game.includes('name === "fog"') || !game.includes('name === "pin-fight"') || !game.includes('name === "waypoint"')) {
+  fail("yard-20 shot modes missing");
+} else ok("shot=fog, shot=pin-fight, shot=waypoint");
+
 if (!game.includes('type: "pressure"') || !game.includes("function pressureRivalClaim")) {
   fail("corridor pressure must race empty dirt, not seize a held pad");
 } else ok("corridor pressure race");
@@ -271,6 +287,9 @@ const stills = [
   ["docs/shots/yard-scout.png", 350000],
   ["docs/shots/yard-scout-map.png", 350000],
   ["docs/shots/yard-skirmish.png", 350000],
+  ["docs/shots/yard-fog.png", 120000],
+  ["docs/shots/yard-pin-fight.png", 120000],
+  ["docs/shots/yard-waypoint.png", 120000],
 ];
 for (const [rel, min] of stills) {
   const p = join(root, rel);
@@ -284,6 +303,9 @@ if (!review.includes("yard-ghosts.png") || !review.includes("yard-event.png") ||
 if (!review.includes("yard-objective.png") || !review.includes("yard-crew.png") || !review.includes("yard-scout.png") || !review.includes("yard-skirmish.png") || !review.includes("yard-scout-map.png")) {
   fail("REVIEW must list objective / crew / scout / skirmish stills");
 } else ok("REVIEW lists ops stills");
+if (!review.includes("yard-fog.png") || !review.includes("yard-pin-fight.png") || !review.includes("yard-waypoint.png")) {
+  fail("REVIEW must list fog / pin-fight / waypoint stills");
+} else ok("REVIEW lists interconnect stills");
 
 if (process.exitCode) {
   console.error("smoke-empire failed");

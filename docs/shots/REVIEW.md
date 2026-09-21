@@ -1,27 +1,27 @@
-# Empire playtest — rts-yard-19
+# Empire playtest — rts-yard-20
 
-Replay stills (paused board, no title): `?shot=board` · `?shot=empty` (Flagstaff dirt chessboard) · `?shot=ghosts` (MCS violet ring and edge) · `?shot=raising` · `?shot=full` · `?shot=rival` (LA blocked tray) · `?shot=contested` (Vegas UNDERCUT chip) · `?shot=event` (field-call only — threat chip suppressed) · `?shot=hover` (canopy consequence) · `?shot=fork` · `?shot=pop` (one complete toast) · `?shot=objective` (hold-share arc) · `?shot=crew` (crew tokens on the Phoenix yard) · `?shot=scout` (Vegas detector on the yard) · `?shot=scout-map` (Vegas + LA pulses on the map) · `?shot=skirmish` (price-war tug lane) · `?showcase=1`.
+Replay stills (paused board, no title): `?shot=board` · `?shot=empty` (Flagstaff dirt chessboard) · `?shot=ghosts` (MCS violet ring and edge) · `?shot=raising` · `?shot=full` · `?shot=rival` (LA blocked tray) · `?shot=contested` (Vegas UNDERCUT chip) · `?shot=event` (field-call only — threat chip suppressed) · `?shot=hover` (canopy consequence) · `?shot=fork` · `?shot=pop` (one complete toast) · `?shot=objective` (hold-share arc) · `?shot=crew` (crew tokens on the Phoenix yard) · `?shot=scout` (Vegas detector on the yard) · `?shot=scout-map` (Vegas + LA pulses on the map) · `?shot=skirmish` (price-war tug lane) · `?shot=fog` (Vegas DET plus 1-hop INTEL, distant rivals muted) · `?shot=pin-fight` (Vegas map-pin tug) · `?shot=waypoint` (crew pips on Flagstaff and Tucson) · `?showcase=1`.
 
-Checked-in frames: `yard-empty.png` · `yard-pad.png` · `yard-ghosts.png` · `yard-event.png` · `yard-raising.png` · `yard-full.png` · `yard-rival.png` · `yard-contested.png` · `yard-hover.png` · `yard-threat.png` · `yard-fork.png` · `yard-pop.png` · `yard-objective.png` · `yard-crew.png` · `yard-scout.png` · `yard-scout-map.png` · `yard-skirmish.png`.
+Checked-in frames: `yard-empty.png` · `yard-pad.png` · `yard-ghosts.png` · `yard-event.png` · `yard-raising.png` · `yard-full.png` · `yard-rival.png` · `yard-contested.png` · `yard-hover.png` · `yard-threat.png` · `yard-fork.png` · `yard-pop.png` · `yard-objective.png` · `yard-crew.png` · `yard-scout.png` · `yard-scout-map.png` · `yard-skirmish.png` · `yard-fog.png` · `yard-pin-fight.png` · `yard-waypoint.png`.
 
-## rts-yard-19
+## rts-yard-20
 
-Experiment on top of the 10/10 yard-18 ops pass. Three AoE/StarCraft reads, still no combat units and no pad seizure.
+Playtest-19 scored 9/10. Three interconnect reads, still no combat units and no pad seizure.
 
-- **Scout pulse.** The first scout is still $40K and one crew for one month. When it lands, the city keeps a fading detector for 4 months: a cyan radar on the map pin (`DET n`) and a SCOUTED badge on the yard. Intel refresh on that city is free while the pulse is up and renews the fade. A second scout can go to another city at the same time (two flights max). The scout button follows the city you are looking at — `SCOUT OUT` only if that city already has a crew in the air.
-- **Spatial skirmish.** PRICE WAR and AMENITY RACE still use the ops-strip meters. The same fight is now a tug lane on the yard drive rank: Zaps red fills from the near end, the rival color from the far end. Click the strip, the yard banner, the HUD meter, or press `P` to push Zaps. An on-call crew pushes a little harder. The winner is still a small price step and, for Zaps, $120K. Nobody takes the pad.
-- **Crew tokens.** Three worker pips sit on a Zaps yard (and a smaller set on the Phoenix map pin). Click a token, or press `1` `2` `3` while the yard is open, to cycle that crew RAISE → RESPOND → SCOUT on the open city. `R` and the strip still flip the whole fork. Build cap is the number of crews on RAISE. A crew in the air or on call is not idle. Idle RAISE crews still burn standby cash and hand rivals the month. Rival pads do not get your tokens. Speed keys `1` and `2` still change speed on the continent map.
+- **Interconnect fog.** A detector still rings the scouted city for 4 months (`DET n`, free refresh). For that same pulse it radiates one hop along the corridor: neighbors wear a soft INTEL glow, and the corridor segment lights cyan. Rival pins you have not detected, and that are not adjacent to a live detector, stay muted and read UNKNOWN. A city you already hold, or a scout still in the air, is not fog. Echo cities do not get the price line or the free refresh.
+- **Map-pin fight.** PRICE WAR and AMENITY RACE keep the yard tug lane and the ops meters. The contested city's map pin also shows a small Zaps/rival tug and a PUSH chip, and the pin flashes. Click the chip or the pin (or press `P`) to push. Double-click the pin to open the yard. Nobody takes the pad. No units, no flanking.
+- **Crew select → waypoint.** Click a crew token, or press `1` `2` `3` on a yard, to select it. Click it again to cycle RAISE → RESPOND → SCOUT. SCOUT and `S` arm the selected crew and wait for a city click — they do not launch at the open yard. Clicking a city then sets that crew's SCOUT or RESPOND target. Map pips sit on every Zaps city (and on a rival pin only while a scout is assigned there), not only Phoenix. Yard tokens stay on Zaps yards. Rival yards still have none.
 
 ## Tried and dropped
 
-- Per-crew task cards in the tray. Yard-18 already found they doubled the tray. Tokens on the yard are the lighter version.
-- A second $40K charge to refresh intel while the detector is still ringing.
-- Resolving the tug inside the month clock. The lane click is the within-month push; the meters still tick with the calendar.
-- Paying a skirmish win with the rival's pad.
-- Marching crew tokens between cities, or any real combat unit.
+- Fogging the whole painted continent. Only unknown rival pins mute. Dirt and Zaps yards stay readable.
+- A second detector badge on the hop. Neighbors get INTEL, not `DET n`, and not the free refresh.
+- Replacing the yard tug with the map pin. Both stay. The pin is the interconnect read.
+- Marching tokens as combat units, or paying a skirmish with the rival pad.
 
-## Holds from rts-yard-18
+## Holds from rts-yard-19
 
+- Scout pulse, yard tug lane, and the three crew tokens.
 - Ops objectives, corridor pressure, and the build-order fork.
 - Rival pads stay sealed. LA, Dallas, and Denver still read RIVAL SITE.
 - Empty claimable yards stay a dirt chessboard. No survey-flag hero.
@@ -31,28 +31,30 @@ Experiment on top of the 10/10 yard-18 ops pass. Three AoE/StarCraft reads, stil
 - A kit completion emits one toast node. The yard flash and in-place pop stay.
 - Goldilocks frame stays 76% / cap 800.
 - Official 1.8KB wordmarks (`?v=canon-1823`) are unchanged.
+- On the continent map, `1` `2` `4` are still speed.
 
 ## Playtest notes
 
-1. Open `?shot=scout-map` — Vegas wears a bright `DET 4` radar. LA wears a dimmer `DET 2` from the second scout. Phoenix HQ shows the three crew pips.
-2. Open `?shot=scout` — the Vegas yard shows the SCOUTED detector and the free-refresh intel line. The strip button reads REFRESH LAS VEGAS · FREE.
-3. Open `?shot=skirmish` — the drive rank is a red/cyan tug. Zaps is ahead. PUSH P is on the yard. The HUD meters are still there.
-4. Open `?shot=crew` — Phoenix yard tokens: crew 1 is CALL (picked), 2 and 3 are RAISE. The strip still reads 1 ON CALL.
+1. Open `?shot=fog` — Vegas wears `DET 4`. Phoenix, Los Angeles, St. George, and Reno wear INTEL, and the corridors from Vegas glow. Dallas, Denver, Salt Lake City, El Paso, and San Diego stay muted UNKNOWN.
+2. Open `?shot=pin-fight` — the Vegas pin flashes and shows a red/cyan tug labeled PUSH. Clicking it moves Zaps the same way `P` does. The yard lane is still there if you open the site.
+3. Open `?shot=waypoint` — crew 1 is selected on Flagstaff (RESPOND), crew 2 is on Tucson (SCOUT), crew 3 stays on Phoenix. The hint reads CLICK A CITY.
+4. Select a crew, press `S` or cycle to SCOUT, then click a different city. The scout does not auto-launch at the yard you had open.
 5. Open `?shot=empty` and `?shot=rival` — dirt chessboard, LA still RIVAL SITE, no crew tokens on the rival pad.
-6. On a yard, `1` `2` `3` assign that crew. On the map, `1` `2` `4` are still speed.
+6. Open `?shot=scout-map` — Vegas `DET 4` and LA `DET 2` still pulse. Their neighbors pick up the hop glow.
 
 ## Verdict
 
 | Bar | Grade | Evidence |
 |---|---|---|
-| Scout pulse | **RAISE** | Map radar + yard SCOUTED, 4 months, free refresh, second scout |
-| Spatial skirmish | **RAISE** | Drive-rank tug, click or `P`, meters kept |
-| Crew tokens | **RAISE** | 1–3 selectable, RAISE / RESPOND / SCOUT, idle tax stays |
+| Interconnect fog | **RAISE** | DET on the scouted city, INTEL one hop, UNKNOWN rivals muted |
+| Map-pin fight | **RAISE** | Pin tug + PUSH, click or `P`, yard lane kept |
+| Crew waypoint | **RAISE** | Select then city, pips on Flagstaff and Tucson |
 | Rival pad seizure | **HOLD** | LA/Dallas/Denver tray = RIVAL SITE |
 | Empty claim | **HOLD** | Flagstaff dirt chessboard |
 | Field-call dock | **HOLD** | price visible |
 | MCS violet / one toast | **HOLD** | `#d8c4ff`, single COMPLETE node |
 | Yard framing | **HOLD** | ~76% of yard, cap 800 |
 | Brand | **HOLD** | Official cream/red wordmarks |
+| Scout pulse / yard tug / tokens | **HOLD** | rts-yard-19 reads stay |
 
-Night Shift untouched. Cache `rts-yard-19`.
+Night Shift untouched. Cache `rts-yard-20`.

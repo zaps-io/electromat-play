@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-yard-19 */
+/* empire-build: rts-yard-20 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -22,7 +22,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-yard-19";
+  const SPRITE_V = "rts-yard-20";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -43,7 +43,7 @@
     voltspan: "240 / 204",
     rival: "240 / 167",
   };
-  const KIT_V = "rts-yard-19";
+  const KIT_V = "rts-yard-20";
   const KIT_SPRITES = {
     dc: `assets/sprites/kit-dc.png?v=${KIT_V}`,
     mcs: `assets/sprites/kit-mcs.png?v=${KIT_V}`,
@@ -623,7 +623,8 @@
     state.crews.forEach((c, i) => {
       c.id = i + 1;
       if (c.task !== "raise" && c.task !== "respond" && c.task !== "scout") c.task = "raise";
-      if (c.task !== "scout") c.city = null;
+      if (c.task === "raise") c.city = null;
+      else if (c.city && !CITY_BY_ID[c.city]) c.city = null;
     });
     if (state.crewPosture === "respond" && !state.crews.some((c) => c.task === "respond")) {
       const volunteer = state.crews.find((c) => c.task === "raise");
@@ -1885,6 +1886,24 @@
     return Math.max(0.34, Math.min(1, left / PULSE_MONTHS));
   }
 
+  // Detector rings the scouted city and one corridor hop. Neighbors glow
+  // for the same pulse; they do not get the free refresh or the DET badge.
+  function echoMonths(cityId) {
+    const meta = CITY_BY_ID[cityId];
+    if (!meta || pulseMonths(cityId) > 0) return 0;
+    let best = 0;
+    for (const nid of meta.neighbors) best = Math.max(best, pulseMonths(nid));
+    return best;
+  }
+
+  function cityRevealed(cityId) {
+    if (!state || !CITY_BY_ID[cityId]) return false;
+    if (pulseMonths(cityId) > 0 || echoMonths(cityId) > 0) return true;
+    if (scoutFlight(cityId)) return true;
+    const city = state.cities[cityId];
+    return Boolean(city && playerClaiming(city));
+  }
+
   function scoutBlock(cityId) {
     if (!cityId || !CITY_BY_ID[cityId]) return "PICK A CITY";
     if (scoutFlight(cityId)) return "SCOUT OUT";
@@ -1934,8 +1953,9 @@
     };
     const rival = RIVALS[sc.rival];
     const name = CITY_BY_ID[sc.city].name;
-    log(`Detector on ${name}. ${rival ? rival.name : "Rival"} next ${sc.kit} · $${Number(sc.price).toFixed(2)}/kWh. Pulse holds ${PULSE_MONTHS} months — refresh is free.`, "deal");
-    toast(`DETECTOR · ${name} · ${PULSE_MONTHS} MO`, "good");
+    const hops = (CITY_BY_ID[sc.city].neighbors || []).map((id) => CITY_BY_ID[id].name);
+    log(`Detector on ${name}. ${rival ? rival.name : "Rival"} next ${sc.kit} · $${Number(sc.price).toFixed(2)}/kWh. Pulse holds ${PULSE_MONTHS} months — refresh is free. 1 hop: ${hops.join(", ")}.`, "deal");
+    toast(`DETECTOR · ${name} · ${PULSE_MONTHS} MO · 1 HOP`, "good");
   }
 
   function launchScout(cityId, opts = {}) {
@@ -2013,7 +2033,72 @@
     syncPostureFromCrews();
   }
 
-  function cycleCrew(id, cityId) {
+  function crewHome(crew) {
+    if (crew && crew.city && CITY_BY_ID[crew.city]) return crew.city;
+    return "phoenix";
+  }
+
+  function waypointCrew() {
+    if (!crewPick || !state) return null;
+    const crew = crews().find((c) => c.id === crewPick);
+    if (!crew) return null;
+    if (crew.task === "respond") return crew;
+    if (crew.task === "scout" && !(crew.city && scoutFlight(crew.city))) return crew;
+    return null;
+  }
+
+  function armScout(crewId) {
+    normalizeCrews();
+    const crew = state.crews.find((c) => c.id === Number(crewId));
+    if (!crew) return false;
+    if (crew.task === "scout" && crew.city && scoutFlight(crew.city)) {
+      toast(`CREW ${crew.id} · SCOUT OUT · ${scoutFlight(crew.city).left} MO`, "deal");
+      renderAll();
+      return false;
+    }
+    crew.task = "scout";
+    crew.city = null;
+    crewPick = crew.id;
+    syncPostureFromCrews();
+    toast(`CREW ${crew.id} · SCOUT · click a city`, "deal");
+    log(`Crew ${crew.id} armed to scout. Click the city on the interconnect — not the open yard.`, "deal");
+    renderAll();
+    return true;
+  }
+
+  function assignWaypoint(cityId) {
+    if (!cityId || !CITY_BY_ID[cityId]) return false;
+    const crew = waypointCrew();
+    if (!crew) return false;
+    if (crew.task === "scout") {
+      launchScout(cityId, { crewId: crew.id });
+      return true;
+    }
+    crew.city = cityId;
+    state.idleMonths = 0;
+    syncPostureFromCrews();
+    const name = CITY_BY_ID[cityId].name;
+    toast(`CREW ${crew.id} · RESPOND · ${name}`, "deal");
+    log(`Crew ${crew.id} on call at ${name}.`, "deal");
+    renderAll();
+    return true;
+  }
+
+  function selectCrew(id) {
+    normalizeCrews();
+    const crew = state.crews.find((c) => c.id === Number(id));
+    if (!crew) return false;
+    if (crewPick !== crew.id) {
+      crewPick = crew.id;
+      const ready = crew.task === "scout" || crew.task === "respond";
+      toast(ready ? `CREW ${crew.id} SELECT · click a city` : `CREW ${crew.id} SELECT`, "deal");
+      renderAll();
+      return true;
+    }
+    return cycleCrew(crew.id);
+  }
+
+  function cycleCrew(id) {
     normalizeCrews();
     const crew = state.crews.find((c) => c.id === Number(id));
     if (!crew) return false;
@@ -2025,17 +2110,14 @@
     }
     const order = ["raise", "respond", "scout"];
     const next = order[(Math.max(0, order.indexOf(crew.task)) + 1) % order.length];
-    if (next === "scout") {
-      const target = cityId && CITY_BY_ID[cityId] ? cityId : (siteView || selected);
-      return launchScout(target, { crewId: crew.id });
-    }
+    if (next === "scout") return armScout(crew.id);
     crew.task = next;
     crew.city = null;
     if (next === "respond") state.idleMonths = 0;
     syncPostureFromCrews();
     const cap = crewCap();
     toast(next === "respond"
-      ? `CREW ${crew.id} · RESPOND · on call. Build cap ${cap}.`
+      ? `CREW ${crew.id} · RESPOND · click a city. Build cap ${cap}.`
       : `CREW ${crew.id} · RAISE`, "deal");
     log(`Crew ${crew.id} assigned ${next.toUpperCase()}.`, "deal");
     renderAll();
@@ -2086,8 +2168,14 @@
     const block = selected ? scoutBlock(selected) : "PICK A CITY";
     const flightHere = selected ? scoutFlight(selected) : null;
     const pulseHere = selected ? pulseMonths(selected) : 0;
+    const picked = crews().find((c) => c.id === crewPick);
+    const pickedFlying = picked && picked.task === "scout" && scoutFlight(picked.city);
     let scoutText = `SCOUT ${scoutCity} · $40K`;
-    if (flightHere) scoutText = `SCOUT OUT · ${flightHere.left} MO`;
+    let scoutDisabled = Boolean(block);
+    if (picked && !pickedFlying) {
+      scoutText = `SCOUT · CREW ${picked.id} · CLICK CITY`;
+      scoutDisabled = false;
+    } else if (flightHere) scoutText = `SCOUT OUT · ${flightHere.left} MO`;
     else if (pulseHere) scoutText = `REFRESH ${scoutCity} · FREE`;
     else if (block) scoutText = `SCOUT · ${block}`;
     const pct = obj && obj.total ? Math.max(8, Math.round((Math.max(0, obj.left) / obj.total) * 100)) : 0;
@@ -2107,7 +2195,7 @@
         <button type="button" data-posture="raise" class="${posture === "raise" ? "on" : ""}">RAISE</button>
         <button type="button" data-posture="respond" class="${posture === "respond" ? "on" : ""}">RESPOND</button>
         <span class="crew-read">${crewReadText()}</span>
-        <button type="button" id="btn-scout"${block ? " disabled" : ""}>${scoutText}</button>
+        <button type="button" id="btn-scout"${scoutDisabled ? " disabled" : ""}>${scoutText}</button>
       </div>`;
   }
 
@@ -2133,7 +2221,11 @@
         pushSkirmish();
         return;
       }
-      if (e.target.closest("#btn-scout")) launchScout(selected);
+      if (e.target.closest("#btn-scout")) {
+        const picked = crewPick && crews().find((c) => c.id === crewPick);
+        if (picked && !(picked.task === "scout" && scoutFlight(picked.city))) armScout(crewPick);
+        else launchScout(selected);
+      }
     });
   }
 
@@ -2325,7 +2417,27 @@
   function renderCorridors() {
     const svg = $("corridor-layer");
     if (!svg) return;
-    svg.innerHTML = "";
+    if (!state) {
+      svg.innerHTML = "";
+      return;
+    }
+    const seen = new Set();
+    let html = "";
+    for (const meta of CITIES) {
+      const alpha = pulseAlpha(meta.id);
+      if (alpha <= 0) continue;
+      for (const nid of meta.neighbors) {
+        const a = meta.id < nid ? meta.id : nid;
+        const b = meta.id < nid ? nid : meta.id;
+        const key = `${a}|${b}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const other = CITY_BY_ID[nid];
+        if (!other) continue;
+        html += `<line class="corridor-hop" x1="${meta.x}" y1="${meta.y}" x2="${other.x}" y2="${other.y}" stroke-opacity="${alpha.toFixed(2)}" />`;
+      }
+    }
+    svg.innerHTML = html;
   }
 
   function occupantClass(city) {
@@ -2810,15 +2922,18 @@
       const tier = compoundTier(youSite);
       const sharp = rivalSite(city);
       const nodeRival = strongestRival(city);
-      btn.className = `city-node ${occ} ${selected === meta.id ? "selected" : ""} ${raising ? "raising" : ""} ${siteView === meta.id ? "site-focus" : ""} ${sharp ? "sharp-rival" : ""} tier-${tier}`;
+      const revealed = cityRevealed(meta.id);
+      const fogged = sharp && !revealed;
+      const fightHere = state.skirmish && state.skirmish.city === meta.id;
+      btn.className = `city-node ${occ} ${selected === meta.id ? "selected" : ""} ${raising ? "raising" : ""} ${siteView === meta.id ? "site-focus" : ""} ${sharp && !fogged ? "sharp-rival" : ""} ${fogged ? "fogged" : ""} ${fightHere ? "pin-fight" : ""} tier-${tier}`;
       if (nodeRival && (sharp || contestedCity(city))) btn.style.setProperty("--rival", nodeRival.color);
       btn.dataset.city = meta.id;
       btn.style.left = `${(meta.x / 1200) * 100}%`;
       btn.style.top = `${(meta.y / 800) * 100}%`;
-      btn.title = `${meta.name}, ${meta.state}`;
+      btn.title = fogged ? `${meta.name}, ${meta.state} — unknown rival` : `${meta.name}, ${meta.state}`;
       btn.tabIndex = 0;
       btn.addEventListener("click", (ev) => {
-        if (ev.target.closest(".crew-token")) return;
+        if (ev.target.closest(".crew-token") || ev.target.closest(".pin-tug")) return;
         ev.preventDefault();
         enterSite(meta.id);
       });
@@ -2839,7 +2954,7 @@
         const kit = document.createElement("span");
         const rival = strongestRival(city);
         kit.className = "city-kit rival-tag";
-        kit.textContent = rival ? rival.name : "RIVAL";
+        kit.textContent = fogged ? "UNKNOWN" : rival ? rival.name : "RIVAL";
         btn.append(kit);
       }
       const label = document.createElement("span");
@@ -2849,6 +2964,7 @@
         : meta.name.toUpperCase();
       btn.append(label);
       const pulse = pulseMonths(meta.id);
+      const echo = echoMonths(meta.id);
       if (pulse > 0) {
         btn.classList.add("scouted");
         const radar = document.createElement("span");
@@ -2859,12 +2975,42 @@
         pin.className = "scout-pin";
         pin.textContent = `DET ${pulse}`;
         btn.append(radar, pin);
+      } else if (echo > 0) {
+        btn.classList.add("intel-near");
+        const glow = document.createElement("span");
+        glow.className = "intel-glow";
+        let hopAlpha = 0.45;
+        for (const nid of meta.neighbors) hopAlpha = Math.max(hopAlpha, pulseAlpha(nid) * 0.72);
+        glow.style.opacity = String(Math.min(1, hopAlpha));
+        const pin = document.createElement("span");
+        pin.className = "intel-pin";
+        pin.textContent = "INTEL";
+        btn.append(glow, pin);
       }
-      if (meta.id === "phoenix") {
+      if (fightHere) {
+        const sk = state.skirmish;
+        const rival = RIVALS[sk.rival];
+        const total = Math.max(1, (sk.you || 0) + (sk.them || 0));
+        const youW = Math.round(((sk.you || 0) / total) * 100);
+        const tug = document.createElement("span");
+        tug.className = "pin-tug";
+        tug.dataset.push = "1";
+        tug.title = `${sk.kind === "amenity" ? "AMENITY RACE" : "PRICE WAR"} · click to PUSH`;
+        tug.innerHTML =
+          `<span class="pin-tug-bar">` +
+          `<i class="you" style="width:${youW}%"></i>` +
+          `<i class="them" style="width:${100 - youW}%;background:${rival ? rival.color : "#E89A2E"}"></i>` +
+          `</span><b>PUSH</b>`;
+        btn.append(tug);
+      }
+      const stationed = crews().filter((c) => crewHome(c) === meta.id);
+      const pipOnRival = sharp && stationed.some((c) => c.task === "scout");
+      const pipOnYard = stationed.length && (!sharp || meta.id === "phoenix" || playerClaiming(city) || pipOnRival);
+      if (pipOnYard) {
         const holder = document.createElement("div");
         holder.className = "crew-tokens map";
-        holder.innerHTML = crewTokenMarkup();
-        btn.append(holder);
+        holder.innerHTML = crewTokenMarkup(meta.id);
+        if (holder.innerHTML) btn.append(holder);
       }
       layer.appendChild(btn);
     }
@@ -3565,17 +3711,19 @@
     );
   }
 
-  function crewTokenMarkup() {
-    const list = crews();
+  function crewTokenMarkup(cityId) {
+    const all = crews();
+    const list = cityId ? all.filter((c) => crewHome(c) === cityId) : all;
+    if (!list.length) return "";
     const builds = playerBuilds();
-    const raisers = list.filter((c) => c.task === "raise");
+    const raisers = all.filter((c) => c.task === "raise");
     const idleIds = new Set(raisers.slice(builds).map((c) => c.id));
     return list.map((c) => {
       const label = c.task === "respond" ? "CALL" : c.task === "scout" ? "SCOUT" : "RAISE";
       const idle = idleIds.has(c.id) ? " idle" : "";
       const picked = crewPick === c.id ? " picked" : "";
-      const where = c.task === "scout" && c.city && CITY_BY_ID[c.city]
-        ? ` title="SCOUT ${CITY_BY_ID[c.city].name}"`
+      const where = c.city && CITY_BY_ID[c.city]
+        ? ` title="${c.task.toUpperCase()} ${CITY_BY_ID[c.city].name}"`
         : "";
       return `<button type="button" class="crew-token task-${c.task}${idle}${picked}" data-crew="${c.id}"${where}><i>${c.id}</i><b>${label}</b></button>`;
     }).join("");
@@ -3698,7 +3846,7 @@
       if (crewBtn && state) {
         e.preventDefault();
         e.stopPropagation();
-        cycleCrew(Number(crewBtn.getAttribute("data-crew")), siteView || selected);
+        selectCrew(Number(crewBtn.getAttribute("data-crew")));
         return;
       }
       if (e.target.closest("[data-push]") && state) {
@@ -3907,7 +4055,7 @@
     stage.dataset.bound = "1";
     stage.addEventListener("pointerdown", (e) => {
       if (e.button !== 0) return;
-      if (e.target.closest(".map-tools") || e.target.closest(".site-overlay") || e.target.closest(".crew-token")) return;
+      if (e.target.closest(".map-tools") || e.target.closest(".site-overlay") || e.target.closest(".crew-token") || e.target.closest(".pin-tug")) return;
       mapDrag = { id: e.pointerId, x: e.clientX, y: e.clientY, ox: mapCam.x, oy: mapCam.y, moved: false };
       stage.setPointerCapture(e.pointerId);
       stage.classList.add("panning");
@@ -3931,13 +4079,28 @@
       if (lastPan) e.preventDefault();
     };
     stage.addEventListener("pointerup", (e) => {
+      if (e.target.closest(".pin-tug")) {
+        if (mapDrag && mapDrag.id === e.pointerId) endDrag(e);
+        return;
+      }
       const dragged = mapDrag && mapDrag.id === e.pointerId && mapDrag.moved;
       endDrag(e);
       if (dragged || lastPan) return;
-      if (siteView) return;
       if (e.target.closest(".map-tools") || e.target.closest(".site-overlay") || e.target.closest(".crew-token")) return;
+      if (siteView) return;
       const city = cityAtClient(e.clientX, e.clientY);
-      if (city) enterSite(city.id);
+      if (!city) return;
+      if (assignWaypoint(city.id)) return;
+      if (state.skirmish && state.skirmish.city === city.id) {
+        pushSkirmish();
+        if (e.detail >= 2) enterSite(city.id);
+        else {
+          selected = city.id;
+          renderAll();
+        }
+        return;
+      }
+      enterSite(city.id);
     });
     stage.addEventListener("pointercancel", endDrag);
     stage.addEventListener("wheel", (e) => {
@@ -3957,11 +4120,17 @@
       zoomAt(r.width / 2, r.height / 2, mapCam.scale / 1.2);
     });
     stage.addEventListener("click", (e) => {
+      if (e.target.closest(".pin-tug") && state?.skirmish) {
+        e.preventDefault();
+        e.stopPropagation();
+        pushSkirmish();
+        return;
+      }
       const crewBtn = e.target.closest(".crew-tokens.map [data-crew]");
       if (!crewBtn || !state) return;
       e.preventDefault();
       e.stopPropagation();
-      cycleCrew(Number(crewBtn.getAttribute("data-crew")), selected || "phoenix");
+      selectCrew(Number(crewBtn.getAttribute("data-crew")));
     });
     $("btn-exit-site")?.addEventListener("click", exitSite);
     $("btn-exit-site-overlay")?.addEventListener("click", exitSite);
@@ -4172,6 +4341,29 @@
     renderDealChrome();
   }
 
+  function renderWaypointHint() {
+    const stage = $("map-stage");
+    if (!stage) return;
+    let hint = $("waypoint-hint");
+    if (!hint) {
+      hint = document.createElement("p");
+      hint.id = "waypoint-hint";
+      hint.className = "waypoint-hint hidden";
+      stage.append(hint);
+    }
+    const crew = state && !siteView ? waypointCrew() : null;
+    if (!crew) {
+      hint.classList.add("hidden");
+      hint.textContent = "";
+      return;
+    }
+    const where = crew.city && CITY_BY_ID[crew.city] ? ` · ${CITY_BY_ID[crew.city].name.toUpperCase()}` : "";
+    hint.classList.remove("hidden");
+    hint.textContent = crew.task === "scout"
+      ? `CREW ${crew.id} SCOUT · CLICK A CITY${where}`
+      : `CREW ${crew.id} RESPOND · CLICK A CITY${where}`;
+  }
+
   function renderAll() {
     if (!state) return;
     allShares();
@@ -4184,6 +4376,8 @@
     applyMapCam();
     renderSiteYard();
     renderOps();
+    renderWaypointHint();
+    $("map-stage")?.classList.toggle("await-waypoint", Boolean(waypointCrew()) && !siteView);
   }
 
   function hasSave() {
@@ -4442,6 +4636,55 @@
       selected = "phoenix";
       return null;
     }
+    if (name === "fog" || name === "intel-net") {
+      state.month = 5;
+      state.forkShown = true;
+      state.pendingFork = null;
+      z("vegas").dc = 2;
+      state.cities.vegas.sites.voltspan.dc = 2;
+      state.cities.vegas.price.zaps = 0.4;
+      state.cities.vegas.price.voltspan = 0.36;
+      state.intel.vegas = { rival: "voltspan", kit: "LOUNGE", price: 0.34, until: 8 };
+      selected = "phoenix";
+      return null;
+    }
+    if (name === "pin-fight" || name === "skirmish-map") {
+      state.month = 6;
+      state.forkShown = true;
+      state.pendingFork = null;
+      z("vegas").dc = 2;
+      z("vegas").lounge = 1;
+      state.cities.vegas.sites.voltspan.dc = 2;
+      state.cities.vegas.sites.voltspan.lounge = 0;
+      state.cities.vegas.price.zaps = 0.37;
+      state.cities.vegas.price.voltspan = 0.43;
+      state.crewPosture = "respond";
+      state.crews = [
+        { id: 1, task: "respond", city: null },
+        { id: 2, task: "raise", city: null },
+        { id: 3, task: "raise", city: null },
+      ];
+      state.skirmish = { city: "vegas", rival: "voltspan", kind: "price", you: 62, them: 41, left: 2 };
+      crewPick = 0;
+      selected = "vegas";
+      return null;
+    }
+    if (name === "waypoint" || name === "crews-map") {
+      state.month = 4;
+      state.forkShown = true;
+      state.pendingFork = null;
+      z("flagstaff").dc = 2;
+      z("tucson").dc = 1;
+      state.crewPosture = "respond";
+      state.crews = [
+        { id: 1, task: "respond", city: "flagstaff" },
+        { id: 2, task: "scout", city: "tucson" },
+        { id: 3, task: "raise", city: null },
+      ];
+      crewPick = 1;
+      selected = "flagstaff";
+      return null;
+    }
     if (name === "skirmish" || name === "war") {
       state.month = 6;
       state.forkShown = true;
@@ -4524,7 +4767,7 @@
       }
       if (onBoard && siteView && !typing && (e.key === "1" || e.key === "2" || e.key === "3")) {
         e.preventDefault();
-        cycleCrew(Number(e.key), siteView);
+        selectCrew(Number(e.key));
       } else {
         if (e.key === "1") setSpeed(1);
         if (e.key === "2") setSpeed(2);
@@ -4533,6 +4776,11 @@
       if (e.key === "Escape") {
         if (siteView) {
           exitSite();
+          return;
+        }
+        if (crewPick) {
+          crewPick = 0;
+          if (state) renderAll();
           return;
         }
         hideModal();
@@ -4556,7 +4804,9 @@
       }
       if ((e.key === "s" || e.key === "S") && selected) {
         e.preventDefault();
-        launchScout(selected);
+        const picked = crewPick && crews().find((c) => c.id === crewPick);
+        if (picked && !(picked.task === "scout" && scoutFlight(picked.city))) armScout(crewPick);
+        else launchScout(selected);
       }
       if ((e.key === "p" || e.key === "P") && state.skirmish) {
         e.preventDefault();
@@ -4608,7 +4858,7 @@
   }
 
   window.__EMPIRE_SMOKE__ = {
-    build: "rts-yard-19",
+    build: "rts-yard-20",
     hitR: CITY_HIT_R,
     goldilocks: 0.76,
     nearestCity,
@@ -4644,6 +4894,8 @@
     intel: (id) => state.intel[id] || null,
     skirmish: () => state.skirmish,
     pulse: (id) => pulseMonths(id),
+    echo: (id) => echoMonths(id),
+    revealed: (id) => cityRevealed(id),
     scoutPrice: (id) => (pulseMonths(id) > 0 && !scoutFlight(id) ? 0 : SCOUT_COST),
     flights: () => inFlight().map((s) => ({ city: s.city, left: s.left })),
     finishScouts: () => {
@@ -4652,7 +4904,10 @@
     },
     pushSkirmish: () => pushSkirmish(),
     crews: () => crews().map((c) => ({ id: c.id, task: c.task, city: c.city })),
-    cycleCrew: (id, city) => cycleCrew(id, city || siteView || selected),
+    cycleCrew: (id) => cycleCrew(id),
+    selectCrew: (id) => selectCrew(id),
+    assignWaypoint: (id) => assignWaypoint(id),
+    armScout: (id) => armScout(id || crewPick),
     crewCap,
     completeToasts: () => {
       toast("DC CHARGER COMPLETE · Flagstaff", "good");
