@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-yard-20 */
+/* empire-build: rts-yard-21 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -22,7 +22,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-yard-20";
+  const SPRITE_V = "rts-yard-21";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -43,7 +43,7 @@
     voltspan: "240 / 204",
     rival: "240 / 167",
   };
-  const KIT_V = "rts-yard-20";
+  const KIT_V = "rts-yard-21";
   const KIT_SPRITES = {
     dc: `assets/sprites/kit-dc.png?v=${KIT_V}`,
     mcs: `assets/sprites/kit-mcs.png?v=${KIT_V}`,
@@ -377,6 +377,15 @@
       ],
       intel: {},
       skirmish: null,
+      score: 0,
+      streak: 0,
+      chain: [],
+      milestones: {},
+      shareMarks: null,
+      edict: null,
+      pendingEdict: null,
+      nextEdict: 2,
+      gradeAt: 0,
     };
   }
 
@@ -409,8 +418,14 @@
     return site.dc * 1 + site.mcs * 2.35 + site.bess * 0.35;
   }
 
-  function amenity(site) {
-    return 1 + (site.lounge ? 0.14 : 0) + (site.market ? 0.1 : 0);
+  function edictLive(id) {
+    return Boolean(state && state.edict && state.edict.id === id && state.edict.left > 0);
+  }
+
+  function amenity(site, faction) {
+    let n = 1 + (site.lounge ? 0.14 : 0) + (site.market ? 0.1 : 0);
+    if (faction === YOU && site.lounge && edictLive("amenity")) n += 0.05;
+    return n;
   }
 
   function siteCount(site) {
@@ -451,7 +466,7 @@
       const war = city.war > 0 ? 1.12 : 1;
       let a =
         capacity(site) *
-        amenity(site) *
+        amenity(site, f) *
         Math.pow(0.48 / price, exp) *
         war *
         corridorPull(city, f);
@@ -481,7 +496,7 @@
     const dcKwh = site.dc * 620 * 26 * (meta.demand / 100);
     const mcsKwh = site.mcs * 2800 * 14 * ((meta.truck + (city.truckBoost || 0)) / 40);
     const bess = site.bess ? 1.16 : 1;
-    const kwh = (dcKwh + mcsKwh) * share * amenity(site) * bess;
+    const kwh = (dcKwh + mcsKwh) * share * amenity(site, faction) * bess;
     const retail = site.market ? share * 2200 * (meta.demand / 80) : 0;
     const lounge = site.lounge ? share * 1600 : 0;
     return kwh * city.price[faction] + retail + lounge;
@@ -582,6 +597,7 @@
         lastPriceToast = { city: city.id, at: now, from: prev, to: after };
       }
     }
+    tickSharePops();
   }
 
   function playerBuilds() {
@@ -715,6 +731,7 @@
     const meta = CITY_BY_ID[cityId];
     let n = Math.round(BUILD[type].cost * meta.land);
     if (state.landOption) n = Math.round(n * 0.7);
+    if (type === "mcs" && edictLive("corridor")) n = Math.round(n * 0.8);
     return n;
   }
 
@@ -913,6 +930,8 @@
       if (state.landOption) state.landOption = 0;
     }
     const city = state.cities[cityId];
+    let months = spec.months;
+    if (faction === YOU && edictLive("reserve")) months += 1;
     const claimEmpty =
       faction === YOU &&
       !hasCap(city.sites[YOU]) &&
@@ -928,13 +947,13 @@
       faction,
       city: cityId,
       type,
-      left: spec.months,
+      left: months,
       cost,
       claimEmpty,
       slot,
     });
     if (faction === YOU) {
-      log(`${spec.name} queued in ${CITY_BY_ID[cityId].name} · ${spec.months} mo · ${money(cost)}`);
+      log(`${spec.name} queued in ${CITY_BY_ID[cityId].name} · ${months} mo · ${money(cost)}`);
       toast(`${spec.name} raising · ${CITY_BY_ID[cityId].name}`, "good");
     }
     renderAll();
@@ -961,6 +980,7 @@
     } else if (BUILD[job.type].unique) site[job.type] = 1;
     else site[job.type] += 1;
     if (job.faction === YOU) {
+      tickSharePops();
       pops.push({
         city: job.city,
         type: job.type,
@@ -1225,7 +1245,7 @@
   function offerBuildFork() {
     if (!state || state.over || state.buildPath || state.forkShown || state.pendingFork) return;
     if (state.month > 4) return;
-    if (state.pendingDeal || state.pendingEvent) return;
+    if (state.pendingDeal || state.pendingEvent || state.pendingEdict) return;
     state.pendingFork = { at: state.month };
     state.forkShown = true;
     toast("BUILD ORDER · MCS corridor or lounge + market.", "deal");
@@ -1233,7 +1253,7 @@
   }
 
   function maybeFieldCall() {
-    if (state.over || state.pendingDeal || state.pendingEvent || state.pendingFork) return;
+    if (state.over || state.pendingDeal || state.pendingEvent || state.pendingFork || state.pendingEdict) return;
     if (state.month < (state.nextEvent || 2)) return;
     const fired =
       tryUndercutEvent() || tryStrainEvent() || tryAmenityEvent() || tryPoachEvent();
@@ -1377,7 +1397,7 @@
   }
 
   function maybeDeal() {
-    if (state.over || state.pendingDeal) return;
+    if (state.over || state.pendingDeal || state.pendingEdict) return;
     if (state.month < state.nextDeal) return;
     state.nextDeal = state.month + 40 + Math.floor(Math.random() * 24);
     if (Math.random() > 0.12) return;
@@ -1391,10 +1411,16 @@
   function renderDealChrome() {
     const badge = $("btn-deals");
     if (!badge || !state) return;
-    const hot = Boolean(state.pendingDeal || state.pendingEvent || state.pendingFork);
+    const hot = Boolean(state.pendingDeal || state.pendingEvent || state.pendingFork || state.pendingEdict);
     badge.classList.toggle("hidden", !hot);
     badge.classList.toggle("hot", hot);
-    badge.textContent = state.pendingFork ? "FORK" : state.pendingEvent ? "CALL" : "DEALS";
+    badge.textContent = state.pendingEdict
+      ? "EDICT"
+      : state.pendingFork
+        ? "FORK"
+        : state.pendingEvent
+          ? "CALL"
+          : "DEALS";
     if (!hot) $("deal-sheet").classList.add("hidden");
   }
 
@@ -1418,6 +1444,20 @@
         clear: () => { state.pendingDeal = null; },
       };
     }
+    if (state?.pendingEdict) {
+      const ids = state.pendingEdict.ids || ["corridor", "amenity", "reserve"];
+      return {
+        spec: {
+          kicker: "STRATEGY EDICT",
+          title: "PICK ONE. THE OTHERS EXPIRE.",
+          body: "One exclusive order this window. Rivals move the month you choose.",
+          cards: ids.filter((id) => EDICTS[id]).map((id) => ({ id, ...EDICTS[id] })),
+        },
+        clear() {
+          state.pendingEdict = null;
+        },
+      };
+    }
     return null;
   }
 
@@ -1437,6 +1477,28 @@
     h.textContent = spec.title;
     const p = document.createElement("p");
     p.textContent = spec.body;
+    sheet.classList.toggle("edict-sheet", Boolean(spec.cards));
+    if (spec.cards) {
+      const grid = document.createElement("div");
+      grid.className = "edict-cards";
+      for (const card of spec.cards) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "edict-card";
+        b.innerHTML = `<b>${card.title}</b><span>${card.body}</span>`;
+        b.addEventListener("click", () => {
+          acceptEdict(card.id);
+          choice.clear();
+          sheet.classList.add("hidden");
+          renderAll();
+        });
+        grid.appendChild(b);
+      }
+      sheet.append(k, h, p, grid);
+      sheet.classList.remove("field-call", "build-fork");
+      sheet.classList.remove("hidden");
+      return;
+    }
     const row = document.createElement("div");
     row.className = "modal-actions";
     const yes = document.createElement("button");
@@ -1516,6 +1578,243 @@
     }
   }
 
+  const TRACK_GATES = [
+    { id: "maj4", field: "majority", at: 4, bonus: 140000, label: "MAJORITY 4/12" },
+    { id: "maj8", field: "majority", at: 8, bonus: 240000, label: "MAJORITY 8/12" },
+    { id: "maj12", field: "majority", at: 12, bonus: 400000, label: "MAJORITY 12/12" },
+    { id: "st3", field: "states", at: 3, bonus: 120000, label: "STATES 3/7" },
+    { id: "st7", field: "states", at: 7, bonus: 320000, label: "STATES 7/7" },
+    { id: "mcs2", field: "mcs", at: 2, bonus: 140000, label: "MCS 2/4" },
+    { id: "mcs4", field: "mcs", at: 4, bonus: 280000, label: "MCS 4/4" },
+  ];
+
+  const CHAIN_LABEL = {
+    expand: "CLAIM",
+    border: "BORDER",
+    mcs: "MCS",
+    lounge: "LOUNGE",
+    hold: "HOLD",
+    third: "CITY",
+  };
+
+  const EDICTS = {
+    corridor: {
+      title: "CORRIDOR SUBSIDY",
+      body: "MCS −20% cost this month. Rivals cut prices on the corridor.",
+      life: 1,
+    },
+    amenity: {
+      title: "AMENITY PUSH",
+      body: "Lounge share +5% while this edict holds. A rival rushes a lounge on their own pad.",
+      life: 4,
+    },
+    reserve: {
+      title: "RESERVE CREWS",
+      body: "Idle crew cost waived for 2 months. Raises take +1 month. Rivals undercut.",
+      life: 2,
+    },
+  };
+
+  function streakMult() {
+    return Math.max(1, Math.min(3, state?.streak || 0));
+  }
+
+  function formatMult(n) {
+    const v = Math.round(n * 10) / 10;
+    return Number.isInteger(v) ? String(v) : v.toFixed(1);
+  }
+
+  function campaignGrade() {
+    const track = winProgress();
+    const sharePts = Math.min(34, track.share * 70);
+    const cityPts = Math.min(28, track.cities * 4);
+    const mcsPts = Math.min(22, track.mcs * 7);
+    const streakPts = Math.min(16, Math.max(0, (state.streak || 0) - 1) * 5);
+    const pts = sharePts + cityPts + mcsPts + streakPts;
+    let letter = "D";
+    if (pts >= 78) letter = "A";
+    else if (pts >= 56) letter = "B";
+    else if (pts >= 34) letter = "C";
+    return {
+      letter,
+      pts: Math.round(pts),
+      share: Math.round(track.share * 100),
+      cities: track.cities,
+      mcs: track.mcs,
+      mult: formatMult(streakMult()),
+    };
+  }
+
+  function gradeBlurb(letter) {
+    if (letter === "A") return "The corridor reads yours.";
+    if (letter === "B") return "Ahead of the pack. Keep the chain.";
+    if (letter === "C") return "In the fight. The next arc has to land.";
+    return "Behind the rivals. Claim dirt and chain a clear.";
+  }
+
+  function nextUnlock(track) {
+    const open = TRACK_GATES.filter((g) => !state.milestones[g.id] && (track[g.field] || 0) < g.at);
+    if (!open.length) return "TRACK CLEAR · HOLD THE TREASURY";
+    open.sort((a, b) => (track[b.field] || 0) / b.at - (track[a.field] || 0) / a.at);
+    const g = open[0];
+    return `NEXT UNLOCK · ${g.label} · +${money(g.bonus)}`;
+  }
+
+  function meterHtml(label, now, need) {
+    const pct = Math.min(100, Math.round((now / Math.max(1, need)) * 100));
+    const hot = now >= need ? " hot" : "";
+    return `<div class="track-meter${hot}"><span>${label}</span><b>${now}/${need}</b><i><em style="width:${pct}%"></em></i></div>`;
+  }
+
+  function edictChip() {
+    if (!state.edict) return "";
+    const spec = EDICTS[state.edict.id];
+    const name = spec ? spec.title : state.edict.id.toUpperCase();
+    return `<p class="track-edict">EDICT · ${name} · ${Math.max(0, state.edict.left)} MO</p>`;
+  }
+
+  function seedCampaignMarks() {
+    if (!state || state.shareMarks) return;
+    allShares();
+    state.shareMarks = {};
+    for (const c of CITIES) {
+      const pct = Math.round((state.cities[c.id].share[YOU] || 0) * 100);
+      state.shareMarks[c.id] = [25, 50, 75].filter((t) => pct >= t);
+    }
+    const track = winProgress();
+    for (const gate of TRACK_GATES) {
+      if (!state.milestones[gate.id] && (track[gate.field] || 0) >= gate.at) {
+        state.milestones[gate.id] = state.month || 1;
+      }
+    }
+  }
+
+  function tickSharePops() {
+    if (!state || !state.shareMarks) return;
+    allShares();
+    for (const c of CITIES) {
+      const city = state.cities[c.id];
+      if (!hasCap(city.sites[YOU])) continue;
+      const pct = Math.round((city.share[YOU] || 0) * 100);
+      const marks = state.shareMarks[c.id] || [];
+      for (const t of [25, 50, 75]) {
+        if (pct >= t && marks.indexOf(t) === -1) {
+          marks.push(t);
+          toast(`${c.name.toUpperCase()} SHARE ${t}%`, "milestone");
+          log(`${c.name} share crossed ${t}%.`, "good");
+        }
+      }
+      state.shareMarks[c.id] = marks;
+    }
+  }
+
+  function tickMilestones() {
+    if (!state) return;
+    const track = winProgress();
+    for (const gate of TRACK_GATES) {
+      if (state.milestones[gate.id]) continue;
+      if ((track[gate.field] || 0) < gate.at) continue;
+      state.milestones[gate.id] = state.month;
+      const bonus = Math.round(gate.bonus * streakMult());
+      state.cash += bonus;
+      state.score = (state.score || 0) + bonus;
+      const multBit = streakMult() > 1 ? ` · ×${formatMult(streakMult())}` : "";
+      toast(`MILESTONE · ${gate.label}${multBit} · +${money(bonus)}`, "milestone");
+      log(`Milestone ${gate.label}. +${money(bonus)}.`, "good");
+    }
+  }
+
+  function tickEdictClock() {
+    if (!state.edict) return;
+    state.edict.left -= 1;
+    if (state.edict.left <= 0) {
+      const spec = EDICTS[state.edict.id];
+      log(`Edict lapsed: ${spec ? spec.title : state.edict.id}.`, "deal");
+      state.edict = null;
+    }
+  }
+
+  function rivalAnswer(kind) {
+    const notes = [];
+    if (kind === "amenity") {
+      for (const c of CITIES) {
+        const city = state.cities[c.id];
+        const rival = strongestRival(city);
+        if (!rival || !hasCap(city.sites[rival.id]) || city.sites[rival.id].lounge) continue;
+        if (state.queue.some((q) => q.city === c.id && q.faction === rival.id && q.type === "lounge")) continue;
+        state.queue.push({
+          faction: rival.id,
+          city: c.id,
+          type: "lounge",
+          left: 2,
+          cost: 0,
+          claimEmpty: false,
+          slot: null,
+        });
+        notes.push(`${rival.name} queues a lounge in ${c.name}`);
+        break;
+      }
+    }
+    let cuts = 0;
+    const cap = kind === "amenity" ? 1 : 2;
+    for (const c of CITIES) {
+      if (cuts >= cap) break;
+      const city = state.cities[c.id];
+      const rival = strongestRival(city);
+      if (!rival || !hasCap(city.sites[rival.id])) continue;
+      const near = hasCap(city.sites[YOU]) || c.neighbors.some((id) => hasCap(state.cities[id].sites[YOU]));
+      if (!near) continue;
+      city.price[rival.id] = Math.max(0.28, +(city.price[rival.id] - 0.02).toFixed(2));
+      notes.push(`${rival.name} cuts ${c.name}`);
+      cuts += 1;
+    }
+    if (notes.length) {
+      log(`Rivals answer the edict. ${notes.slice(0, 2).join(". ")}.`, "bad");
+      toast(`RIVALS ANSWER · ${notes[0]}`, "bad");
+    }
+  }
+
+  function acceptEdict(id) {
+    const spec = EDICTS[id];
+    if (!spec) return false;
+    state.edict = { id, left: spec.life };
+    log(`Edict signed: ${spec.title}.`, "deal");
+    toast(`EDICT · ${spec.title}`, "milestone");
+    rivalAnswer(id);
+    return true;
+  }
+
+  function maybeEdict() {
+    if (!state || state.over) return;
+    if (state.month === 6 || state.month % 12 === 0) return;
+    if (state.month < (state.nextEdict || 2)) return;
+    if (state.pendingDeal || state.pendingEvent || state.pendingFork || state.pendingEdict) return;
+    state.pendingEdict = { month: state.month, ids: ["corridor", "amenity", "reserve"] };
+    state.nextEdict = state.month + 2;
+    setSpeed(0);
+    log("Strategy edict. Pick one card. The other two expire.", "deal");
+    toast("EDICT · pick one strategy card.", "deal");
+  }
+
+  function maybeGrade() {
+    if (!state || state.over) return;
+    const due = state.month === 6 || (state.month > 0 && state.month % 12 === 0);
+    if (!due || state.gradeAt === state.month) return;
+    state.gradeAt = state.month;
+    const g = campaignGrade();
+    const when = state.month % 12 === 0 ? "YEAR END" : "MID CAMPAIGN";
+    toast(`GRADE ${g.letter} · ${when}`, "milestone");
+    log(`${when} grade ${g.letter}. Share ${g.share}% · ${g.cities} cities · ${g.mcs} MCS · streak ×${g.mult}.`, "good");
+    if (state.pendingEdict || state.pendingEvent || state.pendingFork || state.pendingDeal) return;
+    setSpeed(0);
+    showModal({
+      kicker: when,
+      title: `GRADE ${g.letter}`,
+      body: `Share ${g.share}% · ${g.cities} cities · ${g.mcs} MCS · streak ×${g.mult}. ${gradeBlurb(g.letter)}`,
+      actions: [{ label: "KEEP BUILDING", primary: true, run: hideModal }],
+    });
+  }
+
   function openingObjective() {
     return {
       id: "expand",
@@ -1540,6 +1839,15 @@
     if (state.lastObjective == null) state.lastObjective = "";
     if (state.pressureEventAt == null) state.pressureEventAt = 0;
     if (!state.objective) state.objective = openingObjective();
+    if (state.score == null) state.score = 0;
+    if (state.streak == null) state.streak = 0;
+    if (!Array.isArray(state.chain)) state.chain = [];
+    if (!state.milestones) state.milestones = {};
+    if (state.pendingEdict === undefined) state.pendingEdict = null;
+    if (state.edict === undefined) state.edict = null;
+    if (state.nextEdict == null) state.nextEdict = Math.max(2, state.month + (state.month % 2 === 0 ? 2 : 1));
+    if (state.gradeAt == null) state.gradeAt = 0;
+    seedCampaignMarks();
   }
 
   function loungeRaceCity() {
@@ -1670,17 +1978,31 @@
   }
 
   function grantObjective(obj) {
-    const pay = { expand: 180000, border: 160000, mcs: 150000, lounge: 140000, hold: 200000, third: 170000, endure: 60000 }[obj.kind] || 100000;
+    const base = { expand: 180000, border: 160000, mcs: 150000, lounge: 140000, hold: 200000, third: 170000, endure: 60000 }[obj.kind] || 100000;
+    const label = CHAIN_LABEL[obj.kind];
+    if (label) {
+      state.streak = (state.streak || 0) + 1;
+      state.chain = (state.chain || []).concat(label).slice(-3);
+    }
+    const pay = Math.round(base * streakMult());
     state.cash += pay;
+    state.score = (state.score || 0) + pay;
     state.pressure = Math.max(0, (state.pressure || 0) - 24);
-    log(`Objective held: ${obj.title}. +${money(pay)}.`, "good");
-    toast(`OBJECTIVE HELD · ${obj.title} · +${money(pay)}`, "good");
+    const chain = (state.chain || []).join(" → ");
+    const mult = formatMult(streakMult());
+    log(`Objective held: ${obj.title}. ×${mult}. +${money(pay)}.`, "good");
+    toast(`OBJECTIVE HELD · ${obj.title} · ×${mult}${chain ? ` · ${chain}` : ""} · +${money(pay)}`, "milestone");
   }
 
   function failObjective(obj) {
     if (obj.kind !== "endure") {
       state.cash -= 40000;
       state.pressure = Math.min(100, (state.pressure || 0) + 18);
+      if ((state.streak || 0) > 0) {
+        state.streak = 0;
+        state.chain = [];
+        toast("STREAK BROKE", "bad");
+      }
       nudgeRivalTempo();
     }
     log(`Objective missed: ${obj.title}.`, "bad");
@@ -1734,6 +2056,10 @@
   }
 
   function tickIdleCrews() {
+    if (edictLive("reserve")) {
+      state.idleMonths = 0;
+      return;
+    }
     if (state.month < 2 || idleCrewCount() <= 0) {
       state.idleMonths = 0;
       return;
@@ -2181,11 +2507,11 @@
     const pct = obj && obj.total ? Math.max(8, Math.round((Math.max(0, obj.left) / obj.total) * 100)) : 0;
     const holdBit = obj && obj.kind === "hold" ? ` · ${obj.streak || 0}/${obj.need || 3} MO AT ${obj.shown != null ? obj.shown : "—"}%` : "";
     const pressure = state.pressure || 0;
-    const pressureKicker = pressure >= 30 && presenceCount(YOU) < 2 ? " · CORRIDOR PRESSURE" : "";
+    const pressureKicker = pressure >= 30 && presenceCount(YOU) < 2 ? "CORRIDOR PRESSURE" : "DO THIS";
     strip.innerHTML = `
       <div class="ops-objective">
-        <p class="kicker">OBJECTIVE${pressureKicker}</p>
-        <b>${obj ? obj.title : "—"}</b>
+        <p class="kicker">${pressureKicker}</p>
+        <b>NEXT · ${obj ? obj.title : "HOLD THE MONTH"}</b>
         <span>${obj ? obj.detail : ""}${holdBit}${obj ? ` · ${Math.max(0, obj.left)} MO LEFT` : ""}</span>
         <em class="ops-clock"><i style="width:${pct}%"></i></em>
         ${pressure > 0 ? `<em class="ops-pressure" style="width:${pressure}%"></em>` : ""}
@@ -2253,18 +2579,23 @@
     for (const r of activeRivals()) rivalAct(r.id);
 
     state.month += 1;
+    tickEdictClock();
     tickIdleCrews();
     tickTurtlePressure();
     tickSkirmish();
     tickObjective();
+    tickMilestones();
+    tickSharePops();
     if (state.month % 2 === 0) {
       log(`P&L ${money(lastNet)} · cash ${money(state.cash)}`);
     }
     maybeDeal();
     maybeFieldCall();
+    maybeEdict();
+    maybeGrade();
     checkEnd();
     renderAll();
-    if (state.pendingEvent) openDealSheet();
+    if (state.pendingEvent || state.pendingEdict) openDealSheet();
     persistQuiet();
   }
 
@@ -3911,6 +4242,7 @@
       : contested
         ? "CONTESTED"
         : SITE_TYPE_NAME[baseKind] || SITE_TYPE_NAME[kind] || "SITE";
+    paintContextPlate($("site-plate"), city);
     const intel = $("site-overlay-intel");
     const rival = strongestRival(city);
     const intelExtra = `${intelHtml(city)}${state.skirmish && state.skirmish.city === city.id ? skirmishHtml() : ""}`;
@@ -4170,6 +4502,7 @@
         `<span class="${relax ? "on" : ""}">RELAX</span>` +
         `<span class="on">DEPART</span>`;
     }
+    paintContextPlate($("insp-plate"), city);
     $("insp-blurb").textContent = inspectorBlurb(city, meta, kind);
 
     $("insp-compound").innerHTML = compoundMarkup(city, meta);
@@ -4311,32 +4644,78 @@
     }
   }
 
+  function contextPlateHtml(city) {
+    if (!city || rivalSite(city)) return "";
+    const bits = [];
+    if (contestedCity(city)) {
+      const rival = strongestRival(city);
+      const youPct = Math.round((city.share[YOU] || 0) * 100);
+      const themPct = rival ? Math.round((city.share[rival.id] || 0) * 100) : 0;
+      const them = rival ? rival.name : "RIVAL";
+      bits.push(`<div class="plate-stat plate-you"><span class="plate-label">YOUR SHARE</span><b>${youPct}%</b></div>`);
+      bits.push(`<div class="plate-stat plate-them"><span class="plate-label">${them}</span><b>${themPct}%</b></div>`);
+      bits.push(`<div class="plate-stat plate-price"><span class="plate-label">PRICE</span><b>$${city.price[YOU].toFixed(2)}</b><small>/kWh</small></div>`);
+    }
+    if (hasCap(city.sites[YOU])) {
+      const net = cityIncome(city, YOU) - cityOpex(city, YOU);
+      bits.push(`<div class="plate-stat plate-income"><span class="plate-label">INCOME / MO</span><b>${money(net)}</b></div>`);
+    }
+    return bits.join("");
+  }
+
+  function paintContextPlate(el, city) {
+    if (!el) return;
+    const html = city ? contextPlateHtml(city) : "";
+    el.innerHTML = html;
+    el.classList.toggle("hidden", !html);
+  }
+
   function renderHud() {
     const y = Math.floor((state.month - 1) / 12) + 1;
     const m = ((state.month - 1) % 12) + 1;
     const track = winProgress();
+    const grade = campaignGrade();
     setStat("stat-date", `Y${y} M${String(m).padStart(2, "0")}`);
     setStat("stat-cash", money(state.cash), state.cash < 0);
     setStat("stat-share", `${Math.round(track.share * 100)}%`);
-    setStat("stat-cities", `${track.cities}/16`);
     setStat(
       "stat-crews",
-      `${MAX_CREWS - idleCrewCount()}/${MAX_CREWS}`,
+      `${idleCrewCount()}/${MAX_CREWS}`,
       idleCrewCount() > 0 && (state.idleMonths || 0) >= 2
     );
-    setStat("stat-net", money(lastNet), lastNet < 0);
+    const net = $("stat-net");
+    if (net) {
+      net.textContent = `${lastNet > 0 ? "+" : ""}${money(lastNet)}/MO`;
+      net.classList.toggle("warn", lastNet < 0);
+    }
+    setStat("stat-streak", `×${formatMult(streakMult())}`);
+    const streakEl = $("stat-streak");
+    if (streakEl) streakEl.classList.toggle("hot", (state.streak || 0) >= 2);
+    const chainEl = $("stat-chain");
+    if (chainEl) {
+      const chain = state.chain || [];
+      chainEl.textContent = chain.length ? chain.join(" → ") : "READY";
+    }
+    const gradeEl = $("stat-grade");
+    if (gradeEl) {
+      if (gradeEl.textContent !== grade.letter) {
+        gradeEl.textContent = grade.letter;
+        gradeEl.classList.remove("tick");
+        void gradeEl.offsetWidth;
+        gradeEl.classList.add("tick");
+      }
+      gradeEl.dataset.grade = grade.letter;
+    }
     const camp = $("hud-campaign");
     if (camp) {
-      const majPct = Math.min(100, Math.round((track.majority / track.needMajority) * 100));
       camp.innerHTML =
-        `<div class="camp-bar" role="img" aria-label="Continental share ${Math.round(track.share * 100)} percent">` +
-        `<i style="width:${Math.round(track.share * 100)}%"></i></div>` +
-        `<div class="camp-goals">` +
-        `<span${track.majority >= track.needMajority ? ' class="hot"' : ""}>MAJORITY ${track.majority}/${track.needMajority}</span>` +
-        `<span${track.states >= track.needStates ? ' class="hot"' : ""}>STATES ${track.states}/${track.needStates}</span>` +
-        `<span${track.mcs >= track.needMcs ? ' class="hot"' : ""}>MCS ${track.mcs}/${track.needMcs}</span>` +
-        `<span class="camp-fill">${majPct}%</span>` +
-        `</div>`;
+        `<div class="track-meters">` +
+        meterHtml("MAJORITY", track.majority, track.needMajority) +
+        meterHtml("STATES", track.states, track.needStates) +
+        meterHtml("MCS", track.mcs, track.needMcs) +
+        `</div>` +
+        `<p class="track-next">${nextUnlock(track)}</p>` +
+        edictChip();
     }
     renderDealChrome();
   }
@@ -4407,7 +4786,53 @@
 
   function applyShot(name) {
     const z = (id) => state.cities[id].sites.zaps;
-    if (name === "board" || name === "map") {
+    if (name === "board" || name === "map" || name === "plate") {
+      lastNet = 42000;
+      selected = "phoenix";
+      return null;
+    }
+    if (name === "edict" || name === "cards") {
+      state.month = 2;
+      state.forkShown = true;
+      state.pendingFork = null;
+      state.pendingEdict = { month: 2, ids: ["corridor", "amenity", "reserve"] };
+      state.cash = 2400000;
+      lastNet = 18000;
+      selected = "phoenix";
+      return null;
+    }
+    if (name === "grade" || name === "streak") {
+      state.month = 6;
+      state.gradeAt = 6;
+      state.forkShown = true;
+      state.pendingFork = null;
+      state.streak = 3;
+      state.chain = ["CLAIM", "HOLD", "LOUNGE"];
+      state.cash = 3180000;
+      lastNet = 124000;
+      z("tucson").dc = 2;
+      z("tucson").mcs = 1;
+      z("flagstaff").dc = 2;
+      z("flagstaff").mcs = 1;
+      z("vegas").dc = 2;
+      z("vegas").lounge = 1;
+      state.cities.vegas.sites.voltspan.dc = 2;
+      state.cities.vegas.price.zaps = 0.34;
+      state.cities.vegas.price.voltspan = 0.48;
+      z("albuquerque").dc = 1;
+      state.objective = {
+        id: "hold-vegas",
+        kind: "hold",
+        title: "HOLD 45% LAS VEGAS",
+        detail: "Keep Zaps share at 45% or better for 3 months. Price, lounge, or BESS. Their dirt stays theirs.",
+        left: 3,
+        total: 5,
+        city: "vegas",
+        floor: 0.45,
+        need: 3,
+        streak: 2,
+        shown: 58,
+      };
       selected = "phoenix";
       return null;
     }
@@ -4786,7 +5211,7 @@
         hideModal();
         $("deal-sheet").classList.add("hidden");
       }
-      if ((e.key === "d" || e.key === "D") && (state?.pendingDeal || state?.pendingEvent)) openDealSheet();
+      if ((e.key === "d" || e.key === "D") && (state?.pendingDeal || state?.pendingEvent || state?.pendingFork || state?.pendingEdict)) openDealSheet();
       if (!onBoard || typing || state.over) return;
       const kitKey = { c: "dc", m: "mcs", b: "bess", l: "lounge", k: "market" }[e.key.toLowerCase()];
       if (kitKey && selected) {
@@ -4843,7 +5268,7 @@
       renderAll();
       const site = params.get("site") || shotCity;
       if (site && CITY_BY_ID[site]) enterSite(site);
-      if (state.pendingEvent || state.pendingDeal || state.pendingFork) openDealSheet();
+      if (state.pendingEvent || state.pendingDeal || state.pendingFork || state.pendingEdict) openDealSheet();
       if (shot === "hover" || shot === "consequence") {
         hoverKit = "dc";
         renderSiteYard();
@@ -4858,7 +5283,12 @@
   }
 
   window.__EMPIRE_SMOKE__ = {
-    build: "rts-yard-20",
+    build: "rts-yard-21",
+    deployCost,
+    acceptEdict,
+    campaignGrade,
+    streakMult,
+    grantObjective,
     hitR: CITY_HIT_R,
     goldilocks: 0.76,
     nearestCity,

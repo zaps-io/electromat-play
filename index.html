@@ -12,11 +12,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Share+Tech+Mono&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600;700&family=Share+Tech+Mono&display=swap"
       rel="stylesheet"
     />
-    <meta name="empire-build" content="rts-yard-20" />
-    <link rel="stylesheet" href="styles.css?v=rts-yard-20" />
+    <meta name="empire-build" content="rts-yard-21" />
+    <link rel="stylesheet" href="styles.css?v=rts-yard-21" />
   </head>
   <body>
     <section id="title-screen" class="screen" data-screen="title">
@@ -82,33 +82,40 @@
           <span class="empire-word">EMPIRE</span>
         </div>
         <div class="hud-center">
-          <div class="hud-stats">
-            <div class="stat">
-              <span class="stat-label">MONTH</span>
-              <span id="stat-date" class="stat-value">Y1 M01</span>
+          <div class="plate" id="hud-plate" aria-label="Campaign plate">
+            <div class="plate-main">
+              <div class="plate-stat plate-cash">
+                <span class="plate-label">CASH</span>
+                <span id="stat-cash" class="plate-value">$0</span>
+                <span id="stat-net" class="plate-sub">$0/MO</span>
+              </div>
+              <div class="plate-stat plate-share">
+                <span class="plate-label">SHARE</span>
+                <span id="stat-share" class="plate-value">0%</span>
+              </div>
+              <div class="plate-stat plate-month">
+                <span class="plate-label">MONTH</span>
+                <span id="stat-date" class="plate-value">Y1 M01</span>
+              </div>
+              <div class="plate-stat plate-crews">
+                <span class="plate-label">CREWS</span>
+                <span id="stat-crews" class="plate-value">0/3</span>
+                <span class="plate-sub">FREE</span>
+              </div>
             </div>
-            <div class="stat">
-              <span class="stat-label">CASH</span>
-              <span id="stat-cash" class="stat-value">$0</span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">SHARE</span>
-              <span id="stat-share" class="stat-value">0%</span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">CITIES</span>
-              <span id="stat-cities" class="stat-value">1/16</span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">CREWS</span>
-              <span id="stat-crews" class="stat-value">0/3</span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">NET</span>
-              <span id="stat-net" class="stat-value">$0</span>
+            <div class="plate-score">
+              <div class="plate-stat plate-streak">
+                <span class="plate-label">STREAK</span>
+                <span id="stat-streak" class="plate-value">×1</span>
+                <span id="stat-chain" class="plate-sub">READY</span>
+              </div>
+              <div class="plate-stat plate-grade">
+                <span class="plate-label">GRADE</span>
+                <span id="stat-grade" class="plate-value">D</span>
+              </div>
+              <div class="hud-campaign" id="hud-campaign" aria-label="Campaign progress"></div>
             </div>
           </div>
-          <div class="hud-campaign" id="hud-campaign" aria-label="Campaign progress"></div>
         </div>
         <div class="hud-controls">
           <button id="btn-deals" class="deals-badge hidden" type="button">DEALS</button>
@@ -159,6 +166,7 @@
                   EXIT<span class="exit-key">ESC</span>
                 </button>
               </div>
+              <div id="site-plate" class="context-plate hidden" aria-label="Site numbers"></div>
               <div id="site-overlay-intel" class="site-intel hidden"></div>
               <div class="site-yard" id="site-yard">
                 <p id="site-consequence" class="site-consequence hidden"></p>
@@ -179,6 +187,7 @@
           <p class="kicker" id="insp-kicker">SELECT A CITY</p>
           <h2 id="insp-name">Continent</h2>
           <p id="insp-phase" class="insp-phase">PHASE HQ</p>
+          <div id="insp-plate" class="context-plate hidden" aria-label="City numbers"></div>
           <div id="insp-triad" class="insp-triad" aria-hidden="true"></div>
           <p id="insp-blurb" class="insp-blurb">
             Click a city. The compound is dirt until you drop a pad. Each deploy
@@ -208,6 +217,6 @@
       <div class="modal-card" id="modal-card"></div>
     </div>
 
-    <script src="game.js?v=rts-yard-20"></script>
+    <script src="game.js?v=rts-yard-21"></script>
   </body>
 </html>
