@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* rts-yard-13: Flagstaff/Tucson hits, paused start, Goldilocks, cache. */
+/* rts-yard-14: rival ownership block, contested share, field calls, cache. */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,13 +16,13 @@ const fail = (msg) => {
 };
 const ok = (msg) => console.log(`OK   ${msg}`);
 
-if (!html.includes('content="rts-yard-13"') || !html.includes("styles.css?v=rts-yard-13") || !html.includes("game.js?v=rts-yard-13")) {
-  fail("index.html cache is not rts-yard-13");
-} else ok("index.html cache rts-yard-13");
+if (!html.includes('content="rts-yard-14"') || !html.includes("styles.css?v=rts-yard-14") || !html.includes("game.js?v=rts-yard-14")) {
+  fail("index.html cache is not rts-yard-14");
+} else ok("index.html cache rts-yard-14");
 
-if (!game.includes("rts-yard-13") || !css.includes("rts-yard-13") || !review.includes("rts-yard-13")) {
-  fail("game/styles/REVIEW cache is not rts-yard-13");
-} else ok("game/styles/REVIEW cache rts-yard-13");
+if (!game.includes("rts-yard-14") || !css.includes("rts-yard-14") || !review.includes("rts-yard-14")) {
+  fail("game/styles/REVIEW cache is not rts-yard-14");
+} else ok("game/styles/REVIEW cache rts-yard-14");
 
 if (!game.includes("const CITY_HIT_R = 70")) fail("CITY_HIT_R must stay 70");
 else ok("CITY_HIT_R = 70");
@@ -88,7 +88,6 @@ if (!citiesMatch) {
   else ok("Tucson click stays Tucson");
   if (hitPhx?.id !== "phoenix") fail(`Phoenix pin resolved ${hitPhx?.id}`);
   else ok("Phoenix click stays Phoenix");
-  // HQ photo is large on screen; a click on Flagstaff/Tucson coords must not snap to Phoenix.
   if (nearest(flag.x, flag.y)?.id === "phoenix") fail("Phoenix stole Flagstaff");
   if (nearest(tuc.x, tuc.y)?.id === "phoenix") fail("Phoenix stole Tucson");
   const towardPhxFromFlag = nearest(flag.x + 6, flag.y + 18);
@@ -106,6 +105,38 @@ if (!game.includes("ghostBadge") || !css.includes("kit-pop")) {
 if (!css.includes(".deploy.selected") || !css.includes(".deploy .why")) {
   fail("tray selected/disabled styles missing");
 } else ok("tray selected + disabled reason styles");
+
+if (!game.includes('if (rivalSite(city)) return "RIVAL SITE"')) {
+  fail("blockedReason must refuse rival compounds");
+} else ok("blockedReason returns RIVAL SITE on rival pads");
+
+if (!game.includes("function rivalSite") || !game.includes("function contestedCity") || !game.includes("function playerClaiming")) {
+  fail("ownership helpers missing");
+} else ok("ownership helpers present");
+
+if (!game.includes("shareDuelHtml") || !css.includes(".share-duel") || !html.includes("site-overlay-intel")) {
+  fail("contested share meters missing");
+} else ok("contested share meters + site intel");
+
+if (!game.includes('type: "undercut"') || !game.includes("GRID STRAIN") || !game.includes("MATCH PRICE")) {
+  fail("field-call decision events missing");
+} else ok("field-call undercut + grid strain");
+
+if (!game.includes("applyPlayerPrice") || !game.includes("flashShare")) {
+  fail("price share feedback missing");
+} else ok("price share toast / flash");
+
+if (!game.includes('c: "dc"') || !game.includes('k: "market"')) {
+  fail("kit hotkeys missing");
+} else ok("kit hotkeys C M B L K");
+
+if (!game.includes('name === "rival"') || !game.includes('name === "contested"')) {
+  fail("rival / contested shot modes missing");
+} else ok("shot=rival and shot=contested");
+
+if (!html.includes("Rival compounds stay theirs")) {
+  fail("briefing should state rival pads are sealed");
+} else ok("briefing ownership line");
 
 if (process.exitCode) {
   console.error("smoke-empire failed");

@@ -15,8 +15,8 @@
       href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Share+Tech+Mono&display=swap"
       rel="stylesheet"
     />
-    <meta name="empire-build" content="rts-yard-13" />
-    <link rel="stylesheet" href="styles.css?v=rts-yard-13" />
+    <meta name="empire-build" content="rts-yard-14" />
+    <link rel="stylesheet" href="styles.css?v=rts-yard-14" />
   </head>
   <body>
     <section id="title-screen" class="screen" data-screen="title">
@@ -58,6 +58,7 @@
           <li>Deploy DC chargers, MCS, BESS, lounges, and markets.</li>
           <li>Each city grows a visible compound as kit lands on the pad.</li>
           <li>Win share with price, speed, and amenities — not slogans.</li>
+          <li>Rival compounds stay theirs. You cannot deploy on their pad.</li>
         </ul>
         <p class="briefing-rivals">
           On the board now: <strong>VOLTSPAN</strong>, <strong>GRIDHAWK</strong>,
@@ -153,12 +154,14 @@
                   EXIT<span class="exit-key">ESC</span>
                 </button>
               </div>
+              <div id="site-overlay-intel" class="site-intel hidden"></div>
               <div class="site-yard" id="site-yard">
                 <div class="site-stack" id="site-stack"></div>
               </div>
               <p class="site-overlay-note">
-                Kit ghosts show a countdown and fill as crews work. Complete pops
-                in place. ESC or EXIT returns to the Western Interconnect.
+                Kit ghosts show a countdown and fill as crews work. Click a
+                raising job to inspect. Complete pops in place. ESC or EXIT
+                returns to the Western Interconnect.
               </p>
             </div>
           </div>
@@ -185,8 +188,8 @@
         <div class="tray-label" id="tray-label">DEPLOY</div>
         <div class="tray-grid" id="tray-grid"></div>
         <div class="tray-note">
-          Starts paused. Space pause · 1 2 4 speed · click a city for the yard ·
-          EXIT back to the map. Three crews.
+          C DC · M MCS · B BESS · L lounge · K market · [ ] price.
+          Rival pads stay theirs. Three crews.
         </div>
       </footer>
     </section>
@@ -198,6 +201,6 @@
       <div class="modal-card" id="modal-card"></div>
     </div>
 
-    <script src="game.js?v=rts-yard-13"></script>
+    <script src="game.js?v=rts-yard-14"></script>
   </body>
 </html>
