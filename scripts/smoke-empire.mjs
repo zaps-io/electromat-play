@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-/* rts-yard-15: terminal kit, contested depth, field calls, campaign track, cache. */
-import { readFileSync } from "node:fs";
+/* rts-yard-16: empty dirt pad, MCS ghost tone, field-call dock, cache. */
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -16,13 +16,13 @@ const fail = (msg) => {
 };
 const ok = (msg) => console.log(`OK   ${msg}`);
 
-if (!html.includes('content="rts-yard-15"') || !html.includes("styles.css?v=rts-yard-15") || !html.includes("game.js?v=rts-yard-15")) {
-  fail("index.html cache is not rts-yard-15");
-} else ok("index.html cache rts-yard-15");
+if (!html.includes('content="rts-yard-16"') || !html.includes("styles.css?v=rts-yard-16") || !html.includes("game.js?v=rts-yard-16")) {
+  fail("index.html cache is not rts-yard-16");
+} else ok("index.html cache rts-yard-16");
 
-if (!game.includes("rts-yard-15") || !css.includes("rts-yard-15") || !review.includes("rts-yard-15")) {
-  fail("game/styles/REVIEW cache is not rts-yard-15");
-} else ok("game/styles/REVIEW cache rts-yard-15");
+if (!game.includes("rts-yard-16") || !css.includes("rts-yard-16") || !review.includes("rts-yard-16")) {
+  fail("game/styles/REVIEW cache is not rts-yard-16");
+} else ok("game/styles/REVIEW cache rts-yard-16");
 
 if (!game.includes("const CITY_HIT_R = 70")) fail("CITY_HIT_R must stay 70");
 else ok("CITY_HIT_R = 70");
@@ -173,6 +173,49 @@ if (!game.includes("corridorPull") || !game.includes("contested ? 1.85")) {
 if (!css.includes("toast-pop") || !css.includes("stat-tick") || !css.includes("transition: width 0.45s ease")) {
   fail("audio-less juice animations missing");
 } else ok("toast / stat / meter juice");
+
+if (!game.includes("rivalSite(city)) return overlayBaseKind") || !game.includes("empty-board") || !game.includes("any ? plazaGeom(occ) : boardEtch()")) {
+  fail("claimable empties must show dirt chessboard, not a survey-flag hero");
+} else ok("claimable empty yards use dirt 5×4 chessboard");
+
+const mcsGhost = game.match(/if \(kind === "mcs"\) \{[\s\S]*?return \{[^}]+\}/);
+if (!mcsGhost) fail("ghostTone(mcs) missing");
+else if (/230\s*,\s*50\s*,\s*37|#e63225/i.test(mcsGhost[0])) fail("MCS ghost still uses error red");
+else ok("MCS ghost tone is non-error");
+
+if (/site-tile-reserve\.kind-mcs[\s\S]{0,80}#e63225/.test(css) || /site-tile-progress\.kind-mcs[\s\S]{0,80}230,\s*50,\s*37/.test(css)) {
+  fail("MCS reserve/progress still error red");
+} else ok("MCS reserve tiles are non-error");
+
+const sheetAt = html.indexOf('id="deal-sheet"');
+const inspAt = html.indexOf('id="inspector"');
+if (sheetAt < 0 || inspAt < 0 || sheetAt > inspAt) {
+  fail("field-call sheet must live in the map column, not over the inspector");
+} else ok("field-call sheet is in the map column");
+
+if (!css.includes("map-stage:has(.site-overlay:not(.hidden)) .deal-sheet") || !/\.deal-sheet \{[\s\S]*?position:\s*absolute/.test(css)) {
+  fail("field-call sheet must dock on the map stage");
+} else ok("field-call sheet docks on the map");
+
+if (!css.includes(".price-row") || !/price-row \{[\s\S]*?position:\s*sticky/.test(css) || !html.includes("[ ] price")) {
+  fail("inspector price / [ ] hotkeys must stay pinned visible");
+} else ok("inspector price row stays sticky with [ ] hotkeys");
+
+const stills = [
+  ["docs/shots/yard-empty.png", 500000],
+  ["docs/shots/yard-pad.png", 500000],
+  ["docs/shots/yard-ghosts.png", 500000],
+  ["docs/shots/yard-event.png", 500000],
+];
+for (const [rel, min] of stills) {
+  const p = join(root, rel);
+  if (!existsSync(p)) fail(`${rel} missing`);
+  else if (statSync(p).size < min) fail(`${rel} looks like a stale flag-era still (${statSync(p).size} bytes)`);
+}
+if (!process.exitCode) ok("fresh empty/ghosts/event stills are checked in");
+if (!review.includes("yard-ghosts.png") || !review.includes("yard-event.png") || !review.includes("yard-pad.png")) {
+  fail("REVIEW must list yard-ghosts / yard-event / yard-pad stills");
+} else ok("REVIEW lists refreshed stills");
 
 if (process.exitCode) {
   console.error("smoke-empire failed");
