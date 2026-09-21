@@ -78,6 +78,50 @@
           const buildId = d.querySelector('meta[name="empire-build"]');
           const buildName = buildId ? buildId.content : "";
 
+          const cashBeforeScout = smoke.getState().cash;
+          const launched = smoke.launchScout("phoenix");
+          const cashAfterScout = smoke.getState().cash;
+          const flightCities = smoke.flights().map((s) => s.city);
+          smoke.finishScouts();
+          const pulseMonths = smoke.pulse("phoenix");
+          const refreshPrice = smoke.scoutPrice("phoenix");
+          const cashBeforeRefresh = smoke.getState().cash;
+          const refreshed = smoke.launchScout("phoenix");
+          const cashAfterRefresh = smoke.getState().cash;
+          const second = smoke.launchScout("tucson");
+          const cashAfterSecond = smoke.getState().cash;
+          const secondFlight = smoke.flights().some((s) => s.city === "tucson");
+
+          smoke.getState().skirmish = {
+            city: "vegas",
+            rival: "voltspan",
+            kind: "price",
+            you: 30,
+            them: 44,
+            left: 2,
+          };
+          smoke.getState().cities.vegas.sites.zaps.dc = 2;
+          smoke.getState().cities.vegas.sites.voltspan.dc = 2;
+          smoke.enterSite("vegas");
+          await wait(80);
+          const lane = d.querySelector(".skirmish-lane");
+          const pushed = smoke.pushSkirmish();
+          const youAfter = smoke.skirmish() ? smoke.skirmish().you : 0;
+
+          smoke.enterSite("flagstaff");
+          await wait(40);
+          const crewTokens = d.querySelectorAll("#site-yard .crew-token").length;
+          const cycled = smoke.cycleCrew(1, "flagstaff");
+          const crew1 = smoke.crews()[0];
+
+          smoke.enterSite("la");
+          await wait(40);
+          const laCrews = d.querySelectorAll("#site-yard .crew-token").length;
+          smoke.enterSite("phoenix");
+          await wait(40);
+          const detector = d.querySelector(".scout-detector");
+          const pin = d.querySelector('.city-node[data-city="phoenix"].scouted .scout-pin');
+
           const ok =
             before.site === "flagstaff" &&
             after.site === "flagstaff" &&
@@ -96,8 +140,8 @@
             flagStillOpen &&
             smoke.rivalSite("la") === true &&
             smoke.rivalSite("flagstaff") === false &&
-            smoke.build === "rts-yard-18" &&
-            buildName === "rts-yard-18" &&
+            smoke.build === "rts-yard-19" &&
+            buildName === "rts-yard-19" &&
             smoke.goldilocks === 0.76 &&
             smartAfterOne === 1 &&
             /est\./.test(read) &&
@@ -106,7 +150,27 @@
             threat.chip === "UNDERCUT" &&
             threat.action === "price" &&
             corridorPlan === "lounge" &&
-            amenityPlan === "mcs";
+            amenityPlan === "mcs" &&
+            launched === true &&
+            cashBeforeScout - cashAfterScout === 40000 &&
+            flightCities.indexOf("phoenix") !== -1 &&
+            pulseMonths >= 4 &&
+            refreshPrice === 0 &&
+            refreshed === true &&
+            cashAfterRefresh === cashBeforeRefresh &&
+            second === true &&
+            cashAfterRefresh - cashAfterSecond === 40000 &&
+            secondFlight === true &&
+            lane &&
+            pushed === true &&
+            youAfter > 30 &&
+            crewTokens === 3 &&
+            cycled === true &&
+            crew1.task === "respond" &&
+            laCrews === 0 &&
+            detector &&
+            pin &&
+            /SCOUTED|DET/.test((detector.textContent || "") + (pin.textContent || ""));
 
           report({
             ok,
@@ -131,6 +195,17 @@
             placement: { smartAfterOne, read, consequenceText },
             threat,
             fork: { corridorPlan, amenityPlan },
+            scout: {
+              launched,
+              spent: cashBeforeScout - cashAfterScout,
+              pulseMonths,
+              refreshPrice,
+              refreshed,
+              second,
+              secondSpent: cashAfterRefresh - cashAfterSecond,
+            },
+            skirmishPush: { pushed, youAfter, lane: Boolean(lane) },
+            crews: { crewTokens, cycled, crew1, laCrews, detector: Boolean(detector), pin: pin ? pin.textContent : "" },
             buildName,
           });
         } catch (err) {

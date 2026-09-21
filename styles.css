@@ -1,4 +1,4 @@
-/* empire-build: rts-yard-18 */
+/* empire-build: rts-yard-19 */
 :root {
   --red: #e63225;
   --charcoal: #1e1e24;
@@ -1077,6 +1077,281 @@ button {
   font-size: 0.72rem;
   letter-spacing: 0.04em;
   color: var(--cyan);
+}
+
+.scout-radar {
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 36px;
+  height: 16px;
+  margin-left: -18px;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.scout-radar i {
+  position: absolute;
+  inset: 0;
+  border: 1.5px solid var(--cyan);
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(0, 212, 245, 0.85);
+  animation: scout-ping 2.2s ease-out infinite;
+}
+
+.scout-radar i:nth-child(2) {
+  animation-delay: 0.7s;
+}
+
+@keyframes scout-ping {
+  0% {
+    transform: scale(0.4);
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.scout-pin {
+  position: absolute;
+  left: 50%;
+  top: -13px;
+  transform: translateX(-50%);
+  z-index: 6;
+  padding: 0.06rem 0.32rem 0.04rem;
+  background: var(--cyan);
+  color: #04181c;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  font-weight: 700;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.scout-detector {
+  position: absolute;
+  right: 5%;
+  top: 8%;
+  z-index: 15;
+  width: 118px;
+  height: 118px;
+  pointer-events: none;
+}
+
+.scout-detector .ring {
+  position: absolute;
+  left: 18px;
+  top: 18px;
+  width: 82px;
+  height: 82px;
+  border: 2px solid var(--cyan);
+  border-radius: 50%;
+  box-shadow: 0 0 16px rgba(0, 212, 245, 0.75);
+  animation: det-ping 2.4s ease-out infinite;
+}
+
+.scout-detector .ring.late {
+  animation-delay: 0.8s;
+}
+
+@keyframes det-ping {
+  0% {
+    transform: scale(0.55);
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+}
+
+.scout-detector b,
+.scout-detector em {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: "Share Tech Mono", monospace;
+  font-style: normal;
+  white-space: nowrap;
+}
+
+.scout-detector b {
+  top: 46px;
+  padding: 0.16rem 0.38rem;
+  background: var(--cyan);
+  color: #04181c;
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  font-weight: 700;
+}
+
+.scout-detector em {
+  top: 70px;
+  color: var(--cyan);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-shadow: 0 1px 2px #000;
+}
+
+.crew-tokens {
+  display: flex;
+  gap: 0.28rem;
+  z-index: 16;
+  pointer-events: auto;
+}
+
+.crew-tokens.yard {
+  position: absolute;
+  left: 3%;
+  bottom: 5%;
+}
+
+.crew-tokens.map {
+  position: absolute;
+  top: calc(100% + 16px);
+  left: 50%;
+  transform: translateX(-50%);
+  gap: 0.16rem;
+}
+
+.crew-token {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.12rem;
+  width: 52px;
+  margin: 0;
+  padding: 0.28rem 0.15rem 0.22rem;
+  background: #121217;
+  color: var(--cream);
+  border: 1px solid rgba(245, 240, 232, 0.4);
+  cursor: pointer;
+  font-family: "Share Tech Mono", monospace;
+}
+
+.crew-tokens.map .crew-token {
+  width: 28px;
+  padding: 0.12rem 0.04rem 0.1rem;
+}
+
+.crew-token i {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-style: normal;
+  font-size: 0.68rem;
+  background: var(--amber);
+  color: var(--charcoal);
+}
+
+.crew-tokens.map .crew-token i {
+  width: 14px;
+  height: 14px;
+  font-size: 0.58rem;
+}
+
+.crew-token b {
+  font-size: 0.56rem;
+  letter-spacing: 0.06em;
+  font-weight: 500;
+}
+
+.crew-tokens.map .crew-token b {
+  display: none;
+}
+
+.crew-token.task-respond {
+  border-color: var(--cyan);
+}
+
+.crew-token.task-respond i {
+  background: var(--cyan);
+}
+
+.crew-token.task-scout {
+  border-color: #d8c4ff;
+}
+
+.crew-token.task-scout i {
+  background: #d8c4ff;
+}
+
+.crew-token.task-raise {
+  border-color: var(--amber);
+}
+
+.crew-token.idle {
+  opacity: 0.55;
+}
+
+.crew-token.picked {
+  box-shadow: 0 0 0 2px var(--cream);
+}
+
+.lane-banner {
+  position: absolute;
+  left: 50%;
+  bottom: 20%;
+  transform: translateX(-50%);
+  z-index: 17;
+  margin: 0;
+  padding: 0.32rem 0.7rem;
+  background: #121217;
+  color: var(--cream);
+  border: 1px solid var(--cream);
+  cursor: pointer;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.skirmish-lane .lane-you,
+.skirmish-lane .lane-them {
+  opacity: 0.94;
+  stroke: #121217;
+  stroke-width: 0.35;
+}
+
+.skirmish-lane .lane-seam {
+  fill: none;
+  stroke: var(--cream);
+  stroke-width: 0.85;
+  pointer-events: none;
+}
+
+.skirmish-lane .lane-hit {
+  fill: rgba(245, 240, 232, 0.05);
+  stroke: rgba(245, 240, 232, 0.95);
+  stroke-width: 0.45;
+  pointer-events: all;
+  cursor: pointer;
+}
+
+.lane-tag,
+.lane-title {
+  font-family: "Share Tech Mono", "Courier New", monospace;
+  font-size: 2.7px;
+  font-weight: 700;
+  fill: var(--cream);
+  stroke: #121217;
+  stroke-width: 0.45px;
+  paint-order: stroke;
+  pointer-events: none;
+}
+
+.lane-title {
+  letter-spacing: 0.12em;
+  font-size: 2.5px;
+}
+
+.skirmish[data-push] {
+  cursor: pointer;
 }
 
 .site-intel .skirmish {
