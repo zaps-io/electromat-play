@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-yard-16 */
+/* empire-build: rts-yard-17 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -22,7 +22,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-yard-16";
+  const SPRITE_V = "rts-yard-17";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -43,7 +43,7 @@
     voltspan: "240 / 204",
     rival: "240 / 167",
   };
-  const KIT_V = "rts-yard-16";
+  const KIT_V = "rts-yard-17";
   const KIT_SPRITES = {
     dc: `assets/sprites/kit-dc.png?v=${KIT_V}`,
     mcs: `assets/sprites/kit-mcs.png?v=${KIT_V}`,
@@ -281,8 +281,11 @@
   let lastPan = false;
   let armedKit = null;
   let hoverKit = null;
+  let slotOverride = null;
   let inspectJob = null;
   let pops = [];
+  let yardFlash = null;
+  let queuePulse = 0;
   let lastPriceToast = { city: "", at: 0, from: 0, to: 0 };
 
   function emptySite() {
@@ -343,6 +346,9 @@
       pendingDeal: null,
       pendingEvent: null,
       nextEvent: 2 + Math.floor(Math.random() * 2),
+      pendingFork: null,
+      forkShown: false,
+      buildPath: null,
       warFired: false,
       over: null,
     };
@@ -593,6 +599,167 @@
     return !blockedReason(type, cityId);
   }
 
+  function liveDcIndexList(site) {
+    if (Array.isArray(site.dcSlots) && site.dcSlots.length === site.dc) {
+      return site.dcSlots.filter((n) => n >= 0 && n < 4).slice(0, site.dc);
+    }
+    return Array.from({ length: Math.min(4, Math.max(0, site.dc)) }, (_, i) => i);
+  }
+
+  function emptyDcSlots(used) {
+    return [0, 1, 2, 3].filter((i) => !used.has(i));
+  }
+
+  function runLength(set) {
+    let best = 0;
+    let cur = 0;
+    for (let i = 0; i < 4; i += 1) {
+      if (set.has(i)) {
+        cur += 1;
+        if (cur > best) best = cur;
+      } else cur = 0;
+    }
+    return best;
+  }
+
+  // Prefer the stall that closes a canopy gap or reaches the 3-stall coffer
+  // row. Lounge column (DC slot 0) wins only when the canopy score ties.
+  function smartDcSlot(used, city) {
+    const empty = emptyDcSlots(used);
+    if (!empty.length) return null;
+    const lounge = city.sites[YOU].lounge > 0 || raisingType(city.id, "lounge");
+    let best = empty[0];
+    let bestScore = -Infinity;
+    for (const i of empty) {
+      const next = new Set(used);
+      next.add(i);
+      const left = used.has(i - 1);
+      const right = used.has(i + 1);
+      const run = runLength(next);
+      let score = 0;
+      if (left || right) score += 5;
+      if (left && right) score += 8;
+      if (run >= 3 && runLength(used) < 3) score += 7;
+      else if (run >= 2 && runLength(used) < 2) score += 3;
+      if (lounge && i === 0) score += 1.5;
+      score += (4 - i) * 0.05;
+      if (score > bestScore) {
+        bestScore = score;
+        best = i;
+      }
+    }
+    return best;
+  }
+
+  function chosenSlot(city, type, used) {
+    if (
+      slotOverride &&
+      slotOverride.city === city.id &&
+      slotOverride.type === type &&
+      Number.isInteger(slotOverride.slot) &&
+      !used.has(slotOverride.slot)
+    ) {
+      return slotOverride.slot;
+    }
+    if (type === "dc") return smartDcSlot(used, city);
+    return 0;
+  }
+
+  function dcPlacement(city, previewType) {
+    const site = city.sites[YOU];
+    const live = liveDcIndexList(site);
+    const used = new Set(live);
+    const raising = [];
+    for (const job of jobList(city.id, "dc")) {
+      let slot = Number.isInteger(job.slot) ? job.slot : -1;
+      if (slot < 0 || slot > 3 || used.has(slot)) {
+        slot = [0, 1, 2, 3].find((i) => !used.has(i));
+      }
+      if (slot == null) continue;
+      used.add(slot);
+      raising.push({ slot, job, preview: false });
+    }
+    if (previewType === "dc" && used.size < 4 && !blockedReason("dc", city.id)) {
+      const slot = chosenSlot(city, "dc", used);
+      if (slot != null && !used.has(slot)) {
+        used.add(slot);
+        raising.push({ slot, job: null, preview: true });
+      }
+    }
+    return { live, raising, used };
+  }
+
+  function dcJobView(item) {
+    if (!item) return null;
+    if (item.preview) return { left: BUILD.dc.months, pct: 0.22, preview: true };
+    return { left: item.job.left, pct: jobPct(item.job, "dc"), preview: false };
+  }
+
+  function signedMoney(n) {
+    if (n < 0) return money(n);
+    return `+${money(n)}`;
+  }
+
+  function placementRead(city, type) {
+    if (!city || !BUILD[type] || blockedReason(type, city.id)) return "";
+    const site = city.sites[YOU];
+    const snap = {
+      dc: site.dc,
+      mcs: site.mcs,
+      bess: site.bess,
+      lounge: site.lounge,
+      market: site.market,
+      share: city.share,
+    };
+    let label = "";
+    let tail = "";
+    if (type === "dc") {
+      const plan = dcPlacement(city, null);
+      const slot = chosenSlot(city, "dc", plan.used);
+      const next = new Set(plan.used);
+      if (slot != null) next.add(slot);
+      const beforeRun = runLength(plan.used);
+      const run = runLength(next);
+      const gap = slot != null && plan.used.has(slot - 1) && plan.used.has(slot + 1);
+      const completes = gap || (run >= 3 && beforeRun < 3) || (run >= 2 && beforeRun === 1);
+      const loungeAdj = (snap.lounge > 0 || raisingType(city.id, "lounge")) && slot === 0;
+      let why = completes ? "COMPLETES CANOPY" : `CANOPY ${Math.min(4, plan.used.size + 1)}/4`;
+      if (loungeAdj && completes) why = "COMPLETES CANOPY · LOUNGE ADJACENT";
+      else if (loungeAdj) why = "LOUNGE ADJACENT";
+      const n = slot == null ? snap.dc + 1 : slot + 1;
+      label = `DC ${n} · ${why}`;
+      tail = emptyDcSlots(plan.used).length > 1 ? " · CLICK CELL" : "";
+    } else if (type === "lounge") {
+      label = snap.market > 0 ? "LOUNGE · ADJACENT MARKET · amenity pull" : "LOUNGE · AMENITY PULL +14%";
+    } else if (type === "market") {
+      label = snap.lounge > 0 ? "MARKET · ADJACENT LOUNGE · amenity pull" : "MARKET · AMENITY PULL +10%";
+    } else if (type === "mcs") label = "MCS · CORRIDOR PULL";
+    else if (type === "bess") label = "BESS · GRID ×1.16";
+    const beforeNet = cityIncome(city, YOU) - cityOpex(city, YOU);
+    const beforeShare = city.share[YOU] || 0;
+    try {
+      if (BUILD[type].unique) site[type] = 1;
+      else site[type] += 1;
+      recomputeShare(city);
+      const afterNet = cityIncome(city, YOU) - cityOpex(city, YOU);
+      const afterShare = city.share[YOU] || 0;
+      const dNet = afterNet - beforeNet;
+      const dShare = Math.round((afterShare - beforeShare) * 100);
+      const shareBit = rivalHolders(city).length
+        ? ` · share ${dShare >= 0 ? "+" : ""}${dShare}%`
+        : "";
+      return `${label} · est. ${signedMoney(dNet)}/mo${shareBit}${tail}`;
+    } finally {
+      site.dc = snap.dc;
+      site.mcs = snap.mcs;
+      site.bess = snap.bess;
+      site.lounge = snap.lounge;
+      site.market = snap.market;
+      city.share = snap.share;
+      recomputeShare(city);
+    }
+  }
+
   function enqueue(type, cityId, faction = YOU) {
     const spec = BUILD[type];
     const cost = faction === YOU ? deployCost(type, cityId) : Math.round(spec.cost * 0.9);
@@ -607,6 +774,12 @@
       !hasCap(city.sites[YOU]) &&
       !rivalSite(city) &&
       (type === "dc" || type === "mcs");
+    let slot = null;
+    if (faction === YOU && type === "dc") {
+      const plan = dcPlacement(city, null);
+      slot = chosenSlot(city, "dc", plan.used);
+      slotOverride = null;
+    }
     state.queue.push({
       faction,
       city: cityId,
@@ -614,6 +787,7 @@
       left: spec.months,
       cost,
       claimEmpty,
+      slot,
     });
     if (faction === YOU) {
       log(`${spec.name} queued in ${CITY_BY_ID[cityId].name} · ${spec.months} mo · ${money(cost)}`);
@@ -632,16 +806,25 @@
       return;
     }
     const site = city.sites[job.faction];
-    if (BUILD[job.type].unique) site[job.type] = 1;
+    let placedSlot = null;
+    if (job.type === "dc" && job.faction === YOU) {
+      const live = liveDcIndexList(site);
+      placedSlot = Number.isInteger(job.slot) && !live.includes(job.slot)
+        ? job.slot
+        : [0, 1, 2, 3].find((i) => !live.includes(i));
+      site.dc += 1;
+      if (placedSlot != null) site.dcSlots = live.concat(placedSlot);
+    } else if (BUILD[job.type].unique) site[job.type] = 1;
     else site[job.type] += 1;
     if (job.faction === YOU) {
       pops.push({
         city: job.city,
         type: job.type,
-        slot: Math.max(0, site[job.type] - 1),
-        until: Date.now() + 1900,
+        slot: placedSlot != null ? placedSlot : Math.max(0, site[job.type] - 1),
+        until: Date.now() + 2200,
       });
-      toast(`${BUILD[job.type].name} online in ${CITY_BY_ID[job.city].name}.`, "good");
+      yardFlash = { city: job.city, until: Date.now() + 780 };
+      toast(`${BUILD[job.type].name} COMPLETE · ${CITY_BY_ID[job.city].name}`, "good");
     }
     const who = job.faction === YOU ? "Zaps" : RIVALS[job.faction].name;
     log(`${who} brings ${BUILD[job.type].name} online in ${CITY_BY_ID[job.city].name}.`, job.faction === YOU ? "good" : "bad");
@@ -653,6 +836,31 @@
 
   function rivalCash(rid) {
     return 900000 + state.month * 120000 + presenceCount(rid) * 180000;
+  }
+
+  function rivalBuildType(site, fighting) {
+    const path = state.buildPath;
+    if (path === "amenity") {
+      if (hasCap(site) && site.mcs < 2) return "mcs";
+      if (hasCap(site) && site.dc < 3) return "dc";
+      if (hasCap(site) && !site.bess && state.month > 8) return "bess";
+      if (hasCap(site) && !site.lounge) return "lounge";
+      return "dc";
+    }
+    if (path === "corridor") {
+      if (hasCap(site) && !site.lounge) return "lounge";
+      if (hasCap(site) && site.lounge && !site.market) return "market";
+      if (hasCap(site) && site.dc >= 2 && site.mcs < 1) return "mcs";
+      if (hasCap(site) && !site.bess && state.month > 10) return "bess";
+      return site.dc < 3 ? "dc" : "mcs";
+    }
+    if (fighting && hasCap(site) && !site.lounge) return "lounge";
+    if (fighting && hasCap(site) && !site.market && site.lounge) return "market";
+    if (hasCap(site) && site.dc >= 2 && site.mcs < 2) return "mcs";
+    if (hasCap(site) && !site.lounge && site.dc >= 2) return "lounge";
+    if (hasCap(site) && !site.bess && state.month > 10) return "bess";
+    if (hasCap(site) && !site.market && site.lounge) return "market";
+    return "dc";
   }
 
   function rivalAct(rid) {
@@ -684,18 +892,15 @@
     const site = city.sites[rid];
     const budget = rivalCash(rid);
     const fighting = hasCap(city.sites[YOU]);
-    let type = "dc";
-    if (fighting && hasCap(site) && !site.lounge) type = "lounge";
-    else if (fighting && hasCap(site) && !site.market && site.lounge) type = "market";
-    else if (hasCap(site) && site.dc >= 2 && site.mcs < 2) type = "mcs";
-    else if (hasCap(site) && !site.lounge && site.dc >= 2) type = "lounge";
-    else if (hasCap(site) && !site.bess && state.month > 10) type = "bess";
-    else if (hasCap(site) && !site.market && site.lounge) type = "market";
+    const type = rivalBuildType(site, fighting);
     if (budget > BUILD[type].cost && state.queue.filter((q) => q.faction === rid).length < 2) {
       enqueue(type, targetId, rid);
     }
-    if (fighting && Math.random() < 0.28) {
-      city.price[rid] = Math.max(0.28, +(city.price[rid] - 0.01).toFixed(2));
+    const path = state.buildPath;
+    const cutP = path === "amenity" ? 0.46 : path === "corridor" ? 0.18 : 0.28;
+    const cutStep = path === "amenity" ? 0.02 : 0.01;
+    if (fighting && Math.random() < cutP) {
+      city.price[rid] = Math.max(0.28, +(city.price[rid] - cutStep).toFixed(2));
     }
     maybeRivalWar(rid, targetId);
   }
@@ -787,8 +992,91 @@
     return true;
   }
 
+  function threatCall(city) {
+    if (!city || !contestedCity(city)) return null;
+    const rival = strongestRival(city);
+    if (!rival) return null;
+    const you = city.sites[YOU];
+    const them = city.sites[rival.id];
+    const yours = city.price[YOU] || 0.42;
+    const theirs = city.price[rival.id] || 0.42;
+    if (yours - theirs >= 0.015) {
+      return { id: "UNDERCUT", chip: "UNDERCUT", action: "price", key: "[", verb: "CUT PRICE" };
+    }
+    if ((them.lounge || them.market) && !you.lounge && !raisingType(city.id, "lounge")) {
+      return { id: "AMENITY GAP", chip: "AMENITY GAP", action: "lounge", key: "L", verb: "QUEUE LOUNGE" };
+    }
+    if (!you.bess && !raisingType(city.id, "bess") && (them.bess || (CITY_BY_ID[city.id]?.demand || 0) >= 70)) {
+      return { id: "GRID STRAIN", chip: "GRID STRAIN", action: "bess", key: "B", verb: "QUEUE BESS" };
+    }
+    if (!you.lounge && !raisingType(city.id, "lounge")) {
+      return { id: "AMENITY GAP", chip: "AMENITY GAP", action: "lounge", key: "L", verb: "QUEUE LOUNGE" };
+    }
+    return { id: "UNDERCUT", chip: "UNDERCUT", action: "price", key: "[", verb: "CUT PRICE" };
+  }
+
+  function threatChipHtml(city) {
+    const t = threatCall(city);
+    if (!t) return "";
+    return `<button type="button" class="threat-chip" data-threat="${t.action}">${t.chip}<span>${t.verb} ${t.key}</span></button>`;
+  }
+
+  function answerThreat(city) {
+    const t = threatCall(city);
+    if (!t || !city) return false;
+    const meta = CITY_BY_ID[city.id];
+    if (t.action === "price") {
+      const rival = strongestRival(city);
+      const theirs = rival ? city.price[rival.id] : city.price[YOU] - 0.02;
+      const cut = city.price[YOU] > theirs
+        ? Math.max(0.28, +Number(theirs).toFixed(2))
+        : Math.max(0.28, +(city.price[YOU] - 0.02).toFixed(2));
+      applyPlayerPrice(city, cut);
+      toast(`CUT PRICE · ${meta.name} ${city.price[YOU].toFixed(2)}`, "deal");
+      return true;
+    }
+    const type = t.action === "lounge" ? "lounge" : "bess";
+    if (!canDeploy(type, city.id)) {
+      toast(`${BUILD[type].name} · ${blockedReason(type, city.id)}`, "bad");
+      return false;
+    }
+    return enqueue(type, city.id);
+  }
+
+  function forkSpec() {
+    return {
+      kicker: "BUILD ORDER",
+      title: "MCS CORRIDOR OR LOUNGE + MARKET",
+      body: "Rush MCS and pull trucks along the corridor, or thicken lounge and market on the pads you hold. Both win. Rivals pressure the path you leave open.",
+      yes: "MCS CORRIDOR",
+      no: "LOUNGE + MARKET",
+      accept() {
+        state.buildPath = "corridor";
+        state.forkShown = true;
+        log("Build order: MCS corridor. Rivals will race lounges.", "deal");
+        toast("MCS CORRIDOR · rivals race lounges.", "deal");
+      },
+      decline() {
+        state.buildPath = "amenity";
+        state.forkShown = true;
+        log("Build order: lounge + market. Rivals will cut the corridor.", "deal");
+        toast("LOUNGE + MARKET · rivals cut the corridor.", "deal");
+      },
+    };
+  }
+
+  function offerBuildFork() {
+    if (!state || state.over || state.buildPath || state.forkShown || state.pendingFork) return;
+    if (state.month > 4) return;
+    if (state.pendingDeal || state.pendingEvent) return;
+    state.pendingFork = { at: state.month };
+    state.forkShown = true;
+    toast("BUILD ORDER · MCS corridor or lounge + market.", "deal");
+    openDealSheet();
+  }
+
   function maybeFieldCall() {
-    if (state.over || state.pendingDeal || state.pendingEvent) return;
+    if (state.over || state.pendingDeal || state.pendingEvent || state.pendingFork) return;
     if (state.month < (state.nextEvent || 2)) return;
     const fired =
       tryUndercutEvent() || tryStrainEvent() || tryAmenityEvent() || tryPoachEvent();
@@ -922,14 +1210,23 @@
   function renderDealChrome() {
     const badge = $("btn-deals");
     if (!badge || !state) return;
-    const hot = Boolean(state.pendingDeal || state.pendingEvent);
+    const hot = Boolean(state.pendingDeal || state.pendingEvent || state.pendingFork);
     badge.classList.toggle("hidden", !hot);
     badge.classList.toggle("hot", hot);
-    badge.textContent = state.pendingEvent ? "CALL" : "DEALS";
+    badge.textContent = state.pendingFork ? "FORK" : state.pendingEvent ? "CALL" : "DEALS";
     if (!hot) $("deal-sheet").classList.add("hidden");
   }
 
   function activeChoice() {
+    if (state?.pendingFork) {
+      return {
+        spec: forkSpec(),
+        clear() {
+          state.pendingFork = null;
+          state.forkShown = true;
+        },
+      };
+    }
     if (state?.pendingEvent) {
       const spec = fieldCallSpec(state.pendingEvent);
       if (spec) return { spec, clear: () => { state.pendingEvent = null; } };
@@ -982,7 +1279,8 @@
     });
     row.append(yes, no);
     sheet.append(k, h, p, row);
-    sheet.classList.toggle("field-call", Boolean(state.pendingEvent));
+    sheet.classList.toggle("field-call", Boolean(state.pendingEvent) && !state.pendingFork);
+    sheet.classList.toggle("build-fork", Boolean(state.pendingFork));
     sheet.classList.remove("hidden");
   }
 
@@ -1052,6 +1350,7 @@
     state.cash += lastNet;
 
     for (const job of state.queue) job.left -= 1;
+    queuePulse = Date.now();
     const done = state.queue.filter((j) => j.left <= 0);
     state.queue = state.queue.filter((j) => j.left > 0);
     for (const job of done) finishBuild(job);
@@ -1121,6 +1420,7 @@
     log("Campaign loaded.", "good");
     showBoard();
     bindMapControls();
+    offerBuildFork();
     renderAll();
   }
 
@@ -1132,12 +1432,15 @@
     lastNet = 0;
     armedKit = null;
     hoverKit = null;
+    slotOverride = null;
     inspectJob = null;
     pops = [];
+    yardFlash = null;
     lastPriceToast = { city: "", at: 0, from: 0, to: 0 };
     siteView = null;
     showBoard();
     bindMapControls();
+    offerBuildFork();
     renderAll();
   }
 
@@ -1695,7 +1998,10 @@
       const occ = occupantClass(city);
       const raising = jobsFor(meta.id).length > 0;
       const tier = compoundTier(youSite);
-      btn.className = `city-node ${occ} ${selected === meta.id ? "selected" : ""} ${raising ? "raising" : ""} ${siteView === meta.id ? "site-focus" : ""} tier-${tier}`;
+      const sharp = rivalSite(city);
+      const nodeRival = strongestRival(city);
+      btn.className = `city-node ${occ} ${selected === meta.id ? "selected" : ""} ${raising ? "raising" : ""} ${siteView === meta.id ? "site-focus" : ""} ${sharp ? "sharp-rival" : ""} tier-${tier}`;
+      if (nodeRival && (sharp || contestedCity(city))) btn.style.setProperty("--rival", nodeRival.color);
       btn.dataset.city = meta.id;
       btn.style.left = `${(meta.x / 1200) * 100}%`;
       btn.style.top = `${(meta.y / 800) * 100}%`;
@@ -1785,15 +2091,18 @@
       lounge: site.lounge < 1 ? raisingCount(city.id, "lounge") : 0,
       market: site.market < 1 ? raisingCount(city.id, "market") : 0,
     };
+    const previewDc = hoverKit === "dc" && city.id === selected;
+    const dcPlan = dcPlacement(city, previewDc ? "dc" : null);
     const occ = {
       cityId: city.id,
-      dc: Math.min(4, Math.max(0, site.dc) + raising.dc),
+      dc: Math.min(4, dcPlan.live.length + dcPlan.raising.length),
       mcs: Math.min(2, Math.max(0, site.mcs) + raising.mcs),
       bess: Math.min(1, Math.max(0, site.bess) + (raising.bess ? 1 : 0)),
       lounge: Math.min(1, Math.max(0, site.lounge) + (raising.lounge ? 1 : 0)),
       market: Math.min(1, Math.max(0, site.market) + (raising.market ? 1 : 0)),
       raising,
       live: site,
+      dcPlan,
       jobs: {
         dc: jobList(city.id, "dc"),
         mcs: jobList(city.id, "mcs"),
@@ -1804,12 +2113,20 @@
       preview: null,
     };
     const cap = { dc: 4, mcs: 2, bess: 1, lounge: 1, market: 1 };
-    if (hoverKit && city.id === selected && cap[hoverKit] && !blockedReason(hoverKit, city.id) && occ[hoverKit] < cap[hoverKit]) {
+    if (
+      hoverKit &&
+      hoverKit !== "dc" &&
+      city.id === selected &&
+      cap[hoverKit] &&
+      !blockedReason(hoverKit, city.id) &&
+      occ[hoverKit] < cap[hoverKit]
+    ) {
       occ[hoverKit] += 1;
       occ.preview = hoverKit;
-      if (hoverKit === "dc" || hoverKit === "mcs") occ.raising[hoverKit] += 1;
+      if (hoverKit === "mcs") occ.raising[hoverKit] += 1;
       else occ.raising[hoverKit] = 1;
     }
+    if (dcPlan.raising.some((item) => item.preview)) occ.preview = "dc";
     return occ;
   }
 
@@ -1981,10 +2298,22 @@
       const key = `${c},${r}`;
       if (!tiles.has(key)) tiles.set(key, { c, r, kind });
     };
-    for (let i = 0; i < occ.dc; i += 1) {
-      const slot = SLOTS.dc[i];
-      if (!slot) continue;
-      add(slot.c, slot.r, "dc");
+    if (occ.dcPlan) {
+      const seen = new Set();
+      const paint = (idx) => {
+        const slot = SLOTS.dc[idx];
+        if (!slot || seen.has(idx)) return;
+        seen.add(idx);
+        add(slot.c, slot.r, "dc");
+      };
+      occ.dcPlan.live.forEach(paint);
+      occ.dcPlan.raising.forEach((item) => paint(item.slot));
+    } else {
+      for (let i = 0; i < occ.dc; i += 1) {
+        const slot = SLOTS.dc[i];
+        if (!slot) continue;
+        add(slot.c, slot.r, "dc");
+      }
     }
     if (occ.mcs) SLOTS.mcs.forEach((s) => add(s.c, s.r, "mcs"));
     if (occ.bess) SLOTS.bess.forEach((s) => add(s.c, s.r, "bess"));
@@ -2020,10 +2349,21 @@
   }
 
   function reservedMark(occ, c, r) {
-    for (let i = occ.live.dc; i < occ.dc; i += 1) {
-      const slot = SLOTS.dc[i];
-      if (slot && slot.c === c && slot.r === r) {
-        return { kind: "dc", label: `DC ${i + 1}`, ...slotJob(occ, "dc", i - occ.live.dc) };
+    if (occ.dcPlan) {
+      const hit = occ.dcPlan.raising.find((item) => {
+        const slot = SLOTS.dc[item.slot];
+        return slot && slot.c === c && slot.r === r;
+      });
+      if (hit) {
+        const job = dcJobView(hit);
+        return { kind: "dc", label: `DC ${hit.slot + 1}`, ...job };
+      }
+    } else {
+      for (let i = occ.live.dc; i < occ.dc; i += 1) {
+        const slot = SLOTS.dc[i];
+        if (slot && slot.c === c && slot.r === r) {
+          return { kind: "dc", label: `DC ${i + 1}`, ...slotJob(occ, "dc", i - occ.live.dc) };
+        }
       }
     }
     if (occ.raising.mcs) {
@@ -2068,11 +2408,38 @@
     );
   }
 
+  function slotPickHits(occ) {
+    if (occ.preview !== "dc" || !occ.dcPlan) return "";
+    const used = new Set(occ.dcPlan.live);
+    for (const item of occ.dcPlan.raising) {
+      if (!item.preview) used.add(item.slot);
+    }
+    const empty = emptyDcSlots(used);
+    if (empty.length < 2) return "";
+    const picked = occ.dcPlan.raising.find((item) => item.preview)?.slot;
+    return empty
+      .map((i) => {
+        const slot = SLOTS.dc[i];
+        if (!slot) return "";
+        const quad = insetQuad(gridQuad(slot.c, slot.r, 1, 1), 0.08);
+        const on = i === picked ? " on" : "";
+        return `<polygon class="site-slot-hit${on}" data-place="dc" data-slot="${i}" points="${svgPts(quad)}" />`;
+      })
+      .join("");
+  }
+
   function ghostCaptions(occ) {
     let g = "";
-    for (let i = occ.live.dc; i < occ.dc; i += 1) {
-      const slot = SLOTS.dc[i];
-      if (slot) g += ghostBadge(slot.c, slot.r, `DC ${i + 1}`, slotJob(occ, "dc", i - occ.live.dc));
+    if (occ.dcPlan) {
+      for (const item of occ.dcPlan.raising) {
+        const slot = SLOTS.dc[item.slot];
+        if (slot) g += ghostBadge(slot.c, slot.r, `DC ${item.slot + 1}`, dcJobView(item));
+      }
+    } else {
+      for (let i = occ.live.dc; i < occ.dc; i += 1) {
+        const slot = SLOTS.dc[i];
+        if (slot) g += ghostBadge(slot.c, slot.r, `DC ${i + 1}`, slotJob(occ, "dc", i - occ.live.dc));
+      }
     }
     if (occ.raising.mcs && occ.live.mcs < occ.mcs) {
       g += ghostBadge(SLOTS.mcs[0].c, SLOTS.mcs[0].r, "MCS", slotJob(occ, "mcs", 0));
@@ -2220,14 +2587,24 @@
   }
 
   function drawDcCanopy(occ) {
-    const live = occ.live.dc;
-    if (live < 1) return "";
+    const liveSlots = occ.dcPlan ? occ.dcPlan.live : Array.from({ length: occ.live.dc }, (_, i) => i);
+    if (!liveSlots.length) return "";
+    const contiguous = liveSlots.every((s, i) => s === i);
+    const live = contiguous ? liveSlots.length : Math.max(...liveSlots) - Math.min(...liveSlots) + 1;
+    const origin = contiguous ? 1 : SLOTS.dc[Math.min(...liveSlots)].c;
     const lift = 15.6;
     let g = "";
-    for (let i = 0; i <= live; i += 1) {
-      g += cylPost(1 + i - 0.03, 1.02, 0.07, 0.08, lift, SURF.alum);
+    if (contiguous) {
+      for (let i = 0; i <= live; i += 1) {
+        g += cylPost(1 + i - 0.03, 1.02, 0.07, 0.08, lift, SURF.alum);
+      }
+    } else {
+      for (const i of liveSlots) {
+        const slot = SLOTS.dc[i];
+        if (slot) g += cylPost(slot.c - 0.03, slot.r + 0.02, 0.07, 0.08, lift, SURF.alum);
+      }
     }
-    const street = insetQuad(gridQuad(1.0, 0.96, live + 0.02, 0.42), 0);
+    const street = insetQuad(gridQuad(origin, 0.96, live + 0.02, 0.42), 0);
     const roof = isoPrism(liftPts(street, lift), 0.62, SURF.cream);
     g += roof.g;
     g += `<polygon class="site-roof-deck" points="${svgPts(roof.top)}" />`;
@@ -2245,12 +2622,23 @@
   function drawDcRow(occ) {
     if (occ.dc < 1) return "";
     let g = "";
-    for (let i = 0; i < occ.dc; i += 1) {
-      const slot = SLOTS.dc[i];
-      if (!slot) continue;
-      const ghost = i >= occ.live.dc;
-      const job = ghost ? slotJob(occ, "dc", i - occ.live.dc) : null;
-      g += drawDcUnit(slot, ghost, job, slotPop(occ, "dc", i));
+    if (occ.dcPlan) {
+      for (const i of occ.dcPlan.live) {
+        const slot = SLOTS.dc[i];
+        if (slot) g += drawDcUnit(slot, false, null, slotPop(occ, "dc", i));
+      }
+      for (const item of occ.dcPlan.raising) {
+        const slot = SLOTS.dc[item.slot];
+        if (slot) g += drawDcUnit(slot, true, dcJobView(item), false);
+      }
+    } else {
+      for (let i = 0; i < occ.dc; i += 1) {
+        const slot = SLOTS.dc[i];
+        if (!slot) continue;
+        const ghost = i >= occ.live.dc;
+        const job = ghost ? slotJob(occ, "dc", i - occ.live.dc) : null;
+        g += drawDcUnit(slot, ghost, job, slotPop(occ, "dc", i));
+      }
     }
     return wrapBldg("kit-dc", false, g);
   }
@@ -2314,7 +2702,8 @@
       drawMarket(occ) +
       drawDcCanopy(occ) +
       drawDcRow(occ) +
-      ghostCaptions(occ);
+      ghostCaptions(occ) +
+      slotPickHits(occ);
     return overlaySvg(any ? "site-compound" : "site-compound empty-board", inner);
   }
 
@@ -2331,11 +2720,27 @@
     return `<div class="site-raising">${bits.join(" · ")}</div>`;
   }
 
+  function rivalCutHtml(city) {
+    const rival = strongestRival(city);
+    const color = rival ? rival.color : PAL.amber;
+    return (
+      `<svg class="site-rival-cut" viewBox="0 0 240 180" preserveAspectRatio="xMidYMid meet" aria-hidden="true">` +
+      `<g fill="none" stroke="${color}" stroke-width="3.4" stroke-linejoin="miter">` +
+      `<polygon points="46,122 170,122 198,80 74,80"/>` +
+      `<polygon points="78,78 94,34 190,34 170,78"/>` +
+      `<polygon points="110,34 110,14 158,14 158,34"/>` +
+      `<polygon points="26,136 72,136 84,110 38,110"/>` +
+      `<polygon points="176,112 214,112 226,90 188,90"/>` +
+      `</g></svg>`
+    );
+  }
+
   function yardArtHtml(city, meta, { banner = true } = {}) {
     const baseKind = yardBaseKind(city, meta);
     const base = MAP_SPRITES[baseKind] || MAP_SPRITES.dirt;
     let html = `<img class="site-base" src="${base}" alt="" draggable="false" data-kind="${baseKind}">`;
     if (baseKind === "dirt" || baseKind === "flag") html += kitLayersHtml(city);
+    if (rivalSite(city)) html += rivalCutHtml(city);
     if (banner) html += siteRaisingBanner(meta.id);
     return html;
   }
@@ -2388,10 +2793,30 @@
     if (!yard || yard.dataset.inspectBound) return;
     yard.dataset.inspectBound = "1";
     yard.addEventListener("click", (e) => {
+      const place = e.target.closest("[data-place]");
+      if (place && hoverKit && siteView) {
+        e.preventDefault();
+        e.stopPropagation();
+        slotOverride = {
+          city: siteView,
+          type: place.getAttribute("data-place"),
+          slot: Number(place.getAttribute("data-slot")),
+        };
+        renderSiteYard();
+        return;
+      }
       const hit = e.target.closest("[data-inspect]");
       if (!hit) return;
       const type = hit.getAttribute("data-inspect");
       if (type) inspectRaising(type);
+    });
+    yard.addEventListener("mouseleave", (e) => {
+      const next = e.relatedTarget;
+      if (next && next.closest && next.closest(".tray, #site-yard, #site-overlay")) return;
+      if (hoverKit) {
+        hoverKit = null;
+        renderSiteYard();
+      }
     });
   }
 
@@ -2425,14 +2850,14 @@
         ? "CONTESTED"
         : SITE_TYPE_NAME[baseKind] || SITE_TYPE_NAME[kind] || "SITE";
     const intel = $("site-overlay-intel");
+    const rival = strongestRival(city);
     if (intel) {
-      const rival = strongestRival(city);
       if (sealed) {
         intel.className = "site-intel rival";
         intel.innerHTML = `${shareDuelHtml(city)}<p>RIVAL SITE · ${rival ? rival.name : "They"} hold this pad. Compete on price and empty dirt — you cannot seize the compound.</p>`;
       } else if (contested) {
         intel.className = "site-intel contested";
-        intel.innerHTML = `${shareDuelHtml(city)}<p>CONTESTED · ${rival ? rival.name : "A rival"} shares this market. Price and amenities move share. Their dirt stays theirs.</p>`;
+        intel.innerHTML = `${shareDuelHtml(city)}<p>CONTESTED · ${rival ? rival.name : "A rival"} shares this market. Answer the chip — price, lounge, or BESS. Their dirt stays theirs.</p>${threatChipHtml(city)}`;
       } else {
         intel.className = "site-intel hidden";
         intel.innerHTML = "";
@@ -2446,6 +2871,18 @@
     }
     const stack = $("site-stack");
     if (!stack) return;
+    const consequence = $("site-consequence");
+    if (consequence) {
+      const held = yardFlash && yardFlash.hold && yardFlash.city === city.id;
+      const popped = pops.find((p) => p.city === city.id && p.until > Date.now());
+      const line = held && popped
+        ? `${BUILD[popped.type].name} COMPLETE`
+        : !sealed && hoverKit
+          ? placementRead(city, hoverKit)
+          : "";
+      consequence.textContent = line;
+      consequence.classList.toggle("hidden", !line);
+    }
     const site = city.sites[YOU];
     const aspect = SPRITE_ASPECT[baseKind] || "220 / 131";
     frameSiteStack(stack, aspect);
@@ -2457,6 +2894,14 @@
     stack.dataset.bess = String(site.bess);
     stack.dataset.lounge = String(site.lounge);
     stack.dataset.market = String(site.market);
+    stack.dataset.sealed = sealed ? "1" : "0";
+    if (rival && (sealed || contested)) stack.dataset.rival = rival.id;
+    else delete stack.dataset.rival;
+    const flashing = yardFlash && yardFlash.city === city.id && (yardFlash.hold || yardFlash.until > Date.now());
+    const popping = pops.some((p) => p.city === city.id && p.until > Date.now());
+    stack.classList.toggle("yard-flash", Boolean(flashing));
+    stack.classList.toggle("hold", Boolean(yardFlash && yardFlash.hold && yardFlash.city === city.id));
+    stack.classList.toggle("kit-complete", popping);
     stack.innerHTML = yardArtHtml(city, meta, { banner: true });
   }
 
@@ -2498,6 +2943,7 @@
   function exitSite() {
     siteView = null;
     hoverKit = null;
+    slotOverride = null;
     inspectJob = null;
     mapCam = { ...interconnectCam };
     clampCam();
@@ -2593,6 +3039,16 @@
     $("btn-exit-site-overlay")?.addEventListener("click", exitSite);
     bindYardFrame();
     bindYardInspect();
+    const intel = $("site-overlay-intel");
+    if (intel && !intel.dataset.bound) {
+      intel.dataset.bound = "1";
+      intel.addEventListener("click", (e) => {
+        const chip = e.target.closest("[data-threat]");
+        if (!chip || !siteView || !state) return;
+        answerThreat(state.cities[siteView]);
+        renderAll();
+      });
+    }
   }
 
   function renderInspector() {
@@ -2628,7 +3084,8 @@
           const spec = BUILD[j.type];
           const pct = Math.max(6, Math.round(((spec.months - j.left) / spec.months) * 100));
           const focus = inspectJob === j.type ? " focus" : "";
-          return `<div class="job${focus}" data-job="${j.type}"><span>${spec.name}</span><span>${j.left} MO</span><div class="bar"><span style="width:${pct}%"></span></div></div>`;
+          const pulse = Date.now() - queuePulse < 900 ? " tick" : "";
+          return `<div class="job${focus}" data-job="${j.type}"><span>${spec.name}</span><span>${j.left} MO</span><div class="bar${pulse}"><span style="width:${pct}%"></span></div></div>`;
         })
         .join("");
     }
@@ -2734,10 +3191,13 @@
           : `<small class="ready">${money(cost)} · ${spec.months} MO</small>`;
       btn.innerHTML = `<img src="${spec.icon}" alt="" draggable="false"><span class="deploy-copy"><b>${short}</b>${status}</span>`;
       btn.addEventListener("mouseenter", () => {
+        if (hoverKit !== spec.id) slotOverride = null;
         hoverKit = spec.id;
         renderSiteYard();
       });
-      btn.addEventListener("mouseleave", () => {
+      btn.addEventListener("mouseleave", (e) => {
+        const next = e.relatedTarget;
+        if (next && next.closest && next.closest("#site-yard, #site-overlay")) return;
         if (hoverKit === spec.id) hoverKit = null;
         renderSiteYard();
       });
@@ -2923,6 +3383,44 @@
       selected = "vegas";
       return "vegas";
     }
+    if (name === "hover" || name === "consequence") {
+      z("flagstaff").dc = 2;
+      selected = "flagstaff";
+      return "flagstaff";
+    }
+    if (name === "fork" || name === "build-order") {
+      state.pendingFork = { at: state.month };
+      state.forkShown = true;
+      state.buildPath = null;
+      selected = "phoenix";
+      return null;
+    }
+    if (name === "pop" || name === "complete") {
+      z("flagstaff").dc = 2;
+      selected = "flagstaff";
+      return "flagstaff";
+    }
+    if (name === "amenity-gap") {
+      z("vegas").dc = 2;
+      z("vegas").lounge = 0;
+      state.cities.vegas.sites.voltspan.dc = 2;
+      state.cities.vegas.sites.voltspan.lounge = 1;
+      state.cities.vegas.price.zaps = 0.38;
+      state.cities.vegas.price.voltspan = 0.4;
+      selected = "vegas";
+      return "vegas";
+    }
+    if (name === "strain") {
+      z("vegas").dc = 2;
+      z("vegas").bess = 0;
+      z("vegas").lounge = 1;
+      state.cities.vegas.sites.voltspan.dc = 2;
+      state.cities.vegas.sites.voltspan.bess = 1;
+      state.cities.vegas.price.zaps = 0.36;
+      state.cities.vegas.price.voltspan = 0.38;
+      selected = "vegas";
+      return "vegas";
+    }
     return null;
   }
 
@@ -2942,6 +3440,7 @@
       if (!state) state = freshState();
       showBoard();
       bindMapControls();
+      offerBuildFork();
       renderAll();
     });
     $("btn-save").addEventListener("click", saveManual);
@@ -2992,6 +3491,11 @@
         const city = state.cities[selected];
         if (!rivalSite(city)) {
           e.preventDefault();
+          if (e.key === "[" && threatCall(city)?.action === "price") {
+            answerThreat(city);
+            renderAll();
+            return;
+          }
           const step = e.key === "]" ? 0.01 : -0.01;
           applyPlayerPrice(city, city.price[YOU] + step);
           renderAll();
@@ -3013,12 +3517,22 @@
       renderAll();
       const site = params.get("site") || shotCity;
       if (site && CITY_BY_ID[site]) enterSite(site);
-      if (state.pendingEvent || state.pendingDeal) openDealSheet();
+      if (state.pendingEvent || state.pendingDeal || state.pendingFork) openDealSheet();
+      if (shot === "hover" || shot === "consequence") {
+        hoverKit = "dc";
+        renderSiteYard();
+      }
+      if (shot === "pop" || shot === "complete") {
+        pops.push({ city: "flagstaff", type: "dc", slot: 1, until: Date.now() + 86400000 });
+        yardFlash = { city: "flagstaff", until: Date.now() + 86400000, hold: true };
+        toast("DC CHARGER COMPLETE · Flagstaff", "good");
+        renderSiteYard();
+      }
     }
   }
 
   window.__EMPIRE_SMOKE__ = {
-    build: "rts-yard-16",
+    build: "rts-yard-17",
     hitR: CITY_HIT_R,
     goldilocks: 0.76,
     nearestCity,
@@ -3036,6 +3550,24 @@
     enterSite,
     enqueue,
     applyPlayerPrice: (id, price) => applyPlayerPrice(state.cities[id], price),
+    placementRead: (id, type) => placementRead(state.cities[id], type),
+    smartSlot: (id) => {
+      const plan = dcPlacement(state.cities[id], null);
+      return smartDcSlot(plan.used, state.cities[id]);
+    },
+    threat: (id) => threatCall(state.cities[id]),
+    answerThreat: (id) => answerThreat(state.cities[id]),
+    setHover: (type) => {
+      hoverKit = type;
+      if (siteView) renderSiteYard();
+    },
+    buildPath: () => state.buildPath,
+    pickPath: (path) => {
+      state.buildPath = path === "amenity" ? "amenity" : "corridor";
+      state.forkShown = true;
+      state.pendingFork = null;
+    },
+    rivalPlan: (cityId) => rivalBuildType(state.cities[cityId].sites.voltspan, true),
   };
 
   boot();

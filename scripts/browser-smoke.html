@@ -57,6 +57,27 @@
           const flagWhy = smoke.blockedReason("dc", "flagstaff");
           const flagStillOpen = flagWhy !== "RIVAL SITE";
 
+          smoke.enterSite("flagstaff");
+          smoke.setHover("dc");
+          await wait(80);
+          const consequence = d.querySelector("#site-consequence");
+          const consequenceText = consequence ? consequence.textContent : "";
+          const smartAfterOne = smoke.smartSlot("flagstaff");
+          const read = smoke.placementRead("flagstaff", "dc");
+
+          smoke.getState().cities.vegas.sites.zaps.dc = 2;
+          smoke.getState().cities.vegas.sites.voltspan.dc = 2;
+          smoke.getState().cities.vegas.price.zaps = 0.4;
+          smoke.getState().cities.vegas.price.voltspan = 0.36;
+          const threat = smoke.threat("vegas");
+
+          smoke.pickPath("corridor");
+          const corridorPlan = smoke.rivalPlan("la");
+          smoke.pickPath("amenity");
+          const amenityPlan = smoke.rivalPlan("la");
+          const buildId = d.querySelector('meta[name="empire-build"]');
+          const buildName = buildId ? buildId.content : "";
+
           const ok =
             before.site === "flagstaff" &&
             after.site === "flagstaff" &&
@@ -74,7 +95,18 @@
             denverWhy === "RIVAL SITE" &&
             flagStillOpen &&
             smoke.rivalSite("la") === true &&
-            smoke.rivalSite("flagstaff") === false;
+            smoke.rivalSite("flagstaff") === false &&
+            smoke.build === "rts-yard-17" &&
+            buildName === "rts-yard-17" &&
+            smoke.goldilocks === 0.76 &&
+            smartAfterOne === 1 &&
+            /est\./.test(read) &&
+            /est\./.test(consequenceText) &&
+            threat &&
+            threat.chip === "UNDERCUT" &&
+            threat.action === "price" &&
+            corridorPlan === "lounge" &&
+            amenityPlan === "mcs";
 
           report({
             ok,
@@ -96,6 +128,10 @@
               rivalLa: smoke.rivalSite("la"),
               rivalFlag: smoke.rivalSite("flagstaff"),
             },
+            placement: { smartAfterOne, read, consequenceText },
+            threat,
+            fork: { corridorPlan, amenityPlan },
+            buildName,
           });
         } catch (err) {
           report({ ok: false, error: String(err && err.stack ? err.stack : err) });

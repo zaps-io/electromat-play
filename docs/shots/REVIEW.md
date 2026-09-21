@@ -1,72 +1,51 @@
-# Empire playtest — rts-yard-16
+# Empire playtest — rts-yard-17
 
-Replay stills (paused board, no title): `?shot=board` · `?shot=empty` (Flagstaff dirt chessboard) · `?shot=ghosts` (MCS violet + BESS/MARKET) · `?shot=raising` · `?shot=full` · `?shot=rival` (LA blocked tray) · `?shot=contested` (Vegas share meters) · `?shot=event` (MATCH/HOLD field call, inspector price visible) · `?showcase=1`.
+Replay stills (paused board, no title): `?shot=board` · `?shot=empty` (Flagstaff dirt chessboard) · `?shot=ghosts` (MCS violet + BESS/MARKET) · `?shot=raising` · `?shot=full` · `?shot=rival` (LA blocked tray, sharper silhouette) · `?shot=contested` (Vegas UNDERCUT chip) · `?shot=event` (MATCH/HOLD field call, inspector price visible) · `?shot=hover` (canopy consequence) · `?shot=fork` (MCS corridor vs lounge + market) · `?shot=pop` (kit complete) · `?showcase=1`.
 
-Checked-in frames: `board.png` · `yard-empty.png` · `yard-pad.png` · `yard-ghosts.png` · `yard-event.png` · `yard-raising.png` · `yard-full.png` · `yard-rival.png` · `yard-contested.png`.
+Checked-in frames: `yard-empty.png` · `yard-pad.png` · `yard-ghosts.png` · `yard-event.png` · `yard-raising.png` · `yard-full.png` · `yard-rival.png` · `yard-contested.png` · `yard-hover.png` · `yard-threat.png` · `yard-fork.png` · `yard-pop.png`.
 
-## Visual (Terminal Electromat)
+## rts-yard-17
 
-Yards are miniature Electromat compounds, not generic RTS cubes.
+- **Placement.** Hovering a kit ghost prints one line: canopy / lounge adjacency, estimated income, and share when a rival is in the market. With more than one empty DC stall, the ghost prefers the cell that closes a canopy gap or finishes the 2-stall / 3-stall row, and leans toward the lounge column when that score ties. Click another empty stall to override, then deploy as usual.
+- **Threats.** Rival compounds on the map and in the yard wear a harder silhouette in their color. Contested sites show one counter chip — UNDERCUT (`[`), AMENITY GAP (`L`), or GRID STRAIN (`B`). The chip click and the matching hotkey do that action. Pads stay theirs.
+- **Build order.** Early game opens a fork sheet: MCS corridor rush or lounge + market. Both stay viable. Corridor makes rivals race amenities. Amenity makes rivals push MCS and cut price harder.
+- **Finish.** A completed kit pops harder, the yard flashes, the queue meter ticks, and the toast names the kit (`DC CHARGER COMPLETE · Flagstaff`).
 
-- **DC** — Slim Zeus row: tall brushed-aluminum pedestals, charcoal recess, amber display, red mark, twin holsters, cyan base hairline, short cables.
-- **Canopy** — thin cream roof, cylindrical aluminum posts, recessed warm coffers, cyan edge, thin red fascia.
-- **Lounge** — cream pavilion silhouette, smoked portals with amber glow, aluminum lip. No forced cyan in the lounge core.
-- **MCS** — truck island: low charcoal cabinet + heavier dispensers under an aluminum bay. Raising ghosts use **violet** edges (not error red).
-- **BESS** — cabinet farm with amber data strips (not cyan-capped cubes).
-- **Market** — charcoal kiosk, cream awning, amber board.
-- **Empty claimable** — dirt-pad photo + empty 5×4 chessboard etch. No survey-flag hero.
+## Holds from rts-yard-16
 
-Chessboard snap and Goldilocks frame (76% / cap 800) are unchanged.
-
-## Systems
-
-- Contested markets pull harder on price (elasticity 1.85) and take corridor pull from neighboring pads.
-- Rivals prefer fighting cities you already hold — lounge/market first, occasional cent cuts.
-- Field calls fire earlier and more often (about every 2–4 months): undercut, grid strain, amenity lounge, corridor poach. The sheet auto-opens **on the map column** so inspector price + `[` `]` stay visible. MATCH / HOLD / QUEUE LOUNGE stay real decisions.
-- HUD campaign track shows continental share plus MAJORITY / STATES / MCS toward the win.
-
-## UX
-
-Deploy tray and inspector are amber-on-charcoal terminal UI. CHARGE / RELAX / DEPART triad on the inspector. Toasts stack (up to 3), stats tick, share meters animate. Inspector price row is sticky.
-
-## Ownership (hold from #24)
-
-Rival yards are **not** claimable dirt. VOLTSPAN / GRIDHAWK / ARCWAY compounds stay theirs. Deploying a pad on Los Angeles, Dallas, Denver, San Diego, El Paso, or Salt Lake City is blocked. The tray wears an amber **RIVAL SITE** why-chip. Empty Flagstaff / Tucson / Vegas still take a DC kit.
-
-Contested means both already have a live (or raising) pad. You keep building on **your** yard and fight on price/share. You do not seize their compound.
-
-## Framing (hold)
-
-Goldilocks yard scale **unchanged**: full pad + a bit of sand margin, about **76% of the yard box** (cap 800). Chessboard snap, nearest-city hits (r=70), pause-on-new-game, EXIT/Esc, official 1.8KB wordmarks.
+- Empty claimable yards stay a dirt chessboard. No survey-flag hero.
+- MCS raising ghosts stay violet, not error red.
+- Field calls dock on the map column. Inspector price and `[` `]` stay visible.
+- Rival pads (LA, Dallas, Denver, San Diego, El Paso, Salt Lake City) stay blocked. Tray chip reads RIVAL SITE.
+- Goldilocks frame stays 76% / cap 800.
+- Official 1.8KB wordmarks (`?v=canon-1823`) are unchanged.
 
 ## Playtest notes
 
-1. Open `?shot=empty` — Flagstaff dirt pad, empty 5×4 chessboard, no flag photo. DC hover still ghosts a Slim Zeus.
-2. Open `?shot=ghosts` — Flagstaff MCS raising ghost is violet, not red, next to cyan BESS and amber MARKET.
-3. Open `?shot=event` — FIELD CALL docks on the yard; MATCH / HOLD stay on the map. Inspector price slider and `[` `]` remain visible.
-4. Open `?shot=raising` — Phoenix ghosts with coffered canopy already live on the two-stall row.
-5. Open `?shot=full` — Flagstaff reads as a station: Zeus row, MCS island, BESS farm, lounge pavilion, market kiosk.
-6. Open `?shot=rival` — LA overlay reads RIVAL SITE, tray chips amber, DC click does not enqueue.
-7. Open `?shot=contested` — Vegas meters Zaps vs VOLTSPAN; drag price, share toast/flash.
-8. Open `?shot=board` — campaign track under the resource bar. Phoenix still starts paused.
+1. Open `?shot=hover` — Flagstaff has two live stalls. The DC ghost sits on the third cell. The amber line reads COMPLETES CANOPY and an income estimate. Two empty stalls are clickable.
+2. Open `?shot=contested` — Vegas shows UNDERCUT and CUT PRICE `[`. Clicking the chip matches VOLTSPAN. The pad is still yours to build on.
+3. Open `?shot=fork` — BUILD ORDER sheet offers MCS CORRIDOR and LOUNGE + MARKET. The board stays up. The calendar stays paused.
+4. Open `?shot=pop` — Flagstaff flashes and the toast names DC CHARGER COMPLETE.
+5. Open `?shot=empty` — dirt chessboard, DC click still queues.
+6. Open `?shot=rival` — LA silhouette is harder, tray is RIVAL SITE, DC does not enqueue.
+7. Open `?shot=event` — field call docks beside the yard. Price stays on the inspector.
+8. Open `?shot=ghosts` — MCS ghost is still violet.
 
 ## Verdict
 
 | Bar | Grade | Evidence |
 |---|---|---|
-| Instant-read silhouettes | **RAISE** | Zeus ≠ MCS island ≠ BESS farm ≠ lounge pavilion ≠ market kiosk |
-| Terminal Electromat look | **RAISE** | cream coffers, Slim Zeus, lounge portals |
-| Rival pad seizure | **HOLD** | LA/Dallas/Denver tray = RIVAL SITE; enqueue no-ops |
-| Empty claim | **RAISE** | Flagstaff opens as dirt chessboard, not survey-flag photo |
-| MCS ghost language | **RAISE** | violet, not error-red; still ≠ cyan DC/BESS ≠ amber MARKET |
-| Field-call agency | **RAISE** | sheet docks on the map; inspector price + `[` `]` stay up |
-| Contested share | **RAISE** | steeper price fight + corridor pull + heat |
-| Decision events | **RAISE** | undercut / strain / amenity / poach, auto-open |
-| Win / progress | **RAISE** | HUD campaign track MAJORITY / STATES / MCS |
-| Construction pop | **HOLD+** | louder pop, enqueue toast, meter tick |
-| Flagstaff after Phoenix | **HOLD** | Distance pick, radius 70 |
-| Explore without the year racing | **HOLD** | Boot paused; 1× is slow |
-| Yard framing | **HOLD** | Stack still ~76% of yard (cap 800) |
+| Placement consequence | **RAISE** | Hover line: canopy / amenity / est. income |
+| Smart slot + override | **RAISE** | Completes canopy row; click cell moves the ghost |
+| Threat chip | **RAISE** | UNDERCUT / AMENITY GAP / GRID STRAIN, one click or hotkey |
+| Rival silhouette | **RAISE** | Hard color edge on rival compounds |
+| Build-order fork | **RAISE** | MCS corridor vs lounge + market changes rival pressure |
+| Kit-complete juice | **RAISE** | Louder pop, yard flash, meter tick, named toast |
+| Rival pad seizure | **HOLD** | LA/Dallas/Denver tray = RIVAL SITE |
+| Empty claim | **HOLD** | Flagstaff dirt chessboard |
+| MCS ghost language | **HOLD** | violet |
+| Field-call dock | **HOLD** | price visible |
+| Yard framing | **HOLD** | ~76% of yard, cap 800 |
 | Brand | **HOLD** | Official cream/red wordmarks |
 
-Economy core numbers untouched except share reacting harder when a market is contested. Night Shift untouched. Cache `rts-yard-16`.
+Night Shift untouched. Cache `rts-yard-17`.
