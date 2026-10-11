@@ -1,4 +1,19 @@
-# Empire playtest — rts-yard-23
+# Empire playtest — rts-yard-24
+
+Replay stills: game start (legend under the interconnect label, clear of the build-order strip) · `?shot=footprint` (DC hover, two cursor cells) · `?shot=contested-built` (contested yard).
+
+Checked-in frames: `yard-map-24.png` · `yard-hover-a-24.png` · `yard-hover-b-24.png` · `yard-contested-24.png` · `yard-map-23.png` · `yard-hover-23.png` · `yard-panel-23.png` · `yard-contested-23.png` · `yard-map.png` · `yard-footprint.png` · `yard-midbuild.png` · `yard-five.png`.
+
+## rts-yard-24
+
+Live play of rts-yard-23.
+
+- **Pad picking.** A point anywhere on the pad diamond resolves to a cell. The footprint moves to the nearest free slot for that kit, and a click commits that slot.
+- **Legend.** It sits at the top-left, under the Western Interconnect label, clear of the build-order strip.
+- **Names.** Faction rings and flags sit above-right of the city dot. Labels carry a dark halo so Flagstaff, LA, San Diego, SLC, Denver, El Paso, and Dallas stay readable.
+- **Contested yard.** The white completion glow is dimmed, and the pad sits a few pixels below the undercut row.
+
+## rts-yard-23
 
 Replay stills (paused board, no title): `?shot=map` (faction cloth, radii, legend) · `?shot=footprint` (DC hover, dim hatch, footprint on the nearest open slot) · `?shot=raising` (mid-build, side panel in view) · `?shot=contested-built` (full Vegas yard, share header, crews off the kits).
 

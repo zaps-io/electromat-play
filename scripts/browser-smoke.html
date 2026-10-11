@@ -77,6 +77,7 @@
           const blockedCells = d.querySelectorAll(".site-cell-blocked").length;
           const dimCells = d.querySelectorAll(".site-cell-dim").length;
           const aimed = smoke.aimCell(2, 2);
+          const sweep = smoke.sweepPad();
           const footprint = d.querySelector(".site-footprint");
           const monthRing = d.querySelector(".site-month-ring");
           const scaffold = d.querySelector(".site-scaffold");
@@ -182,8 +183,8 @@
             flagStillOpen &&
             smoke.rivalSite("la") === true &&
             smoke.rivalSite("flagstaff") === false &&
-            smoke.build === "rts-yard-23" &&
-            buildName === "rts-yard-23" &&
+            smoke.build === "rts-yard-24" &&
+            buildName === "rts-yard-24" &&
             cashPx > sharePx &&
             cashPx >= 28 &&
             /NEXT ·/.test(nextLine) &&
@@ -250,6 +251,9 @@
             aimed &&
             aimed.slot === 1 &&
             aimed.footprint === "2,1" &&
+            sweep &&
+            sweep.hits >= 20 &&
+            sweep.unique.length >= 2 &&
             Boolean(footprint) &&
             Boolean(monthRing) &&
             Boolean(scaffold);
@@ -293,7 +297,7 @@
             waypoint: { assigned, crewAfter, flagPip: Boolean(flagPip), tucsonPip: Boolean(tucsonPip), phxPips },
             buildName,
             truth: { crewText, crew0, netText, net0, phxNet, objRings, shareBars, phxRadius: Boolean(phxRadius), earlyFog: Boolean(earlyFog) },
-            grid: { validCells, blockedCells, dimCells, aimed, footprint: Boolean(footprint), monthRing: Boolean(monthRing), scaffold: Boolean(scaffold) },
+            grid: { validCells, blockedCells, dimCells, aimed, sweep, footprint: Boolean(footprint), monthRing: Boolean(monthRing), scaffold: Boolean(scaffold) },
             plate: { cashPx, sharePx, nextLine },
             edict: { edictOk, mcsBefore, mcsAfter },
             streak: { streakNow, multNow, grade: gradeNow },

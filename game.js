@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-yard-23 */
+/* empire-build: rts-yard-24 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -22,7 +22,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-yard-23";
+  const SPRITE_V = "rts-yard-24";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -43,7 +43,7 @@
     voltspan: "240 / 204",
     rival: "240 / 167",
   };
-  const KIT_V = "rts-yard-23";
+  const KIT_V = "rts-yard-24";
   const KIT_SPRITES = {
     dc: `assets/kits/dc.svg?v=${KIT_V}`,
     mcs: `assets/kits/mcs.svg?v=${KIT_V}`,
@@ -3802,7 +3802,7 @@
     return g;
   }
 
-  function cellFromView(x, y) {
+  function viewToGrid(x, y) {
     const { ne, se } = gridStep();
     const a = ne;
     const b = se;
@@ -3812,13 +3812,41 @@
     if (!det) return null;
     const dx = x - GRID.x;
     const dy = y - GRID.y;
-    const col = (d * dx - b * dy) / det;
-    const row = (-c * dx + a * dy) / det;
-    const ci = Math.floor(col + 1e-6);
-    const ri = Math.floor(row + 1e-6);
-    if (ci < 0 || ri < 0 || ci >= GRID.cols || ri >= GRID.rows) return null;
-    if (col - ci > 0.985 || row - ri > 0.985) return null;
-    return { c: ci, r: ri };
+    return {
+      col: (d * dx - b * dy) / det,
+      row: (-c * dx + a * dy) / det,
+    };
+  }
+
+  function nearestGridCell(x, y) {
+    let best = null;
+    let bestD = Infinity;
+    for (let r = 0; r < GRID.rows; r += 1) {
+      for (let c = 0; c < GRID.cols; c += 1) {
+        const mid = cellCenter(c, r);
+        const d = Math.hypot(mid.x - x, mid.y - y);
+        if (d < bestD) {
+          bestD = d;
+          best = { c, r, d };
+        }
+      }
+    }
+    return best;
+  }
+
+  // Raycast the whole pad diamond, including grout and the fringe, onto a cell.
+  function cellFromView(x, y) {
+    const g = viewToGrid(x, y);
+    if (!g) return null;
+    const margin = 0.62;
+    const onPad =
+      g.col >= -margin &&
+      g.row >= -margin &&
+      g.col <= GRID.cols + margin &&
+      g.row <= GRID.rows + margin;
+    if (!onPad) return null;
+    const near = nearestGridCell(x, y);
+    return near ? { c: near.c, r: near.r } : null;
   }
 
   function slotIndex(type, c, r) {
@@ -3935,7 +3963,8 @@
       `<defs><pattern id="${hid}" patternUnits="userSpaceOnUse" width="2.4" height="2.4" patternTransform="rotate(40)">` +
       `<rect width="2.4" height="2.4" fill="rgba(18,18,23,0.16)"/>` +
       `<line x1="0" y1="0" x2="0" y2="2.4" stroke="rgba(245,240,232,0.28)" stroke-width="0.42"/>` +
-      `</pattern></defs>`;
+      `</pattern></defs>` +
+      `<polygon class="site-pad-hit" points="${svgPts(gridQuad(0, 0, GRID.cols, GRID.rows))}" />`;
     const footprint = [];
     for (let r = 0; r < GRID.rows; r += 1) {
       for (let c = 0; c < GRID.cols; c += 1) {
@@ -3953,22 +3982,9 @@
     }
     let marks = footprint.filter((cell) => cell.ok);
     if (type === "dc") {
-      const plan = dcPlacement(city, blockedReason(type, city.id) ? null : "dc");
-      const prev = plan.raising.find((item) => item.preview);
-      if (prev && SLOTS.dc[prev.slot]) {
-        marks = [{ c: SLOTS.dc[prev.slot].c, r: SLOTS.dc[prev.slot].r, ok: true }];
-      } else {
-        let pick = null;
-        if (slotOverride && slotOverride.city === city.id && slotOverride.type === "dc" && SLOTS.dc[slotOverride.slot]) {
-          const slot = SLOTS.dc[slotOverride.slot];
-          if (cellPlaceState(city, "dc", slot.c, slot.r).ok) pick = slot;
-        }
-        if (!pick) {
-          const pt = cursorCell ? cellCenter(cursorCell.c, cursorCell.r) : null;
-          pick = nearestOkSlot(city, "dc", pt);
-        }
-        marks = pick ? [{ c: pick.c, r: pick.r, ok: true }] : [];
-      }
+      const origin = cursorCell ? cellCenter(cursorCell.c, cursorCell.r) : null;
+      const near = nearestOkSlot(city, "dc", origin);
+      marks = near ? [{ c: near.c, r: near.r, ok: true }] : [];
     }
     marks.forEach((cell) => {
       const quad = insetQuad(gridQuad(cell.c, cell.r, 1, 1), 0.1);
@@ -4604,7 +4620,7 @@
     stack.style.width = `${Math.round(w)}px`;
     stack.style.maxWidth = `${Math.round(w)}px`;
     const yardEl = $("site-yard");
-    stack.style.top = yardEl && yardEl.classList.contains("has-intel") ? "57%" : "50%";
+    stack.style.top = yardEl && yardEl.classList.contains("has-intel") ? "calc(54% + 14px)" : "50%";
   }
 
   function inspectRaising(type) {
@@ -4638,46 +4654,26 @@
         pushSkirmish();
         return;
       }
-      const place = e.target.closest("[data-place]");
-      if (place && hoverKit && siteView && state) {
-        e.preventDefault();
-        e.stopPropagation();
-        const type = place.getAttribute("data-place") || hoverKit;
-        const slotAttr = place.getAttribute("data-slot");
-        if (slotAttr != null && slotAttr !== "") {
-          slotOverride = { city: siteView, type, slot: Number(slotAttr) };
-        }
-        const cellAttr = place.getAttribute("data-cell");
-        const city = state.cities[siteView];
-        let st = null;
-        if (cellAttr) {
-          const [c, r] = cellAttr.split(",").map(Number);
-          st = cellPlaceState(city, type, c, r);
-        }
-        const tone = st ? cellTone(st) : blockedReason(type, siteView) ? "blocked" : "valid";
-        if (tone === "valid" && st && type === "dc") {
-          slotOverride = { city: siteView, type, slot: st.slot };
-        }
-        if (tone === "dim") {
-          const pt = st ? cellCenter(...cellAttr.split(",").map(Number)) : null;
-          const snap = nearestOkSlot(city, type, pt);
-          if (snap && type === "dc") slotOverride = { city: siteView, type: "dc", slot: snap.slot };
+      const place = e.target.closest("[data-place], .site-pad-hit");
+      if (!e.target.closest("[data-inspect]") && hoverKit && siteView && state) {
+        const pt = yardViewPoint(e.clientX, e.clientY);
+        const cell = pt ? cellFromView(pt.x, pt.y) : null;
+        if (place || cell) {
+          e.preventDefault();
+          e.stopPropagation();
+          const type = hoverKit;
+          const city = state.cities[siteView];
+          const origin = cell ? cellCenter(cell.c, cell.r) : null;
+          const snap = nearestOkSlot(city, type, origin);
+          if (type === "dc" && snap) slotOverride = { city: siteView, type: "dc", slot: snap.slot };
           if (snap && canDeploy(type, siteView)) enqueue(type, siteView);
           else {
-            const why = blockedReason(type, siteView) || (st && st.reason) || "";
+            const why = blockedReason(type, siteView) || (cell && cellPlaceState(city, type, cell.c, cell.r).reason) || "";
             if (why) toast(`${BUILD[type].name} · ${why}`, "bad");
             renderSiteYard();
           }
           return;
         }
-        const ok = tone === "valid" && canDeploy(type, siteView);
-        if (ok) enqueue(type, siteView);
-        else {
-          const why = st ? st.reason : blockedReason(type, siteView);
-          if (why) toast(`${BUILD[type].name} · ${why}`, "bad");
-          renderSiteYard();
-        }
-        return;
       }
       const hit = e.target.closest("[data-inspect]");
       if (!hit) return;
@@ -4688,15 +4684,17 @@
       if (!siteView || !state || !hoverKit) return;
       if (e.target.closest && e.target.closest(".crew-token")) return;
       const pt = yardViewPoint(e.clientX, e.clientY);
-      const next = pt ? cellFromView(pt.x, pt.y) : null;
+      if (!pt) return;
+      const next = cellFromView(pt.x, pt.y);
       const prevKey = cursorCell ? `${cursorCell.c},${cursorCell.r}` : "";
       const nextKey = next ? `${next.c},${next.r}` : "";
       const city = state.cities[siteView];
-      const snap = pt && hoverKit === "dc" ? nearestOkSlot(city, "dc", pt) : null;
-      const prevSlot = slotOverride && slotOverride.city === siteView && slotOverride.type === "dc" ? slotOverride.slot : -1;
+      const origin = next ? cellCenter(next.c, next.r) : null;
+      const snap = origin ? nearestOkSlot(city, hoverKit, origin) : null;
+      const prevSlot = slotOverride && slotOverride.city === siteView && slotOverride.type === hoverKit ? slotOverride.slot : -1;
       if (prevKey === nextKey && (!snap || snap.slot === prevSlot)) return;
       cursorCell = next;
-      if (snap) slotOverride = { city: siteView, type: "dc", slot: snap.slot };
+      if (snap && hoverKit === "dc") slotOverride = { city: siteView, type: "dc", slot: snap.slot };
       renderSiteYard();
     });
     yard.addEventListener("mouseleave", (e) => {
@@ -5816,7 +5814,7 @@
   }
 
   window.__EMPIRE_SMOKE__ = {
-    build: "rts-yard-23",
+    build: "rts-yard-24",
     monthlyNet,
     cityNet: (id) => cityNet(state.cities[id], YOU),
     crewTruth,
@@ -5905,6 +5903,30 @@
         slot: slotOverride && slotOverride.slot,
         footprint: fp ? fp.getAttribute("data-cell") : "",
       };
+    },
+    sweepPad: () => {
+      const yard = $("site-yard");
+      const svg = $("site-stack") && $("site-stack").querySelector(".site-overlay-svg");
+      if (!yard || !svg || !siteView || !state) return { hits: 0, slots: [], unique: [] };
+      if (!hoverKit) hoverKit = "dc";
+      const rect = svg.getBoundingClientRect();
+      const slots = [];
+      let hits = 0;
+      for (let iy = 0; iy < 5; iy += 1) {
+        for (let ix = 0; ix < 5; ix += 1) {
+          const u = 0.1 + ix * 0.2;
+          const v = 0.1 + iy * 0.2;
+          const p = quadPoint(gridQuad(0, 0, GRID.cols, GRID.rows), u, v);
+          const clientX = rect.left + (p[0] / 100) * rect.width;
+          const clientY = rect.top + (p[1] / 100) * rect.height;
+          yard.dispatchEvent(new PointerEvent("pointermove", { clientX, clientY, bubbles: true }));
+          if (cursorCell) hits += 1;
+          const fp = yard.querySelector(".site-footprint");
+          const slot = fp ? fp.getAttribute("data-slot") : null;
+          if (slot != null && slot !== "") slots.push(Number(slot));
+        }
+      }
+      return { hits, slots, unique: [...new Set(slots)] };
     },
     buildPath: () => state.buildPath,
     pickPath: (path) => {
