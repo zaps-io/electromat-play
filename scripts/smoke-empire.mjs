@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* rts-yard-20: interconnect fog, map-pin fight, crew waypoint. */
+/* rts-yard-22: grid ghosts, kit silhouettes, HUD truth, map flags. */
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,13 +16,13 @@ const fail = (msg) => {
 };
 const ok = (msg) => console.log(`OK   ${msg}`);
 
-if (!html.includes('content="rts-yard-20"') || !html.includes("styles.css?v=rts-yard-20") || !html.includes("game.js?v=rts-yard-20")) {
-  fail("index.html cache is not rts-yard-20");
-} else ok("index.html cache rts-yard-20");
+if (!html.includes('content="rts-yard-22"') || !html.includes("styles.css?v=rts-yard-22") || !html.includes("game.js?v=rts-yard-22")) {
+  fail("index.html cache is not rts-yard-22");
+} else ok("index.html cache rts-yard-22");
 
-if (!game.includes("rts-yard-20") || !css.includes("rts-yard-20") || !review.includes("rts-yard-20")) {
-  fail("game/styles/REVIEW cache is not rts-yard-20");
-} else ok("game/styles/REVIEW cache rts-yard-20");
+if (!game.includes("rts-yard-22") || !css.includes("rts-yard-22") || !review.includes("rts-yard-22")) {
+  fail("game/styles/REVIEW cache is not rts-yard-22");
+} else ok("game/styles/REVIEW cache rts-yard-22");
 
 if (!game.includes("function placementRead") || !game.includes("COMPLETES CANOPY") || !html.includes("site-consequence")) {
   fail("hover consequence line missing");
@@ -166,7 +166,7 @@ if (!css.includes(".site-lounge-edge") || !css.includes("#c8c2b6")) {
   fail("lounge must stay cream/amber, not cyan structure");
 } else ok("lounge pavilion without forced cyan");
 
-if (!game.includes("function winProgress") || !html.includes("hud-campaign") || !css.includes(".camp-bar")) {
+if (!game.includes("function winProgress") || !html.includes("hud-campaign") || !css.includes(".track-meter")) {
   fail("campaign win track missing");
 } else ok("HUD campaign track / winProgress");
 
@@ -174,7 +174,7 @@ if (!game.includes('type: "amenity"') || !game.includes('type: "poach"') || !gam
   fail("amenity / poach field calls missing");
 } else ok("amenity + poach field calls");
 
-if (!game.includes("if (state.pendingEvent) openDealSheet()")) {
+if (!game.includes("if (state.pendingEvent || state.pendingEdict) openDealSheet()")) {
   fail("field calls must auto-open the sheet");
 } else ok("field calls auto-open");
 
@@ -306,6 +306,47 @@ if (!review.includes("yard-objective.png") || !review.includes("yard-crew.png") 
 if (!review.includes("yard-fog.png") || !review.includes("yard-pin-fight.png") || !review.includes("yard-waypoint.png")) {
   fail("REVIEW must list fog / pin-fight / waypoint stills");
 } else ok("REVIEW lists interconnect stills");
+
+if (!game.includes("function monthlyNet") || !game.includes("function crewTruth") || !game.includes("function cellPlaceState")) {
+  fail("HUD truth / grid placement helpers missing");
+} else ok("monthly net, crew truth, cell placement");
+
+if (!game.includes("site-cell-valid") || !game.includes("site-footprint") || !game.includes("site-month-ring") || !game.includes("function scaffoldFrame")) {
+  fail("grid highlight, footprint, or months ring missing");
+} else ok("cyan/red grid, footprint, months ring, scaffold");
+
+if (!game.includes("function flagSvg") || !game.includes("function fogIconSvg") || !game.includes("own-radius") || !game.includes("city-share") || !game.includes("obj-ring")) {
+  fail("map flags, fog icon, share bar, or objective ring missing");
+} else ok("faction flags, fog icon, share bars, objective rings");
+
+if (!game.includes("dock-strip") || !game.includes("fork-collapse")) {
+  fail("build order must dock as a collapsible strip");
+} else ok("build order dock strip");
+
+if (!css.includes(".site-cell-valid") || !css.includes(".site-month-ring") || !css.includes(".own-radius") || !css.includes(".obj-ring")) {
+  fail("yard-22 styles missing");
+} else ok("yard-22 highlight, ring, radius, objective styles");
+
+for (const rel of ["assets/kits/dc.svg", "assets/kits/mcs.svg", "assets/kits/bess.svg", "assets/kits/lounge.svg", "assets/kits/market.svg", "assets/sprites/yard-gravel.png"]) {
+  if (!existsSync(join(root, rel))) fail(`${rel} missing`);
+}
+if (!process.exitCode) ok("kit silhouettes + ochre gravel tile");
+
+const yard22 = [
+  ["docs/shots/yard-map.png", 80000],
+  ["docs/shots/yard-footprint.png", 80000],
+  ["docs/shots/yard-midbuild.png", 80000],
+  ["docs/shots/yard-five.png", 80000],
+];
+for (const [rel, min] of yard22) {
+  const p = join(root, rel);
+  if (!existsSync(p)) fail(`${rel} missing`);
+  else if (statSync(p).size < min) fail(`${rel} too small (${statSync(p).size} bytes)`);
+}
+if (!process.exitCode) ok("map, footprint, mid-build, and five-kit stills");
+if (!review.includes("yard-map.png") || !review.includes("yard-footprint.png") || !review.includes("yard-midbuild.png") || !review.includes("yard-five.png")) {
+  fail("REVIEW must list the yard-22 stills");
+} else ok("REVIEW lists yard-22 stills");
 
 if (process.exitCode) {
   console.error("smoke-empire failed");

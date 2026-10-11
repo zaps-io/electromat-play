@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-yard-21 */
+/* empire-build: rts-yard-22 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -22,7 +22,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-yard-21";
+  const SPRITE_V = "rts-yard-22";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -43,13 +43,13 @@
     voltspan: "240 / 204",
     rival: "240 / 167",
   };
-  const KIT_V = "rts-yard-21";
+  const KIT_V = "rts-yard-22";
   const KIT_SPRITES = {
-    dc: `assets/sprites/kit-dc.png?v=${KIT_V}`,
-    mcs: `assets/sprites/kit-mcs.png?v=${KIT_V}`,
-    bess: `assets/sprites/kit-bess.png?v=${KIT_V}`,
-    lounge: `assets/sprites/kit-lounge.png?v=${KIT_V}`,
-    market: `assets/sprites/kit-market.png?v=${KIT_V}`,
+    dc: `assets/kits/dc.svg?v=${KIT_V}`,
+    mcs: `assets/kits/mcs.svg?v=${KIT_V}`,
+    bess: `assets/kits/bess.svg?v=${KIT_V}`,
+    lounge: `assets/kits/lounge.svg?v=${KIT_V}`,
+    market: `assets/kits/market.svg?v=${KIT_V}`,
   };
 
   /*
@@ -121,7 +121,7 @@
       name: "DC CHARGER",
       cost: 180000,
       months: 2,
-      icon: `assets/sprites/kit-dc.png?v=${KIT_V}`,
+      icon: `assets/kits/dc.svg?v=${KIT_V}`,
       unique: false,
     },
     mcs: {
@@ -129,7 +129,7 @@
       name: "MCS",
       cost: 420000,
       months: 3,
-      icon: `assets/sprites/kit-mcs.png?v=${KIT_V}`,
+      icon: `assets/kits/mcs.svg?v=${KIT_V}`,
       unique: false,
     },
     bess: {
@@ -137,7 +137,7 @@
       name: "BESS",
       cost: 650000,
       months: 4,
-      icon: `assets/sprites/kit-bess.png?v=${KIT_V}`,
+      icon: `assets/kits/bess.svg?v=${KIT_V}`,
       unique: true,
     },
     lounge: {
@@ -145,7 +145,7 @@
       name: "LOUNGE",
       cost: 280000,
       months: 3,
-      icon: `assets/sprites/kit-lounge.png?v=${KIT_V}`,
+      icon: `assets/kits/lounge.svg?v=${KIT_V}`,
       unique: true,
     },
     market: {
@@ -153,7 +153,7 @@
       name: "MARKET",
       cost: 220000,
       months: 2,
-      icon: `assets/sprites/kit-market.png?v=${KIT_V}`,
+      icon: `assets/kits/market.svg?v=${KIT_V}`,
       unique: true,
     },
   };
@@ -281,6 +281,7 @@
   let lastPan = false;
   let armedKit = null;
   let hoverKit = null;
+  let cursorCell = null;
   let slotOverride = null;
   let inspectJob = null;
   let pops = [];
@@ -510,6 +511,17 @@
     return stalls * 1400 * meta.land + site.bess * 900 + site.lounge * 700 + site.market * 600;
   }
 
+  function cityNet(city, faction = YOU) {
+    return cityIncome(city, faction) - cityOpex(city, faction);
+  }
+
+  function monthlyNet(faction = YOU) {
+    if (!state) return 0;
+    let n = 0;
+    for (const c of CITIES) n += cityNet(state.cities[c.id], faction);
+    return n;
+  }
+
   function presenceCount(faction) {
     return CITIES.filter((c) => hasCap(state.cities[c.id].sites[faction])).length;
   }
@@ -691,6 +703,13 @@
 
   function crewsBusy() {
     return playerBuilds();
+  }
+
+  function crewTruth() {
+    const free = idleCrewCount();
+    const busy = crewsBusy();
+    const max = MAX_CREWS;
+    return { free, busy, max, text: `${free}/${max}` };
   }
 
   function setCrewPosture(next) {
@@ -1522,8 +1541,25 @@
     });
     row.append(yes, no);
     sheet.append(k, h, p, row);
-    sheet.classList.toggle("field-call", Boolean(state.pendingEvent) && !state.pendingFork);
-    sheet.classList.toggle("build-fork", Boolean(state.pendingFork));
+    const fork = Boolean(state.pendingFork);
+    sheet.classList.toggle("field-call", Boolean(state.pendingEvent) && !fork);
+    sheet.classList.toggle("build-fork", fork);
+    sheet.classList.toggle("dock-strip", fork);
+    if (fork) {
+      if (sheet.dataset.userOpen !== "1") sheet.classList.add("collapsed");
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "fork-collapse";
+      toggle.textContent = sheet.classList.contains("collapsed") ? "BUILD ORDER" : "HIDE";
+      toggle.addEventListener("click", () => {
+        sheet.classList.toggle("collapsed");
+        sheet.dataset.userOpen = sheet.classList.contains("collapsed") ? "0" : "1";
+        toggle.textContent = sheet.classList.contains("collapsed") ? "BUILD ORDER" : "HIDE";
+      });
+      sheet.prepend(toggle);
+    } else {
+      sheet.classList.remove("collapsed", "dock-strip");
+    }
     sheet.classList.remove("hidden");
   }
 
@@ -2481,7 +2517,7 @@
     if ((state.idleMonths || 0) >= 2 && idleCrewCount() > 0 && scoutN === 0) return "IDLE";
     if (scoutN && respondN) return `${respondN} CALL · ${scoutN} SCOUT`;
     if (scoutN) return `${scoutN} SCOUT · ${crewCap()} RAISE`;
-    return `${crewsBusy()}/${crewCap()}`;
+    return `${crewTruth().text} FREE`;
   }
 
   function renderOps() {
@@ -2664,6 +2700,7 @@
     lastNet = 0;
     armedKit = null;
     hoverKit = null;
+    cursorCell = null;
     slotOverride = null;
     inspectJob = null;
     pops = [];
@@ -2804,7 +2841,8 @@
       return `Contested with ${rival ? rival.name : "a rival"}. Your price ${city.price[YOU].toFixed(2)}/kWh · share ${Math.round((city.share[YOU] || 0) * 100)}%. Cut price or hold — do not seize their pad.`;
     }
     if (kind === "hq" || kind === "tucson" || kind === "vegas" || kind === "plaza") {
-      return `Your price ${city.price[YOU].toFixed(2)}/kWh. Share ${Math.round((city.share[YOU] || 0) * 100)}%. Grid ${you.bess ? "STABLE" : "STRAINED"}. Crews ${crewsBusy()}/${MAX_CREWS}.`;
+      const crew = crewTruth();
+      return `Your price ${city.price[YOU].toFixed(2)}/kWh. Share ${Math.round((city.share[YOU] || 0) * 100)}%. Grid ${you.bess ? "STABLE" : "STRAINED"}. Crews ${crew.text} FREE.`;
     }
     if (kind === "dirt") {
       return `Raising. Land multiplier ${land}. Neighbors: ${neighbors}.`;
@@ -3240,6 +3278,45 @@
     return `<img class="map-sprite" src="${src}" alt="" data-kind="${kind}" draggable="false">`;
   }
 
+  function holderColor(city) {
+    const you = playerClaiming(city);
+    const rival = strongestRival(city);
+    if (you && rival) {
+      const ys = city.share[YOU] || 0;
+      const ts = city.share[rival.id] || 0;
+      return ys >= ts ? PAL.red : rival.color;
+    }
+    if (you) return PAL.red;
+    if (rival) return rival.color;
+    return "";
+  }
+
+  function flagSvg(color) {
+    return (
+      `<svg class="flag-svg" viewBox="0 0 24 32" aria-hidden="true">` +
+      `<line x1="5" y1="2" x2="5" y2="31" stroke="#F5F0E8" stroke-width="1.6"/>` +
+      `<path d="M6 3 L21 8.5 L6 14 Z" fill="${color}"/>` +
+      `</svg>`
+    );
+  }
+
+  function fogIconSvg() {
+    return (
+      `<svg class="fog-icon" viewBox="0 0 32 24" aria-hidden="true">` +
+      `<path d="M8 16 h16 a5 5 0 0 0 .4-10 7 7 0 0 0-13.4 2A4.5 4.5 0 0 0 8 16z" fill="#1E1E24" stroke="#B8BCC0" stroke-width="1.4"/>` +
+      `<path d="M6 19 h20 M9 22 h14" stroke="#B8BCC0" stroke-width="1.4" stroke-linecap="round"/>` +
+      `</svg>`
+    );
+  }
+
+  function objectiveTargets() {
+    const obj = state && state.objective;
+    if (!obj) return [];
+    if (obj.city && CITY_BY_ID[obj.city]) return [obj.city];
+    if (obj.kind === "expand" || obj.id === "expand") return ["flagstaff", "tucson"];
+    return [];
+  }
+
   function renderCities() {
     const layer = $("city-layer");
     layer.innerHTML = "";
@@ -3270,8 +3347,23 @@
       });
       const icon = document.createElement("div");
       icon.className = "map-icon";
-      icon.innerHTML = iconMarkup(city, selected === meta.id, meta);
+      if (fogged) {
+        icon.classList.add("is-fog");
+        icon.innerHTML = fogIconSvg();
+      } else {
+        icon.innerHTML = iconMarkup(city, selected === meta.id, meta);
+      }
       btn.append(icon);
+      const own = holderColor(city);
+      if (own && !fogged) {
+        const radius = document.createElement("span");
+        radius.className = "own-radius";
+        radius.style.setProperty("--own", own);
+        const flag = document.createElement("span");
+        flag.className = "faction-flag";
+        flag.innerHTML = flagSvg(own);
+        btn.append(radius, flag);
+      }
       if (youSite.dc || youSite.mcs) {
         const kit = document.createElement("span");
         kit.className = "city-kit";
@@ -3281,11 +3373,11 @@
         if (contestedCity(city)) bits.push("CONTESTED");
         kit.textContent = bits.join(" · ");
         btn.append(kit);
-      } else if (rivalSite(city)) {
+      } else if (rivalSite(city) && !fogged) {
         const kit = document.createElement("span");
         const rival = strongestRival(city);
         kit.className = "city-kit rival-tag";
-        kit.textContent = fogged ? "UNKNOWN" : rival ? rival.name : "RIVAL";
+        kit.textContent = rival ? rival.name : "RIVAL";
         btn.append(kit);
       }
       const label = document.createElement("span");
@@ -3294,6 +3386,29 @@
         ? `${meta.name.toUpperCase()} ★`
         : meta.name.toUpperCase();
       btn.append(label);
+      const shareEl = document.createElement("span");
+      shareEl.className = "city-share";
+      if (fogged) {
+        shareEl.innerHTML = `<i class="fog"></i>`;
+      } else {
+        const youPct = Math.round((city.share[YOU] || 0) * 100);
+        const rival = strongestRival(city);
+        const themPct = rival ? Math.round((city.share[rival.id] || 0) * 100) : 0;
+        const themColor = rival ? rival.color : "#B8BCC0";
+        shareEl.innerHTML =
+          `<i class="you" style="width:${youPct}%"></i>` +
+          `<i class="them" style="width:${themPct}%;background:${themColor}"></i>`;
+      }
+      btn.append(shareEl);
+      if (objectiveTargets().includes(meta.id)) {
+        btn.classList.add("obj-target");
+        const ring = document.createElement("span");
+        ring.className = "obj-ring";
+        const tag = document.createElement("em");
+        tag.className = "obj-mo";
+        tag.textContent = `${Math.max(0, state.objective.left)} MO`;
+        btn.append(ring, tag);
+      }
       const pulse = pulseMonths(meta.id);
       const echo = echoMonths(meta.id);
       if (pulse > 0) {
@@ -3641,16 +3756,155 @@
     );
   }
 
+  let gravelSeq = 0;
+
   function boardEtch() {
-    let g = "";
+    gravelSeq += 1;
+    const pid = `yard-gravel-${gravelSeq}`;
+    let g =
+      `<defs><pattern id="${pid}" patternUnits="userSpaceOnUse" width="16" height="16">` +
+      `<image href="assets/sprites/yard-gravel.png?v=${SPRITE_V}" width="16" height="16" preserveAspectRatio="xMidYMid slice"/>` +
+      `</pattern></defs>`;
     for (let r = 0; r < GRID.rows; r += 1) {
       for (let c = 0; c < GRID.cols; c += 1) {
         const odd = (c + r) % 2;
         const quad = gridQuad(c, r, 1, 1);
+        g += `<polygon class="site-gravel" points="${svgPts(quad)}" fill="url(#${pid})" />`;
         g += `<polygon class="site-board-grout" points="${svgPts(insetQuad(quad, 0.02))}" />`;
         g += `<polygon class="site-board-etch${odd ? " odd" : ""}" points="${svgPts(insetQuad(quad, 0.08))}" />`;
       }
     }
+    return g;
+  }
+
+  function cellFromView(x, y) {
+    const { ne, se } = gridStep();
+    const a = ne;
+    const b = se;
+    const c = -ne * GRID.neK;
+    const d = se * GRID.seK;
+    const det = a * d - b * c;
+    if (!det) return null;
+    const dx = x - GRID.x;
+    const dy = y - GRID.y;
+    const col = (d * dx - b * dy) / det;
+    const row = (-c * dx + a * dy) / det;
+    const ci = Math.floor(col + 1e-6);
+    const ri = Math.floor(row + 1e-6);
+    if (ci < 0 || ri < 0 || ci >= GRID.cols || ri >= GRID.rows) return null;
+    if (col - ci > 0.985 || row - ri > 0.985) return null;
+    return { c: ci, r: ri };
+  }
+
+  function slotIndex(type, c, r) {
+    const slots = SLOTS[type] || [];
+    for (let i = 0; i < slots.length; i += 1) {
+      if (slots[i].c === c && slots[i].r === r) return i;
+    }
+    return -1;
+  }
+
+  function cellOwner(c, r) {
+    for (const type of ["mcs", "bess", "lounge", "market", "dc"]) {
+      const index = slotIndex(type, c, r);
+      if (index >= 0) return { type, index };
+    }
+    return null;
+  }
+
+  function cellCenter(c, r) {
+    const q = gridQuad(c, r, 1, 1);
+    return {
+      x: (q[0][0] + q[1][0] + q[2][0] + q[3][0]) / 4,
+      y: (q[0][1] + q[1][1] + q[2][1] + q[3][1]) / 4,
+    };
+  }
+
+  function shortBlock(why) {
+    if (why === "RIVAL SITE") return "RIVAL";
+    if (why === "NEED CASH") return "CASH";
+    if (why === "CREWS FULL") return "CREWS";
+    if (why === "ALREADY BUILT") return "BUILT";
+    if (why === "NEED PAD") return "PAD";
+    if (why === "CAMPAIGN OVER") return "OVER";
+    return why ? "NO" : "";
+  }
+
+  function cellPlaceState(city, type, c, r) {
+    if (!BUILD[type]) return { ok: false, reason: "NO", slot: -1 };
+    if (rivalSite(city)) return { ok: false, reason: "RIVAL", slot: -1 };
+    const owner = cellOwner(c, r);
+    if (!owner) return { ok: false, reason: "AISLE", slot: -1 };
+    if (owner.type !== type) {
+      const name = owner.type === "dc" ? "DC" : owner.type.toUpperCase();
+      return { ok: false, reason: name, slot: owner.index };
+    }
+    const why = shortBlock(blockedReason(type, city.id));
+    if (why) return { ok: false, reason: why, slot: owner.index };
+    if (type === "dc") {
+      const plan = dcPlacement(city, null);
+      if (plan.live.includes(owner.index)) return { ok: false, reason: "LIVE", slot: owner.index };
+      if (plan.raising.some((item) => !item.preview && item.slot === owner.index)) {
+        return { ok: false, reason: "RAISE", slot: owner.index };
+      }
+    } else if (city.sites[YOU][type] > 0) {
+      return { ok: false, reason: "BUILT", slot: owner.index };
+    } else if (raisingType(city.id, type)) {
+      return { ok: false, reason: "RAISE", slot: owner.index };
+    }
+    return { ok: true, reason: "", slot: owner.index };
+  }
+
+  function yardViewPoint(clientX, clientY) {
+    const stack = $("site-stack");
+    const svg = stack && stack.querySelector(".site-overlay-svg");
+    if (!svg) return null;
+    const rect = svg.getBoundingClientRect();
+    if (rect.width < 8 || rect.height < 8) return null;
+    return {
+      x: ((clientX - rect.left) / rect.width) * 100,
+      y: ((clientY - rect.top) / rect.height) * 100,
+    };
+  }
+
+  function cellReasonText(c, r, text) {
+    const mid = cellCenter(c, r);
+    return `<text class="site-cell-reason" x="${mid.x.toFixed(2)}" y="${(mid.y + 0.8).toFixed(2)}" text-anchor="middle">${text}</text>`;
+  }
+
+  function placementGrid(city) {
+    if (!hoverKit || !BUILD[hoverKit] || city.id !== selected || rivalSite(city)) return "";
+    const type = hoverKit;
+    let g = "";
+    const footprint = [];
+    for (let r = 0; r < GRID.rows; r += 1) {
+      for (let c = 0; c < GRID.cols; c += 1) {
+        const st = cellPlaceState(city, type, c, r);
+        const quad = insetQuad(gridQuad(c, r, 1, 1), 0.05);
+        const cls = st.ok ? "site-cell-valid" : "site-cell-blocked";
+        const slotAttr = type === "dc" && st.slot >= 0 ? ` data-slot="${st.slot}"` : "";
+        g += `<polygon class="${cls}" data-cell="${c},${r}" data-place="${type}" data-ok="${st.ok ? "1" : "0"}"${slotAttr} points="${svgPts(quad)}" />`;
+        const hovered = cursorCell && cursorCell.c === c && cursorCell.r === r;
+        const ownFoot = cellOwner(c, r)?.type === type;
+        if (!st.ok && st.reason && (hovered || ownFoot)) g += cellReasonText(c, r, st.reason);
+        if (ownFoot && (st.ok || hovered || !blockedReason(type, city.id) || ownFoot)) footprint.push({ c, r, ok: st.ok });
+      }
+    }
+    let marks = footprint;
+    if (type === "dc") {
+      const plan = dcPlacement(city, blockedReason(type, city.id) ? null : "dc");
+      const prev = plan.raising.find((item) => item.preview);
+      if (prev && SLOTS.dc[prev.slot]) {
+        marks = [{ c: SLOTS.dc[prev.slot].c, r: SLOTS.dc[prev.slot].r, ok: true }];
+      } else if (cursorCell && slotIndex("dc", cursorCell.c, cursorCell.r) >= 0) {
+        const st = cellPlaceState(city, "dc", cursorCell.c, cursorCell.r);
+        marks = [{ c: cursorCell.c, r: cursorCell.r, ok: st.ok }];
+      } else marks = footprint.filter((cell) => cell.ok).slice(0, 1);
+    }
+    marks.forEach((cell) => {
+      const quad = insetQuad(gridQuad(cell.c, cell.r, 1, 1), 0.1);
+      g += `<polygon class="site-footprint${cell.ok ? "" : " bad"}" points="${svgPts(quad)}" />`;
+    });
     return g;
   }
 
@@ -3697,19 +3951,48 @@
     return null;
   }
 
+  function scaffoldFrame(foot, fullH) {
+    const top = liftPts(foot, fullH);
+    const lines = [
+      [foot[0], top[0]],
+      [foot[1], top[1]],
+      [foot[2], top[2]],
+      [foot[3], top[3]],
+      [top[0], top[1]],
+      [top[1], top[2]],
+      [top[2], top[3]],
+      [top[3], top[0]],
+    ];
+    return (
+      `<g class="site-scaffold">` +
+      lines
+        .map(
+          ([a, b]) =>
+            `<line x1="${a[0].toFixed(2)}" y1="${a[1].toFixed(2)}" x2="${b[0].toFixed(2)}" y2="${b[1].toFixed(2)}"/>`
+        )
+        .join("") +
+      `</g>`
+    );
+  }
+
   function ghostBadge(c, r, title, job) {
     if (!title) return "";
-    const q = gridQuad(c, r, 1, 1);
-    const cx = (q[0][0] + q[1][0] + q[2][0] + q[3][0]) / 4;
-    const cy = Math.min(q[0][1], q[1][1], q[2][1], q[3][1]) - 4.4;
-    const count = job?.preview ? "SET" : `${job?.left ?? ""} MO`;
+    const mid = cellCenter(c, r);
+    const cx = mid.x;
+    const cy = mid.y - 1.6;
+    const radius = 3.35;
+    const circ = 2 * Math.PI * radius;
+    const pct = job?.preview ? 0.14 : Math.max(0.08, Math.min(1, job?.pct || 0.12));
+    const dash = (circ * pct).toFixed(2);
+    const gap = (circ - circ * pct).toFixed(2);
+    const count = job?.preview ? "·" : `${job?.left ?? ""}`;
     const inspect = job?.preview ? "" : ` data-inspect="${(title.split(" ")[0] || "").toLowerCase()}"`;
     const focus = inspectJob && title.toLowerCase().startsWith(inspectJob) ? " focus" : "";
     return (
-      `<g class="site-ghost-badge${job?.preview ? " preview" : ""}${focus}"${inspect}>` +
-      `<rect class="site-ghost-plate" x="${(cx - 6.8).toFixed(2)}" y="${(cy - 5.0).toFixed(2)}" width="13.6" height="6.5" rx="0.7"/>` +
-      `<text class="site-ghost-label" x="${cx.toFixed(2)}" y="${(cy - 1.2).toFixed(2)}" text-anchor="middle">${title}</text>` +
-      `<text class="site-ghost-count" x="${cx.toFixed(2)}" y="${(cy + 2.2).toFixed(2)}" text-anchor="middle">${count}</text>` +
+      `<g class="site-ghost-badge site-month-ring${job?.preview ? " preview" : ""}${focus}"${inspect}>` +
+      `<circle class="ring-track" cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="${radius}"/>` +
+      `<circle class="ring-fill" cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="${radius}" stroke-dasharray="${dash} ${gap}" transform="rotate(-90 ${cx.toFixed(2)} ${cy.toFixed(2)})"/>` +
+      `<text class="site-ghost-count" x="${cx.toFixed(2)}" y="${(cy + 1.15).toFixed(2)}" text-anchor="middle">${count}</text>` +
       `</g>`
     );
   }
@@ -3807,19 +4090,21 @@
     const ghost = Boolean(occ.raising.bess);
     const job = ghost ? slotJob(occ, "bess", 0) : null;
     const tone = ghost ? ghostTone("bess") : SURF.charcoal;
-    const h = growH(8.4, ghost, job?.pct);
+    const fullH = 5.2;
+    const h = growH(fullH, ghost, job?.pct);
     let g = "";
     SLOTS.bess.forEach((slot, i) => {
-      const plinth = isoPrism(insetQuad(gridQuad(slot.c + 0.16, slot.r + 0.18, 0.68, 0.64), 0.02), 0.85, ghost ? ghostTone("bess") : SURF.concrete);
-      const box = isoPrism(insetQuad(gridQuad(slot.c + 0.22, slot.r + 0.22, 0.56, 0.56), 0.02), h, tone);
+      const plinth = isoPrism(insetQuad(gridQuad(slot.c + 0.1, slot.r + 0.28, 0.8, 0.5), 0.02), 0.55, ghost ? ghostTone("bess") : SURF.concrete);
+      const box = isoPrism(insetQuad(gridQuad(slot.c + 0.14, slot.r + 0.32, 0.72, 0.42), 0.02), h, tone);
       g += plinth.g + box.g;
       g += `<polygon class="site-bess-cap" points="${svgPts(insetQuad(box.top, 0.16))}" />`;
-      g += faceRect(box, 0.12, 0.08, 0.76, 0.07, PAL.amber);
-      g += faceRect(box, 0.14, 0.28, 0.72, 0.08, ghost ? "#243038" : "#141418");
-      g += faceRect(box, 0.14, 0.42, 0.72, 0.08, ghost ? "#243038" : "#141418");
-      g += faceRect(box, 0.14, 0.56, 0.72, 0.08, ghost ? "#243038" : "#141418");
+      g += faceRect(box, 0.16, 0.18, 0.14, 0.12, PAL.cyan);
+      g += faceRect(box, 0.4, 0.18, 0.14, 0.12, PAL.cyan);
+      g += faceRect(box, 0.64, 0.18, 0.14, 0.12, PAL.cyan);
+      g += faceRect(box, 0.14, 0.48, 0.72, 0.08, ghost ? "#243038" : "#141418");
       if (!ghost && i === 1) g += faceRect(box, 0.72, 0.1, 0.14, 0.1, PAL.red);
     });
+    if (ghost) g += scaffoldFrame(insetQuad(gridQuad(0.08, 0.22, 3.84, 0.7), 0), fullH + 0.8);
     return wrapBldg("kit-bess", ghost, g, slotPop(occ, "bess", 0), job?.preview);
   }
 
@@ -3863,14 +4148,18 @@
     const roof = isoPrism(liftPts(bay, lift), 1.15, roofTone);
     g += roof.g;
     g += `<polygon class="site-mcs-edge" points="${svgPts(insetQuad(roof.top, 0.08))}" />`;
+    g += `<polygon class="site-mcs-amber" points="${svgPts(insetQuad(roof.top, 0.2))}" />`;
     g += `<polygon class="site-roof-under" points="${svgPts(insetQuad(roof.top, 0.18))}" />`;
+    if (bayGhost || raising) g += scaffoldFrame(bay, lift + 1.2);
     return wrapBldg("kit-mcs", bayGhost, g, slotPop(occ, "mcs", 0) && live >= 1, occ.preview === "mcs" && live < 1);
   }
 
   function drawDcUnit(slot, ghost, job, pop) {
-    const tone = ghost ? ghostTone("dc") : SURF.alum;
-    const h = growH(16.8, ghost, job?.pct);
-    const foot = insetQuad(gridQuad(slot.c + 0.34, slot.r + 0.42, 0.32, 0.38), 0);
+    const whitePost = { top: "#F5F0E8", front: "#e7e0d4", side: "#c8c2b6", edge: "#6e6a62" };
+    const tone = ghost ? ghostTone("dc") : whitePost;
+    const fullH = 19.4;
+    const h = growH(fullH, ghost, job?.pct);
+    const foot = insetQuad(gridQuad(slot.c + 0.4, slot.r + 0.5, 0.2, 0.26), 0);
     const body = isoPrism(foot, h, tone);
     const hat = isoPrism(liftPts(insetQuad(foot, 0.08), h), ghost ? 0.7 : 0.55, ghost ? ghostTone("dc") : SURF.alum);
     let unit = body.g + hat.g;
@@ -3883,6 +4172,7 @@
     const holsterL = isoPrism(liftPts(leftHook, h * 0.48), 1.2, ghost ? ghostTone("dc") : SURF.charcoal);
     const holsterR = isoPrism(liftPts(rightHook, h * 0.48), 1.2, ghost ? ghostTone("dc") : SURF.charcoal);
     unit += holsterL.g + holsterR.g;
+    if (ghost) unit += scaffoldFrame(foot, fullH);
     if (!ghost) {
       const a = holsterL.sw;
       const b = holsterR.se;
@@ -3954,7 +4244,8 @@
     const ghost = Boolean(occ.raising.lounge);
     const job = ghost ? slotJob(occ, "lounge", 0) : null;
     const tone = ghost ? ghostTone("lounge") : SURF.cream;
-    const h = growH(9.2, ghost, job?.pct);
+    const fullH = 6.6;
+    const h = growH(fullH, ghost, job?.pct);
     const foot = insetQuad(gridQuad(0.12, 3.08, 1.76, 0.72), 0.02);
     const patio = isoPrism(insetQuad(gridQuad(0.28, 3.56, 0.96, 0.3), 0), 0.7, ghost ? ghostTone("lounge") : SURF.concrete);
     const planter = isoPrism(insetQuad(gridQuad(1.54, 3.6, 0.24, 0.2), 0), 1.2, ghost ? ghostTone("lounge") : SURF.alum);
@@ -3974,7 +4265,7 @@
     if (!ghost) {
       g += `<polygon class="site-portal-glow" points="${svgPts(subQuad(front, 0.1, 0.22, 0.39, 0.48))}" />`;
       g += `<polygon class="site-portal-glow" points="${svgPts(subQuad(front, 0.53, 0.22, 0.82, 0.48))}" />`;
-    }
+    } else g += scaffoldFrame(foot, fullH + 1.4);
     return wrapBldg("kit-lounge", ghost, g, slotPop(occ, "lounge", 0), job?.preview);
   }
 
@@ -3984,7 +4275,8 @@
     const job = ghost ? slotJob(occ, "market", 0) : null;
     const tone = ghost ? ghostTone("market") : SURF.charcoal;
     const awn = ghost ? ghostTone("lounge") : SURF.cream;
-    const h = growH(7.8, ghost, job?.pct);
+    const fullH = 5.8;
+    const h = growH(fullH, ghost, job?.pct);
     const foot = insetQuad(gridQuad(2.28, 3.22, 1.44, 0.52), 0.02);
     const body = isoPrism(foot, h, tone);
     let g = body.g;
@@ -3992,8 +4284,13 @@
     g += `<polygon class="site-market-board" points="${svgPts(subQuad(front, 0.1, 0.18, 0.62, 0.72))}" />`;
     if (!ghost) g += `<polygon class="site-portal-glow" points="${svgPts(subQuad(front, 0.16, 0.32, 0.56, 0.52))}" />`;
     g += faceRect(body, 0.76, 0.16, 0.14, 0.16, PAL.red);
-    const awning = isoPrism(liftPts(insetQuad(gridQuad(2.2, 3.52, 1.58, 0.22), 0), h * 0.7), 0.7, awn);
+    const awning = isoPrism(liftPts(insetQuad(gridQuad(2.16, 3.46, 1.66, 0.28), 0), h * 0.72), 0.85, awn);
     g += awning.g;
+    for (let i = 0; i < 4; i += 1) {
+      const stripe = subQuad(awning.top, i / 4 + 0.02, 0.08, (i + 0.42) / 4, 0.92);
+      g += `<polygon class="site-market-stripe" points="${svgPts(stripe)}" />`;
+    }
+    if (ghost) g += scaffoldFrame(foot, fullH + 1.2);
     return wrapBldg("kit-market", ghost, g, slotPop(occ, "market", 0), job?.preview);
   }
 
@@ -4002,6 +4299,7 @@
     const any = occ.dc + occ.mcs + occ.bess + occ.lounge + occ.market;
     const inner =
       (any ? plazaGeom(occ) : boardEtch()) +
+      placementGrid(city) +
       drawBess(occ) +
       drawMcs(occ) +
       drawLounge(occ) +
@@ -4042,7 +4340,53 @@
     );
   }
 
-  function crewTokenMarkup(cityId) {
+  function jobAnchor(job) {
+    if (!job) return null;
+    if (job.type === "dc" && Number.isInteger(job.slot) && SLOTS.dc[job.slot]) return SLOTS.dc[job.slot];
+    const slots = SLOTS[job.type];
+    return slots ? slots[0] : null;
+  }
+
+  function crewPins(city) {
+    const pins = {};
+    const jobs = jobsFor(city.id);
+    const raisers = crews().filter((c) => c.task === "raise");
+    const used = new Set();
+    let jobI = 0;
+    raisers.forEach((c, i) => {
+      if (i < playerBuilds() && jobs[jobI]) {
+        const cell = jobAnchor(jobs[jobI]);
+        jobI += 1;
+        if (cell) {
+          pins[c.id] = cell;
+          used.add(`${cell.c},${cell.r}`);
+        }
+      }
+    });
+    const aisle = [
+      { c: 1, r: 2 },
+      { c: 2, r: 2 },
+      { c: 3, r: 2 },
+      { c: 4, r: 2 },
+    ];
+    let ai = 0;
+    crews().forEach((c) => {
+      if (pins[c.id]) return;
+      while (ai < aisle.length && used.has(`${aisle[ai].c},${aisle[ai].r}`)) ai += 1;
+      const cell = aisle[Math.min(ai, aisle.length - 1)];
+      ai += 1;
+      used.add(`${cell.c},${cell.r}`);
+      pins[c.id] = cell;
+    });
+    const out = {};
+    Object.entries(pins).forEach(([id, cell]) => {
+      const mid = cellCenter(cell.c, cell.r);
+      out[id] = { x: mid.x, y: mid.y + 2.4 };
+    });
+    return out;
+  }
+
+  function crewTokenMarkup(cityId, pins) {
     const all = crews();
     const list = cityId ? all.filter((c) => crewHome(c) === cityId) : all;
     if (!list.length) return "";
@@ -4056,13 +4400,15 @@
       const where = c.city && CITY_BY_ID[c.city]
         ? ` title="${c.task.toUpperCase()} ${CITY_BY_ID[c.city].name}"`
         : "";
-      return `<button type="button" class="crew-token task-${c.task}${idle}${picked}" data-crew="${c.id}"${where}><i>${c.id}</i><b>${label}</b></button>`;
+      const pin = pins && pins[c.id];
+      const style = pin ? ` style="left:${pin.x.toFixed(1)}%;top:${pin.y.toFixed(1)}%"` : "";
+      return `<button type="button" class="crew-token task-${c.task}${idle}${picked}" data-crew="${c.id}"${where}${style}><i>${c.id}</i><b>${label}</b></button>`;
     }).join("");
   }
 
   function crewYardHtml(city) {
     if (!city || rivalSite(city)) return "";
-    return `<div class="crew-tokens yard">${crewTokenMarkup()}</div>`;
+    return `<div class="crew-tokens yard">${crewTokenMarkup(null, crewPins(city))}</div>`;
   }
 
   function scoutYardHtml(city) {
@@ -4187,15 +4533,29 @@
         return;
       }
       const place = e.target.closest("[data-place]");
-      if (place && hoverKit && siteView) {
+      if (place && hoverKit && siteView && state) {
         e.preventDefault();
         e.stopPropagation();
-        slotOverride = {
-          city: siteView,
-          type: place.getAttribute("data-place"),
-          slot: Number(place.getAttribute("data-slot")),
-        };
-        renderSiteYard();
+        const type = place.getAttribute("data-place") || hoverKit;
+        const slotAttr = place.getAttribute("data-slot");
+        if (slotAttr != null && slotAttr !== "") {
+          slotOverride = { city: siteView, type, slot: Number(slotAttr) };
+        }
+        const okAttr = place.getAttribute("data-ok");
+        const cellAttr = place.getAttribute("data-cell");
+        let ok = okAttr == null ? !blockedReason(type, siteView) : okAttr === "1";
+        if (cellAttr) {
+          const [c, r] = cellAttr.split(",").map(Number);
+          ok = cellPlaceState(state.cities[siteView], type, c, r).ok;
+        }
+        if (ok && canDeploy(type, siteView)) enqueue(type, siteView);
+        else {
+          const why = cellAttr
+            ? cellPlaceState(state.cities[siteView], type, ...cellAttr.split(",").map(Number)).reason
+            : blockedReason(type, siteView);
+          if (why) toast(`${BUILD[type].name} · ${why}`, "bad");
+          renderSiteYard();
+        }
         return;
       }
       const hit = e.target.closest("[data-inspect]");
@@ -4203,11 +4563,27 @@
       const type = hit.getAttribute("data-inspect");
       if (type) inspectRaising(type);
     });
+    yard.addEventListener("pointermove", (e) => {
+      if (!siteView || !state || !hoverKit) return;
+      if (e.target.closest && e.target.closest(".crew-token")) return;
+      const pt = yardViewPoint(e.clientX, e.clientY);
+      const next = pt ? cellFromView(pt.x, pt.y) : null;
+      const prevKey = cursorCell ? `${cursorCell.c},${cursorCell.r}` : "";
+      const nextKey = next ? `${next.c},${next.r}` : "";
+      if (prevKey === nextKey) return;
+      cursorCell = next;
+      if (hoverKit === "dc" && next) {
+        const st = cellPlaceState(state.cities[siteView], "dc", next.c, next.r);
+        if (st.ok) slotOverride = { city: siteView, type: "dc", slot: st.slot };
+      }
+      renderSiteYard();
+    });
     yard.addEventListener("mouseleave", (e) => {
       const next = e.relatedTarget;
       if (next && next.closest && next.closest(".tray, #site-yard, #site-overlay")) return;
-      if (hoverKit) {
+      if (hoverKit || cursorCell) {
         hoverKit = null;
+        cursorCell = null;
         renderSiteYard();
       }
     });
@@ -4344,6 +4720,7 @@
   function exitSite() {
     siteView = null;
     hoverKit = null;
+    cursorCell = null;
     slotOverride = null;
     inspectJob = null;
     mapCam = { ...interconnectCam };
@@ -4534,7 +4911,7 @@
       ["BESS", you.bess ? "YES" : "—"],
       ["Lounge", you.lounge ? "YES" : "—"],
       ["Market", you.market ? "YES" : "—"],
-      ["Income/mo", money(cityIncome(city, YOU) - cityOpex(city, YOU))],
+      ["Income/mo", money(cityNet(city, YOU))],
     ];
     let html = `<div class="insp-grid">${rows.map(([k, v]) => `<div>${k}<br><b>${v}</b></div>`).join("")}</div>`;
     if (sealed || contested || rivalHolders(city).length) {
@@ -4657,7 +5034,7 @@
       bits.push(`<div class="plate-stat plate-price"><span class="plate-label">PRICE</span><b>$${city.price[YOU].toFixed(2)}</b><small>/kWh</small></div>`);
     }
     if (hasCap(city.sites[YOU])) {
-      const net = cityIncome(city, YOU) - cityOpex(city, YOU);
+      const net = cityNet(city, YOU);
       bits.push(`<div class="plate-stat plate-income"><span class="plate-label">INCOME / MO</span><b>${money(net)}</b></div>`);
     }
     return bits.join("");
@@ -4678,15 +5055,17 @@
     setStat("stat-date", `Y${y} M${String(m).padStart(2, "0")}`);
     setStat("stat-cash", money(state.cash), state.cash < 0);
     setStat("stat-share", `${Math.round(track.share * 100)}%`);
+    const crew = crewTruth();
     setStat(
       "stat-crews",
-      `${idleCrewCount()}/${MAX_CREWS}`,
-      idleCrewCount() > 0 && (state.idleMonths || 0) >= 2
+      crew.text,
+      crew.free > 0 && (state.idleMonths || 0) >= 2
     );
     const net = $("stat-net");
     if (net) {
-      net.textContent = `${lastNet > 0 ? "+" : ""}${money(lastNet)}/MO`;
-      net.classList.toggle("warn", lastNet < 0);
+      const run = monthlyNet();
+      net.textContent = `${run > 0 ? "+" : ""}${money(run)}/MO`;
+      net.classList.toggle("warn", run < 0);
     }
     setStat("stat-streak", `×${formatMult(streakMult())}`);
     const streakEl = $("stat-streak");
@@ -4836,7 +5215,7 @@
       selected = "phoenix";
       return null;
     }
-    if (name === "pad" || name === "empty") {
+    if (name === "pad" || name === "empty" || name === "footprint") {
       selected = "flagstaff";
       return "flagstaff";
     }
@@ -5217,8 +5596,12 @@
       if (kitKey && selected) {
         e.preventDefault();
         armedKit = kitKey;
+        hoverKit = kitKey;
         if (canDeploy(kitKey, selected)) enqueue(kitKey, selected);
-        else renderTray();
+        else {
+          renderTray();
+          renderSiteYard();
+        }
       }
       if ((e.key === "r" || e.key === "R") && selected) {
         e.preventDefault();
@@ -5269,8 +5652,12 @@
       const site = params.get("site") || shotCity;
       if (site && CITY_BY_ID[site]) enterSite(site);
       if (state.pendingEvent || state.pendingDeal || state.pendingFork || state.pendingEdict) openDealSheet();
-      if (shot === "hover" || shot === "consequence") {
+      if (shot === "hover" || shot === "consequence" || shot === "footprint") {
         hoverKit = "dc";
+        if (shot === "footprint") {
+          cursorCell = { c: 1, r: 1 };
+          slotOverride = { city: "flagstaff", type: "dc", slot: 0 };
+        }
         renderSiteYard();
       }
       if (shot === "pop" || shot === "complete") {
@@ -5283,7 +5670,10 @@
   }
 
   window.__EMPIRE_SMOKE__ = {
-    build: "rts-yard-21",
+    build: "rts-yard-22",
+    monthlyNet,
+    cityNet: (id) => cityNet(state.cities[id], YOU),
+    crewTruth,
     deployCost,
     acceptEdict,
     campaignGrade,
@@ -5347,8 +5737,14 @@
     answerThreat: (id) => answerThreat(state.cities[id]),
     setHover: (type) => {
       hoverKit = type;
+      if (type === "dc" && siteView) {
+        cursorCell = { c: SLOTS.dc[0].c, r: SLOTS.dc[0].r };
+        slotOverride = { city: siteView, type: "dc", slot: 0 };
+      }
       if (siteView) renderSiteYard();
     },
+    cursorCell: () => cursorCell,
+    cellPlaceState: (id, type, c, r) => cellPlaceState(state.cities[id], type, c, r),
     buildPath: () => state.buildPath,
     pickPath: (path) => {
       state.buildPath = path === "amenity" ? "amenity" : "corridor";
