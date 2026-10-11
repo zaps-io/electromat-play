@@ -1107,6 +1107,31 @@
     return { x: clamp(ax, 0, 1), y: clamp(ay, 0, 1) };
   }
 
+  function opaqueBounds(img) {
+    const c = document.createElement("canvas");
+    c.width = img.naturalWidth;
+    c.height = img.naturalHeight;
+    const g = c.getContext("2d", { willReadFrequently: true });
+    g.drawImage(img, 0, 0);
+    const { data, width, height } = g.getImageData(0, 0, c.width, c.height);
+    let minX = width;
+    let minY = height;
+    let maxX = 0;
+    let maxY = 0;
+    let hit = false;
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        if (data[(y * width + x) * 4 + 3] < 24) continue;
+        hit = true;
+        if (x < minX) minX = x;
+        if (y < minY) minY = y;
+        if (x > maxX) maxX = x;
+        if (y > maxY) maxY = y;
+      }
+    }
+    if (!hit) return { x: 0, y: 0, w: width, h: height };
+    return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
+  }
   function rememberSprite(id, img, anchor, frames, raw) {
     if (!id || !img) return;
     const ax = raw?.anchor?.x ?? raw?.anchorX ?? anchor.x * img.naturalWidth;
@@ -1114,6 +1139,7 @@
     const rec = {
       img,
       anchor,
+      bounds: opaqueBounds(img),
       frames: frames || null,
       gameScale: Number(raw?.game_scale || raw?.gameScale || 0),
       anchorPx: {
@@ -1237,7 +1263,8 @@
       dh = dw * (img.naturalHeight / img.naturalWidth);
     }
     const p = iso(col + wTiles / 2, row + hTiles / 2);
-    dropShadow(g, col + wTiles / 2, row + hTiles / 2, Math.max(8, dw * 0.22), Math.max(4, dw * 0.09));
+    g.imageSmoothingEnabled = true;
+    g.imageSmoothingQuality = "high";
     g.drawImage(img, p.x - rec.anchor.x * dw, p.y - rec.anchor.y * dh, dw, dh);
     return true;
   }
@@ -1550,11 +1577,12 @@
     g.stroke();
   }
   function drawProgress(g, b) {
-    const p = iso(b.col + b.w / 2, b.row);
+    const p = iso(b.col + b.w / 2, b.row + b.h / 2);
+    const lift = 36 + (b.w + b.h) * 8;
     g.fillStyle = "rgba(30,30,36,0.82)";
-    g.fillRect(p.x - 18, p.y - 48, 36, 6);
+    g.fillRect(p.x - 18, p.y - lift, 36, 6);
     g.fillStyle = CYAN;
-    g.fillRect(p.x - 18, p.y - 48, 36 * b.progress, 6);
+    g.fillRect(p.x - 18, p.y - lift, 36 * b.progress, 6);
   }
 
   function drawHQ(g, b) {
@@ -1675,26 +1703,32 @@
     drawBox(g, b.col + b.w * 0.35, b.row + b.h - 0.2, 0.7, 0.5, 12, CREAM, RED);
   }
 
+  function drawBuildingBody(g, b) {
+    if (drawSprite(g, spriteKey(b.kind), b.col, b.row, { w: b.w, h: b.h })) return;
+    dropShadow(g, b.col + b.w / 2, b.row + b.h / 2, 8 + b.w * 7, 4 + b.h * 2);
+    if (b.kind === "hq") drawHQ(g, b);
+    else if (b.kind === "dc") drawDC(g, b);
+    else if (b.kind === "mcs") drawMCS(g, b);
+    else if (b.kind === "bess") drawBESS(g, b);
+    else if (b.kind === "substation") drawSub(g, b);
+    else if (b.kind === "warehouse") drawWarehouse(g, b);
+    else if (b.kind === "lounge") drawLounge(g, b);
+    else if (b.kind === "market") drawMarket(g, b);
+    else if (b.kind === "permit") drawPermit(g, b);
+    else if (b.kind === "sales") drawSales(g, b);
+    else drawBox(g, b.col, b.row, b.w, b.h, 18, "#C8B89A", CREAM);
+  }
   function drawBuilding(g, b) {
-    if (!b.done && !drawSprite(g, "scaffold", b.col, b.row, { w: b.w, h: b.h })) drawScaffold(g, b);
-    g.save();
-    g.globalAlpha = b.done ? 1 : 0.25 + b.progress * 0.7;
-    const drew = drawSprite(g, spriteKey(b.kind), b.col, b.row, { w: b.w, h: b.h });
-    if (!drew) {
-      dropShadow(g, b.col + b.w / 2, b.row + b.h / 2, 8 + b.w * 7, 4 + b.h * 2);
-      if (b.kind === "hq") drawHQ(g, b);
-      else if (b.kind === "dc") drawDC(g, b);
-      else if (b.kind === "mcs") drawMCS(g, b);
-      else if (b.kind === "bess") drawBESS(g, b);
-      else if (b.kind === "substation") drawSub(g, b);
-      else if (b.kind === "warehouse") drawWarehouse(g, b);
-      else if (b.kind === "lounge") drawLounge(g, b);
-      else if (b.kind === "market") drawMarket(g, b);
-      else if (b.kind === "permit") drawPermit(g, b);
-      else if (b.kind === "sales") drawSales(g, b);
-      else drawBox(g, b.col, b.row, b.w, b.h, 18, "#C8B89A", CREAM);
-    }
-    g.restore();
+    if (!b.done) {
+      const scaffolded = drawSprite(g, spriteKey("scaffold"), b.col, b.row, { w: b.w, h: b.h });
+      if (!scaffolded) {
+        drawScaffold(g, b);
+        g.save();
+        g.globalAlpha = 0.25 + b.progress * 0.7;
+        drawBuildingBody(g, b);
+        g.restore();
+      }
+    } else drawBuildingBody(g, b);
     if (!b.done && !state.portrait) drawProgress(g, b);
     if (selection.has(b.id) && !state.portrait) {
       const p = iso(b.col + b.w / 2, b.row + b.h / 2);
@@ -1730,7 +1764,7 @@
         g.fill();
       }
     }
-    if (u.job?.type === "build" && !state.portrait) {
+    if (u.job?.type === "build" && !state.portrait && !drew) {
       const p = iso(u.col, u.row);
       const swing = Math.sin(state.time * 9) * 8;
       g.strokeStyle = "#8A5A16";
@@ -2150,7 +2184,35 @@
     return total ? Math.round((100 * owned) / total) : 0;
   }
 
+  function portraitSpriteId(ent) {
+    if (!ent) return null;
+    if (ent.kind === "crew") return spriteKey("crew");
+    if (ent.w || VEHICLES[ent.kind]) return spriteKey(ent.kind);
+    return null;
+  }
+  function blitPortrait(id) {
+    const rec = spriteRecord(id);
+    const cnv = $("select-portrait");
+    const g = cnv.getContext("2d");
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.fillStyle = "#141418";
+    g.fillRect(0, 0, 160, 160);
+    if (!rec?.img?.naturalWidth) return false;
+    g.imageSmoothingEnabled = true;
+    g.imageSmoothingQuality = "high";
+    const img = rec.img;
+    const box = rec.bounds || { x: 0, y: 0, w: img.naturalWidth, h: img.naturalHeight };
+    const fit = Math.min(148 / box.w, 140 / box.h);
+    const dw = img.naturalWidth * fit;
+    const dh = img.naturalHeight * fit;
+    const ox = (box.x + box.w / 2) * fit;
+    const oy = (box.y + box.h / 2) * fit;
+    g.drawImage(img, 80 - ox, 82 - oy, dw, dh);
+    return true;
+  }
   function paintPortrait(ent) {
+    const id = portraitSpriteId(ent);
+    if (id && blitPortrait(id)) return;
     const cnv = $("select-portrait");
     const g = cnv.getContext("2d");
     g.setTransform(1, 0, 0, 1, 0, 0);
