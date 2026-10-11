@@ -1,4 +1,4 @@
-/* empire-build: rts-yard-27 */
+/* empire-build: rts-yard-28 */
 :root {
   --red: #e63225;
   --charcoal: #1e1e24;
@@ -316,16 +316,8 @@ button {
   color: var(--amber);
 }
 
-.plate-crews .plate-value.idle::after {
-  content: "";
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  margin-left: 0.32rem;
-  border-radius: 50%;
-  background: var(--amber);
-  box-shadow: 0 0 0 1px #1e1e24;
-  vertical-align: 0.08em;
+.plate-crews .plate-value.idle {
+  color: var(--amber);
 }
 
 .plate-score {
@@ -1742,10 +1734,12 @@ button {
 
 .crew-tokens.map {
   position: absolute;
-  top: calc(100% + 16px);
+  top: calc(100% + 26px);
   left: 50%;
+  right: auto;
   transform: translateX(-50%);
-  gap: 0.16rem;
+  flex-direction: row;
+  gap: 2px;
 }
 
 .crew-token {
@@ -1764,8 +1758,8 @@ button {
 }
 
 .crew-tokens.map .crew-token {
-  width: 28px;
-  padding: 0.12rem 0.04rem 0.1rem;
+  width: 20px;
+  padding: 0.04rem 0.02rem 0.02rem;
 }
 
 .crew-token i {
@@ -1781,9 +1775,9 @@ button {
 }
 
 .crew-tokens.map .crew-token i {
-  width: 14px;
-  height: 14px;
-  font-size: 0.58rem;
+  width: 12px;
+  height: 12px;
+  font-size: 0.52rem;
 }
 
 .crew-token b {
@@ -2599,14 +2593,18 @@ button {
 }
 
 .toasts {
-  position: fixed;
-  top: 92px;
-  right: 16px;
-  z-index: 35;
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  z-index: 40;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.4rem;
-  max-width: min(420px, 46vw);
+  width: max-content;
+  max-width: min(420px, 70%);
   pointer-events: none;
 }
 
@@ -2621,17 +2619,23 @@ button {
 }
 
 .toast.pop-in {
-  animation: toast-pop 0.38s ease-out;
+  animation: toast-pop 0.38s ease-out, toast-out 0.4s ease-in 2.6s forwards;
 }
 
 @keyframes toast-pop {
   0% {
-    transform: translateX(16px);
+    transform: translateY(-8px);
     opacity: 0;
   }
   100% {
     transform: none;
     opacity: 1;
+  }
+}
+
+@keyframes toast-out {
+  to {
+    opacity: 0;
   }
 }
 
@@ -3594,15 +3598,14 @@ button {
   );
 }
 
-.city-node.obj-target::before {
-  content: "";
+.city-node.obj-target .obj-bracket {
   position: absolute;
-  left: -10px;
-  right: -10px;
-  top: 4px;
-  bottom: 8px;
+  left: 8px;
+  right: 8px;
+  top: 14px;
+  bottom: 22px;
   border: 2px solid #e89a2e;
-  box-shadow: 0 0 0 1px #121217, 0 0 10px rgba(232, 154, 46, 0.45);
+  box-shadow: 0 0 0 1px #121217;
   pointer-events: none;
   animation: obj-pulse 1.6s ease-in-out infinite;
 }
@@ -3610,10 +3613,10 @@ button {
 .city-node.obj-target .obj-ring {
   position: absolute;
   left: auto;
-  right: -34px;
-  bottom: 8px;
-  width: 22px;
-  height: 22px;
+  right: 2px;
+  bottom: 18px;
+  width: 12px;
+  height: 12px;
   transform: none;
   border: 2px solid #e89a2e;
   border-radius: 50%;

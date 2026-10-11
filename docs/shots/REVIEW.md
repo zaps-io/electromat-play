@@ -1,4 +1,17 @@
-# Empire playtest — rts-yard-27
+# Empire playtest — rts-yard-28
+
+Replay stills at 1600×900: armed DC footprint on an open pad at two cursor spots (`yard-arm-a-28.png`, `yard-arm-b-28.png`) · contested yard with the income float above the kit roof (`yard-floats-28.png`) · map with CLAIM brackets and crew chips clear of neighbors (`yard-map-28.png`).
+
+## rts-yard-28
+
+Live play of rts-yard-27.
+
+- **Arm, then place.** Tray click or C/M/B/L/K only arms the footprint. The pad click commits to the hovered or nearest free slot. Shift-click stays armed for another. ESC or right-click cancels. `__EMPIRE_SMOKE__.deploy(kind, slot)` still queues directly for tests.
+- **Floats.** Income floats sit above the kit roof and inside the frame.
+- **Toasts.** Grade and idle notes stack at the top center of the map and dismiss themselves.
+- **Map.** CLAIM brackets stay out of the St. George / Las Vegas gap. Phoenix crew chips stay off the Tucson bracket. The crew count no longer carries a trailing dot.
+
+## rts-yard-27
 
 Replay stills at 1600×900: `?shot=contested-built` (sedans at the DC stalls, a truck at MCS, a queue past the stalls, the whole pad inside the frame) · `?shot=states` (faint planned footprint, red scaffold with a progress bar, finished kit) · exit a contested yard (territory fields, CLAIM tags clear of labels, selected bracket).
 
