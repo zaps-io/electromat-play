@@ -1,4 +1,18 @@
-# Empire playtest — rts-yard-25
+# Empire playtest — rts-yard-26
+
+Replay stills: game start (Phoenix HQ clear of Flagstaff) · `?shot=empty` then a real pointer on the far-left cell and the far-right cell · `?shot=pop` (build-complete bounce, cyan ring, income floater).
+
+Checked-in frames: `yard-hover-left-26.png` · `yard-hover-right-26.png` · `yard-map-26.png` · `yard-pop-26.png` · `yard-map-25.png` · `yard-hover-a-25.png` · `yard-hover-b-25.png` · `yard-contested-25.png`.
+
+## rts-yard-26
+
+Live play of rts-yard-25.
+
+- **Ghost slot.** Hover sets the ghost to the nearest free slot for that kit on every pointer move. A sweep from the far-left cell to the far-right cell reports two different slots on `__EMPIRE_SMOKE__.ghostSlot`.
+- **Names.** The Phoenix HQ sprite sits lower and smaller so Flagstaff, and the other city names, stay clear.
+- **Complete.** A finished kit bounces, flashes a cyan ring, and floats its monthly output. Idle crews show a pip on the plate and the ops strip. Hovering a built kit shows that output.
+
+## rts-yard-25
 
 Replay stills: game start (rings beside the dot, subtitle clear) · `?shot=empty` then a real pointer across the pad (two DC slots) · `?shot=contested-built` (yard below the undercut row).
 
