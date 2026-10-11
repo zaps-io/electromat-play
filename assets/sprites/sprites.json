@@ -1,0 +1,297 @@
+{
+ "_doc": "Sprites keyed from OpenAI concept sheets. anchor = pixel (x,y) of base-diamond center within the PNG; place anchor on tile center. bottom_y = lowest opaque footprint row. Buildings/units are native 2x crops. Vehicles: base faces SW (front to lower-left); _b is the horizontal mirror (faces SE). game_scale = suggested multiplier so semi ~3x sedan length.",
+ "sprites": {
+  "buildings/site_hq": {
+   "file": "buildings/site_hq.png",
+   "w": 375,
+   "h": 395,
+   "anchor": {
+    "x": 182,
+    "y": 302
+   },
+   "bottom_y": 391
+  },
+  "buildings/dc_canopy": {
+   "file": "buildings/dc_canopy.png",
+   "w": 403,
+   "h": 267,
+   "anchor": {
+    "x": 191,
+    "y": 184
+   },
+   "bottom_y": 262
+  },
+  "buildings/mcs_gantry": {
+   "file": "buildings/mcs_gantry.png",
+   "w": 402,
+   "h": 356,
+   "anchor": {
+    "x": 188,
+    "y": 267
+   },
+   "bottom_y": 352
+  },
+  "buildings/bess": {
+   "file": "buildings/bess.png",
+   "w": 384,
+   "h": 240,
+   "anchor": {
+    "x": 188,
+    "y": 140
+   },
+   "bottom_y": 236
+  },
+  "buildings/substation": {
+   "file": "buildings/substation.png",
+   "w": 396,
+   "h": 377,
+   "anchor": {
+    "x": 188,
+    "y": 274
+   },
+   "bottom_y": 372
+  },
+  "buildings/lounge": {
+   "file": "buildings/lounge.png",
+   "w": 390,
+   "h": 246,
+   "anchor": {
+    "x": 190,
+    "y": 154
+   },
+   "bottom_y": 242
+  },
+  "buildings/solar_carport": {
+   "file": "buildings/solar_carport.png",
+   "w": 392,
+   "h": 330,
+   "anchor": {
+    "x": 184,
+    "y": 238
+   },
+   "bottom_y": 326
+  },
+  "buildings/crew_depot": {
+   "file": "buildings/crew_depot.png",
+   "w": 400,
+   "h": 295,
+   "anchor": {
+    "x": 196,
+    "y": 184
+   },
+   "bottom_y": 291
+  },
+  "vehicles/ev_hatch": {
+   "file": "vehicles/ev_hatch.png",
+   "w": 264,
+   "h": 177,
+   "anchor": {
+    "x": 119,
+    "y": 98
+   },
+   "bottom_y": 168,
+   "facing": "SW (front toward lower-left)",
+   "game_scale": 1.0
+  },
+  "vehicles/ev_hatch_b": {
+   "file": "vehicles/ev_hatch_b.png",
+   "w": 264,
+   "h": 177,
+   "anchor": {
+    "x": 144,
+    "y": 98
+   },
+   "bottom_y": 168,
+   "facing": "SE (mirrored)",
+   "game_scale": 1.0
+  },
+  "vehicles/sedan": {
+   "file": "vehicles/sedan.png",
+   "w": 301,
+   "h": 183,
+   "anchor": {
+    "x": 136,
+    "y": 94
+   },
+   "bottom_y": 173,
+   "facing": "SW (front toward lower-left)",
+   "game_scale": 1.0
+  },
+  "vehicles/sedan_b": {
+   "file": "vehicles/sedan_b.png",
+   "w": 301,
+   "h": 183,
+   "anchor": {
+    "x": 164,
+    "y": 94
+   },
+   "bottom_y": 173,
+   "facing": "SE (mirrored)",
+   "game_scale": 1.0
+  },
+  "vehicles/suv": {
+   "file": "vehicles/suv.png",
+   "w": 314,
+   "h": 226,
+   "anchor": {
+    "x": 144,
+    "y": 124
+   },
+   "bottom_y": 217,
+   "facing": "SW (front toward lower-left)",
+   "game_scale": 1.0
+  },
+  "vehicles/suv_b": {
+   "file": "vehicles/suv_b.png",
+   "w": 314,
+   "h": 226,
+   "anchor": {
+    "x": 169,
+    "y": 124
+   },
+   "bottom_y": 217,
+   "facing": "SE (mirrored)",
+   "game_scale": 1.0
+  },
+  "vehicles/pickup": {
+   "file": "vehicles/pickup.png",
+   "w": 341,
+   "h": 223,
+   "anchor": {
+    "x": 158,
+    "y": 117
+   },
+   "bottom_y": 213,
+   "facing": "SW (front toward lower-left)",
+   "game_scale": 1.0
+  },
+  "vehicles/pickup_b": {
+   "file": "vehicles/pickup_b.png",
+   "w": 341,
+   "h": 223,
+   "anchor": {
+    "x": 182,
+    "y": 117
+   },
+   "bottom_y": 213,
+   "facing": "SE (mirrored)",
+   "game_scale": 1.0
+  },
+  "vehicles/delivery_van": {
+   "file": "vehicles/delivery_van.png",
+   "w": 297,
+   "h": 250,
+   "anchor": {
+    "x": 138,
+    "y": 150
+   },
+   "bottom_y": 240,
+   "facing": "SW (front toward lower-left)",
+   "game_scale": 1.0
+  },
+  "vehicles/delivery_van_b": {
+   "file": "vehicles/delivery_van_b.png",
+   "w": 297,
+   "h": 250,
+   "anchor": {
+    "x": 158,
+    "y": 150
+   },
+   "bottom_y": 240,
+   "facing": "SE (mirrored)",
+   "game_scale": 1.0
+  },
+  "vehicles/box_truck": {
+   "file": "vehicles/box_truck.png",
+   "w": 357,
+   "h": 300,
+   "anchor": {
+    "x": 184,
+    "y": 132
+   },
+   "bottom_y": 290,
+   "facing": "SW (front toward lower-left)",
+   "game_scale": 1.35
+  },
+  "vehicles/box_truck_b": {
+   "file": "vehicles/box_truck_b.png",
+   "w": 357,
+   "h": 300,
+   "anchor": {
+    "x": 172,
+    "y": 132
+   },
+   "bottom_y": 290,
+   "facing": "SE (mirrored)",
+   "game_scale": 1.35
+  },
+  "vehicles/semi_trailer": {
+   "file": "vehicles/semi_trailer.png",
+   "w": 556,
+   "h": 421,
+   "anchor": {
+    "x": 264,
+    "y": 234
+   },
+   "bottom_y": 411,
+   "facing": "SW (front toward lower-left)",
+   "game_scale": 1.6
+  },
+  "vehicles/semi_trailer_b": {
+   "file": "vehicles/semi_trailer_b.png",
+   "w": 556,
+   "h": 421,
+   "anchor": {
+    "x": 291,
+    "y": 234
+   },
+   "bottom_y": 411,
+   "facing": "SE (mirrored)",
+   "game_scale": 1.6
+  },
+  "vehicles/school_bus": {
+   "file": "vehicles/school_bus.png",
+   "w": 419,
+   "h": 307,
+   "anchor": {
+    "x": 192,
+    "y": 150
+   },
+   "bottom_y": 296,
+   "facing": "SW (front toward lower-left)",
+   "game_scale": 1.8
+  },
+  "vehicles/school_bus_b": {
+   "file": "vehicles/school_bus_b.png",
+   "w": 419,
+   "h": 307,
+   "anchor": {
+    "x": 226,
+    "y": 150
+   },
+   "bottom_y": 296,
+   "facing": "SE (mirrored)",
+   "game_scale": 1.0
+  },
+  "units/crew_truck": {
+   "file": "units/crew_truck.png",
+   "w": 525,
+   "h": 336,
+   "anchor": {
+    "x": 244,
+    "y": 236
+   },
+   "bottom_y": 325
+  },
+  "units/scaffold": {
+   "file": "units/scaffold.png",
+   "w": 651,
+   "h": 593,
+   "anchor": {
+    "x": 307,
+    "y": 430
+   },
+   "bottom_y": 587
+  }
+ }
+}
