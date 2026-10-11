@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* rts-yard-27: pad fills the viewport, traffic, kit states, territory. */
+/* rts-yard-28: arm a footprint, then place it on the pad. */
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,13 +16,17 @@ const fail = (msg) => {
 };
 const ok = (msg) => console.log(`OK   ${msg}`);
 
-if (!html.includes('content="rts-yard-27"') || !html.includes("styles.css?v=rts-yard-27") || !html.includes("game.js?v=rts-yard-27")) {
-  fail("index.html cache is not rts-yard-27");
-} else ok("index.html cache rts-yard-27");
+if (!html.includes('content="rts-yard-28"') || !html.includes("styles.css?v=rts-yard-28") || !html.includes("game.js?v=rts-yard-28")) {
+  fail("index.html cache is not rts-yard-28");
+} else ok("index.html cache rts-yard-28");
 
-if (!game.includes("rts-yard-27") || !css.includes("rts-yard-27") || !review.includes("rts-yard-27")) {
-  fail("game/styles/REVIEW cache is not rts-yard-27");
-} else ok("game/styles/REVIEW cache rts-yard-27");
+if (!game.includes("rts-yard-28") || !css.includes("rts-yard-28") || !review.includes("rts-yard-28")) {
+  fail("game/styles/REVIEW cache is not rts-yard-28");
+} else ok("game/styles/REVIEW cache rts-yard-28");
+
+if (!game.includes("function armKit") || !game.includes("deploy:")) {
+  fail("arm-then-place deploy API missing");
+} else ok("arm then place, deploy(kind, slot) kept");
 
 if (!game.includes("function placementRead") || !game.includes("COMPLETES CANOPY") || !html.includes("site-consequence")) {
   fail("hover consequence line missing");
@@ -458,6 +462,23 @@ if (!process.exitCode) ok("yard-27 traffic, kit states, and ownership map");
 if (!review.includes("yard-traffic-27.png") || !review.includes("yard-states-27.png") || !review.includes("yard-map-27.png")) {
   fail("REVIEW must list the yard-27 stills");
 } else ok("REVIEW lists yard-27 stills");
+
+const yard28 = [
+  ["docs/shots/yard-arm-a-28.png", 80000],
+  ["docs/shots/yard-arm-b-28.png", 80000],
+  ["docs/shots/yard-floats-28.png", 80000],
+  ["docs/shots/yard-map-28.png", 80000],
+  ["docs/shots/yard-map-zoom-28.png", 80000],
+];
+for (const [rel, min] of yard28) {
+  const p = join(root, rel);
+  if (!existsSync(p)) fail(`${rel} missing`);
+  else if (statSync(p).size < min) fail(`${rel} too small (${statSync(p).size} bytes)`);
+}
+if (!process.exitCode) ok("yard-28 arm, float, and map stills");
+if (!review.includes("yard-arm-a-28.png") || !review.includes("yard-arm-b-28.png") || !review.includes("yard-floats-28.png") || !review.includes("yard-map-28.png") || !review.includes("yard-map-zoom-28.png")) {
+  fail("REVIEW must list the yard-28 stills");
+} else ok("REVIEW lists yard-28 stills");
 
 if (process.exitCode) {
   console.error("smoke-empire failed");

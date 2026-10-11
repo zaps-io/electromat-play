@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-yard-27 */
+/* empire-build: rts-yard-28 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -22,7 +22,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-yard-27";
+  const SPRITE_V = "rts-yard-28";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -43,7 +43,7 @@
     voltspan: "240 / 204",
     rival: "240 / 167",
   };
-  const KIT_V = "rts-yard-27";
+  const KIT_V = "rts-yard-28";
   const KIT_SPRITES = {
     dc: `assets/kits/dc.svg?v=${KIT_V}`,
     mcs: `assets/kits/mcs.svg?v=${KIT_V}`,
@@ -166,23 +166,27 @@
     ampfield: { id: "ampfield", name: "AMPFIELD", color: "#2EAF6A", home: "albuquerque", unlock: 24, priceBias: 1.0 },
   };
 
+  // Painted terrain is a 1200×800 plate. Pins use one affine lat/lon → pixel
+  // plane, solved so Los Angeles, Denver, and El Paso sit on their anchors:
+  //   x = 31.125726·lon + 0.435784·lat + 3890.582
+  //   y = -0.925216·lon - 50.595700·lat + 2068.494
   const CITIES = [
-    { id: "sacramento", name: "Sacramento", state: "CA", x: 235, y: 225, demand: 90, truck: 25, land: 1.15, neighbors: ["reno", "la"] },
-    { id: "reno", name: "Reno", state: "NV", x: 285, y: 175, demand: 55, truck: 30, land: 0.9, neighbors: ["sacramento", "vegas", "slc"] },
-    { id: "slc", name: "Salt Lake City", state: "UT", x: 400, y: 130, demand: 95, truck: 40, land: 1.05, neighbors: ["reno", "stgeorge", "grandjunction", "denver"] },
-    { id: "grandjunction", name: "Grand Junction", state: "CO", x: 520, y: 210, demand: 40, truck: 35, land: 0.82, neighbors: ["denver", "flagstaff", "santafe", "slc"] },
+    { id: "sacramento", name: "Sacramento", state: "CA", x: 126, y: 229, demand: 90, truck: 25, land: 1.15, neighbors: ["reno", "la"] },
+    { id: "reno", name: "Reno", state: "NV", x: 179, y: 179, demand: 55, truck: 30, land: 0.9, neighbors: ["sacramento", "vegas", "slc"] },
+    { id: "slc", name: "Salt Lake City", state: "UT", x: 426, y: 110, demand: 95, truck: 40, land: 1.05, neighbors: ["reno", "stgeorge", "grandjunction", "denver"] },
+    { id: "grandjunction", name: "Grand Junction", state: "CO", x: 529, y: 193, demand: 40, truck: 35, land: 0.82, neighbors: ["denver", "flagstaff", "santafe", "slc"] },
     { id: "denver", name: "Denver", state: "CO", x: 640, y: 155, demand: 120, truck: 35, land: 1.2, neighbors: ["santafe", "grandjunction", "slc"] },
     { id: "la", name: "Los Angeles", state: "CA", x: 225, y: 455, demand: 210, truck: 55, land: 1.7, neighbors: ["vegas", "sandiego", "sacramento"] },
-    { id: "vegas", name: "Las Vegas", state: "NV", x: 300, y: 330, demand: 140, truck: 50, land: 1.35, neighbors: ["phoenix", "la", "stgeorge", "reno"] },
-    { id: "stgeorge", name: "St. George", state: "UT", x: 360, y: 285, demand: 45, truck: 28, land: 0.85, neighbors: ["vegas", "flagstaff", "slc"] },
-    { id: "flagstaff", name: "Flagstaff", state: "AZ", x: 400, y: 370, demand: 50, truck: 22, land: 0.88, neighbors: ["phoenix", "stgeorge", "grandjunction"] },
-    { id: "phoenix", name: "Phoenix", state: "AZ", x: 420, y: 455, demand: 150, truck: 45, land: 1.0, neighbors: ["tucson", "flagstaff", "vegas", "albuquerque"] },
-    { id: "sandiego", name: "San Diego", state: "CA", x: 245, y: 555, demand: 130, truck: 30, land: 1.4, neighbors: ["la", "tucson"] },
-    { id: "tucson", name: "Tucson", state: "AZ", x: 455, y: 545, demand: 80, truck: 30, land: 0.92, neighbors: ["phoenix", "elpaso", "sandiego"] },
-    { id: "santafe", name: "Santa Fe", state: "NM", x: 600, y: 330, demand: 48, truck: 18, land: 0.95, neighbors: ["albuquerque", "denver", "grandjunction"] },
-    { id: "albuquerque", name: "Albuquerque", state: "NM", x: 580, y: 420, demand: 85, truck: 40, land: 0.98, neighbors: ["phoenix", "santafe", "elpaso", "dallas"] },
+    { id: "vegas", name: "Las Vegas", state: "NV", x: 323, y: 345, demand: 140, truck: 50, land: 1.35, neighbors: ["phoenix", "la", "stgeorge", "reno"] },
+    { id: "stgeorge", name: "St. George", state: "UT", x: 372, y: 297, demand: 45, truck: 28, land: 0.85, neighbors: ["vegas", "flagstaff", "slc"] },
+    { id: "flagstaff", name: "Flagstaff", state: "AZ", x: 431, y: 391, demand: 50, truck: 22, land: 0.88, neighbors: ["phoenix", "stgeorge", "grandjunction"] },
+    { id: "phoenix", name: "Phoenix", state: "AZ", x: 417, y: 480, demand: 150, truck: 45, land: 1.0, neighbors: ["tucson", "flagstaff", "vegas", "albuquerque"] },
+    { id: "sandiego", name: "San Diego", state: "CA", x: 258, y: 522, demand: 130, truck: 30, land: 1.4, neighbors: ["la", "tucson"] },
+    { id: "tucson", name: "Tucson", state: "AZ", x: 451, y: 541, demand: 80, truck: 30, land: 0.92, neighbors: ["phoenix", "elpaso", "sandiego"] },
+    { id: "santafe", name: "Santa Fe", state: "NM", x: 609, y: 361, demand: 48, truck: 18, land: 0.95, neighbors: ["albuquerque", "denver", "grandjunction"] },
+    { id: "albuquerque", name: "Albuquerque", state: "NM", x: 586, y: 392, demand: 85, truck: 40, land: 0.98, neighbors: ["phoenix", "santafe", "elpaso", "dallas"] },
     { id: "elpaso", name: "El Paso", state: "TX", x: 590, y: 560, demand: 75, truck: 55, land: 0.9, neighbors: ["tucson", "albuquerque", "dallas"] },
-    { id: "dallas", name: "Dallas", state: "TX", x: 900, y: 430, demand: 170, truck: 80, land: 1.25, neighbors: ["albuquerque", "elpaso"] },
+    { id: "dallas", name: "Dallas", state: "TX", x: 892, y: 500, demand: 170, truck: 80, land: 1.25, neighbors: ["albuquerque", "elpaso"] },
   ];
 
   const CITY_BY_ID = Object.fromEntries(CITIES.map((c) => [c.id, c]));
@@ -564,7 +568,7 @@
     el.className = `toast ${kind} pop-in`;
     el.textContent = msg;
     host.appendChild(el);
-    setTimeout(() => el.remove(), 4600);
+    setTimeout(() => el.remove(), 3200);
     while (host.children.length > 3) host.firstElementChild.remove();
   }
 
@@ -1037,6 +1041,9 @@
       slot = chosenSlot(city, "dc", plan.used);
       slotOverride = null;
       ghostSlot = null;
+    } else if (faction === YOU && slotFree(ghostSlot, city, type, new Set())) {
+      slot = ghostSlot.slot;
+      ghostSlot = null;
     }
     state.queue.push({
       faction,
@@ -1053,6 +1060,50 @@
     }
     renderAll();
     return true;
+  }
+
+  function armKit(type) {
+    if (!state || !selected || !BUILD[type]) return false;
+    const why = blockedReason(type, selected);
+    if (why) {
+      toast(`${BUILD[type].name} · ${why}`, "bad");
+      return false;
+    }
+    armedKit = type;
+    previewKit = type;
+    hoverKit = type;
+    if (siteView !== selected) enterSite(selected);
+    else {
+      renderTray();
+      renderSiteYard();
+    }
+    return true;
+  }
+
+  function disarmKit() {
+    armedKit = null;
+    hoverKit = null;
+    previewKit = null;
+    cursorCell = null;
+    ghostSlot = null;
+    slotOverride = null;
+    if (state) {
+      renderTray();
+      renderSiteYard();
+    }
+  }
+
+  function deploy(type, slot) {
+    const cityId = siteView || selected;
+    if (!state || !cityId || !BUILD[type]) return false;
+    if (Number.isInteger(slot)) {
+      const cell = (SLOTS[type] || [])[slot];
+      if (cell) {
+        ghostSlot = { city: cityId, type, slot, c: cell.c, r: cell.r };
+        if (type === "dc") slotOverride = { city: cityId, type: "dc", slot };
+      }
+    }
+    return enqueue(type, cityId);
   }
 
   function finishBuild(job) {
@@ -2909,9 +2960,10 @@
     const sw = stage.clientWidth;
     const sh = stage.clientHeight;
     if (sw < 40 || sh < 40) return;
+    const { fw, fh } = frameSize(sw, sh);
     mapCam.scale = 1.85;
-    const cx = (meta.x / 1200) * sw;
-    const cy = (meta.y / 800) * sh;
+    const cx = (meta.x / 1200) * fw;
+    const cy = (meta.y / 800) * fh;
     mapCam.x = sw * 0.46 - cx * mapCam.scale;
     mapCam.y = sh * 0.42 - cy * mapCam.scale;
     clampCam();
@@ -3493,17 +3545,32 @@
       const label = boxOf(node.querySelector(".city-label"));
       const sprite = boxOf(node.querySelector(".map-icon"));
       const tag = boxOf(node.querySelector(".obj-mo"));
+      const bracket = boxOf(node.querySelector(".obj-bracket"));
+      const ring = boxOf(node.querySelector(".obj-ring"));
       if (label) items.push({ id, kind: "label", box: label });
       if (sprite) items.push({ id, kind: "sprite", box: sprite });
       if (tag) items.push({ id, kind: "tag", box: tag });
+      if (bracket) items.push({ id, kind: "bracket", box: bracket });
+      if (ring) items.push({ id, kind: "bracket", box: ring });
+      node.querySelectorAll(".crew-tokens.map .crew-token").forEach((chip) => {
+        const crew = boxOf(chip);
+        if (crew) items.push({ id, kind: "crew", box: crew });
+      });
     });
     const hits = [];
+    const watch = (a, b) => {
+      if (a.id === b.id && a.kind === "bracket" && b.kind === "sprite") return false;
+      if (a.id === b.id && b.kind === "bracket" && a.kind === "sprite") return false;
+      if (a.id === b.id && a.kind === "bracket" && b.kind === "bracket") return false;
+      if (a.kind === "label" || b.kind === "label" || a.kind === "tag" || b.kind === "tag") return true;
+      if (a.kind === "bracket" || b.kind === "bracket" || a.kind === "crew" || b.kind === "crew") return true;
+      return false;
+    };
     for (let i = 0; i < items.length; i += 1) {
       for (let j = i + 1; j < items.length; j += 1) {
         const a = items[i];
         const b = items[j];
-        const labelInvolved = a.kind === "label" || b.kind === "label";
-        if (!labelInvolved) continue;
+        if (!watch(a, b)) continue;
         if (!boxesHit(a.box, b.box)) continue;
         hits.push({ a: `${a.id}:${a.kind}`, b: `${b.id}:${b.kind}` });
       }
@@ -3536,22 +3603,26 @@
   function tagSpots(meta) {
     const near = nearestCity(meta);
     const goRight = !near || near.x < meta.x;
-    const right = { left: "calc(100% + 8px)", right: "auto", top: "4px", bottom: "auto", transform: "none" };
-    const left = { left: "auto", right: "calc(100% + 8px)", top: "4px", bottom: "auto", transform: "none" };
-    const above = { left: "50%", right: "auto", top: "auto", bottom: "calc(100% + 2px)", transform: "translateX(-50%)" };
-    const below = { left: "50%", right: "auto", top: "calc(100% + 22px)", bottom: "auto", transform: "translateX(-50%)" };
-    return goRight ? [right, left, above, below] : [left, right, above, below];
+    const right = { left: "calc(100% + 16px)", right: "auto", top: "-6px", bottom: "auto", transform: "none" };
+    const rightUp = { left: "calc(100% + 16px)", right: "auto", top: "-22px", bottom: "auto", transform: "none" };
+    const left = { left: "auto", right: "calc(100% + 16px)", top: "-6px", bottom: "auto", transform: "none" };
+    const leftUp = { left: "auto", right: "calc(100% + 16px)", top: "-22px", bottom: "auto", transform: "none" };
+    const above = { left: "50%", right: "auto", top: "auto", bottom: "calc(100% + 8px)", transform: "translateX(-50%)" };
+    const below = { left: "50%", right: "auto", top: "calc(100% + 40px)", bottom: "auto", transform: "translateX(-50%)" };
+    return goRight ? [right, rightUp, above, left, leftUp, below] : [left, leftUp, above, right, rightUp, below];
   }
 
   function foreignHits(el, ownId) {
     let n = 0;
-    document.querySelectorAll(".city-label, .obj-mo, .map-icon").forEach((other) => {
+    const box = el.getBoundingClientRect();
+    document.querySelectorAll(".city-label, .obj-mo, .map-icon, .obj-bracket, .obj-ring, .crew-tokens.map .crew-token").forEach((other) => {
       if (other === el) return;
       const node = other.closest(".city-node");
       const id = node ? node.dataset.city : "";
       if (id === ownId && other.classList.contains("map-icon")) return;
+      if (id === ownId && other.classList.contains("obj-ring")) return;
       if (id === ownId && other.classList.contains("city-label") && el.classList.contains("city-label")) return;
-      if (boxesHit(el.getBoundingClientRect(), other.getBoundingClientRect())) n += 1;
+      if (boxesHit(box, other.getBoundingClientRect())) n += 1;
     });
     return n;
   }
@@ -3570,22 +3641,10 @@
       icon.dataset.nudgeY = "0";
       icon.style.translate = "0 0";
     });
-    document.querySelectorAll(".city-node.obj-target").forEach((node) => {
-      const tag = node.querySelector(".obj-mo");
-      const meta = CITY_BY_ID[node.dataset.city];
-      if (!tag || !meta) return;
-      let chosen = tagSpots(meta)[0];
-      let best = Infinity;
-      for (const spot of tagSpots(meta)) {
-        applyTagSpot(tag, spot);
-        const score = foreignHits(tag, node.dataset.city);
-        if (score < best) {
-          best = score;
-          chosen = spot;
-        }
-        if (score === 0) break;
-      }
-      applyTagSpot(tag, chosen);
+    document.querySelectorAll(".obj-mo, .obj-bracket, .obj-ring, .crew-tokens.map").forEach((el) => {
+      el.dataset.nudgeX = "0";
+      el.dataset.nudgeY = "0";
+      el.style.translate = "0 0";
     });
     const labels = [...document.querySelectorAll(".city-label")];
     for (let pass = 0; pass < 12; pass += 1) {
@@ -3637,14 +3696,14 @@
     });
     for (let pass = 0; pass < 16; pass += 1) {
       let moved = false;
-      document.querySelectorAll(".city-label, .obj-mo").forEach((label) => {
+      document.querySelectorAll(".city-label").forEach((label) => {
         const own = label.closest(".city-node");
         const ownId = own ? own.dataset.city : "";
         const a = label.getBoundingClientRect();
         document.querySelectorAll(".map-icon, .city-label, .obj-mo").forEach((other) => {
           if (other === label) return;
           const host = other.closest(".city-node");
-          if (host && host.dataset.city === ownId && other.classList.contains("map-icon") && label.classList.contains("obj-mo")) return;
+          if (host && host.dataset.city === ownId && other.classList.contains("map-icon")) return;
           if (!boxesHit(a, other.getBoundingClientRect())) return;
           const b = other.getBoundingClientRect();
           const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left);
@@ -3652,16 +3711,106 @@
           const dir = (a.left + a.right) / 2 >= (b.left + b.right) / 2 ? 1 : -1;
           const next = cur + dir * (ox + 4);
           label.dataset.nudgeX = String(next);
-          if (label.classList.contains("city-label")) {
-            label.style.transform = `translateX(calc(-50% + ${next}px))`;
-          } else {
-            const base = label.style.transform && label.style.transform !== "none" ? label.style.transform : "none";
-            label.style.translate = `${next}px 0`;
-          }
+          label.style.transform = `translateX(calc(-50% + ${next}px))`;
           moved = true;
         });
       });
       if (!moved) break;
+    }
+    for (let pass = 0; pass < 14; pass += 1) {
+      let moved = false;
+      document.querySelectorAll(".obj-bracket, .obj-ring, .crew-tokens.map").forEach((el) => {
+        const own = el.closest(".city-node");
+        const ownId = own ? own.dataset.city : "";
+        const a = el.getBoundingClientRect();
+        let hit = null;
+        document.querySelectorAll(".city-label, .map-icon, .obj-bracket, .obj-ring, .crew-tokens.map .crew-token").forEach((other) => {
+          if (hit || other === el || el.contains(other)) return;
+          const host = other.closest(".city-node");
+          if (host && host.dataset.city === ownId && other.classList.contains("map-icon")) return;
+          if (host && host.dataset.city === ownId && other.classList.contains("obj-ring")) return;
+          if (host && host.dataset.city === ownId && el.classList.contains("obj-ring") && other.classList.contains("obj-bracket")) return;
+          const b = other.getBoundingClientRect();
+          const gapX = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+          const gapY = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+          if (gapX <= -4 || gapY <= -4) return;
+          hit = other;
+        });
+        if (!hit) return;
+        const b = hit.getBoundingClientRect();
+        const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+        const oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+        let nx = Number(el.dataset.nudgeX || 0);
+        let ny = Number(el.dataset.nudgeY || 0);
+        if (ox >= oy) nx += ((a.left + a.right) / 2 >= (b.left + b.right) / 2 ? 1 : -1) * (Math.max(ox, 0) + 4);
+        else ny += ((a.top + a.bottom) / 2 >= (b.top + b.bottom) / 2 ? 1 : -1) * (Math.max(oy, 0) + 4);
+        el.dataset.nudgeX = String(nx);
+        el.dataset.nudgeY = String(ny);
+        el.style.translate = `${nx}px ${ny}px`;
+        moved = true;
+      });
+      if (!moved) break;
+    }
+    document.querySelectorAll(".city-node.obj-target").forEach((node) => {
+      const tag = node.querySelector(".obj-mo");
+      const meta = CITY_BY_ID[node.dataset.city];
+      if (!tag || !meta) return;
+      tag.style.translate = "0 0";
+      let chosen = tagSpots(meta)[0];
+      let best = Infinity;
+      for (const spot of tagSpots(meta)) {
+        applyTagSpot(tag, spot);
+        const score = foreignHits(tag, node.dataset.city);
+        if (score < best) {
+          best = score;
+          chosen = spot;
+        }
+        if (score === 0) break;
+      }
+      applyTagSpot(tag, chosen);
+    });
+    const trace = [];
+    for (let pass = 0; pass < 20; pass += 1) {
+      const hits = labelOverlaps();
+      if (!hits.length) break;
+      trace.push(hits[0].a + " × " + hits[0].b);
+      const [idA, kindA] = hits[0].a.split(":");
+      const [idB, kindB] = hits[0].b.split(":");
+      const nodeB = document.querySelector(`.city-node[data-city="${idB}"]`);
+      const nodeA = document.querySelector(`.city-node[data-city="${idA}"]`);
+      const pick = (node, kind) => {
+        if (!node) return null;
+        if (kind === "label") return node.querySelector(".city-label");
+        if (kind === "sprite") return node.querySelector(".map-icon");
+        if (kind === "tag") return node.querySelector(".obj-mo");
+        if (kind === "crew") return node.querySelector(".crew-tokens.map");
+        if (kind === "bracket") return node.querySelector(".obj-bracket") || node.querySelector(".obj-ring");
+        return null;
+      };
+      const preferB = kindA === "label" || kindA === "tag";
+      const el = preferB ? pick(nodeB, kindB) : pick(nodeA, kindA);
+      const other = preferB ? pick(nodeA, kindA) : pick(nodeB, kindB);
+      const mover = el || pick(nodeB, kindB);
+      const still = other || pick(nodeA, kindA);
+      if (!mover || !still) break;
+      const a = mover.getBoundingClientRect();
+      const b = still.getBoundingClientRect();
+      const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+      const oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+      const sig = hits[0].a + " × " + hits[0].b;
+      const repeats = trace.filter((t) => t === sig).length;
+      let useX = ox <= oy;
+      if (repeats > 1) useX = !useX;
+      let nx = Number(mover.dataset.nudgeX || 0);
+      let ny = Number(mover.dataset.nudgeY || 0);
+      if (useX) nx += ((a.left + a.right) / 2 >= (b.left + b.right) / 2 ? 1 : -1) * (Math.max(ox, 0) + 4);
+      else ny += ((a.top + a.bottom) / 2 >= (b.top + b.bottom) / 2 ? 1 : -1) * (Math.max(oy, 0) + 4);
+      mover.dataset.nudgeX = String(nx);
+      mover.dataset.nudgeY = String(ny);
+      if (mover.classList.contains("city-label")) {
+        mover.style.transform = `translateX(calc(-50% + ${nx}px))`;
+        mover.style.translate = `0 ${ny}px`;
+      } else mover.style.translate = `${nx}px ${ny}px`;
     }
   }
 
@@ -3758,10 +3907,12 @@
         btn.classList.add("obj-target");
         const ring = document.createElement("span");
         ring.className = "obj-ring";
+        const frame = document.createElement("span");
+        frame.className = "obj-bracket";
         const tag = document.createElement("em");
         tag.className = "obj-mo";
         tag.textContent = `CLAIM · ${Math.max(0, state.objective.left)} MO`;
-        btn.append(ring, tag);
+        btn.append(frame, ring, tag);
       }
       const pulse = pulseMonths(meta.id);
       const echo = echoMonths(meta.id);
@@ -3821,9 +3972,73 @@
     renderFactionLegend();
   }
 
+  const MAP_ASPECT = 1200 / 800;
+  let mapFramed = false;
+  let mapFitted = false;
+
+  function frameSize(sw, sh) {
+    // One extra pixel past the cover size so subpixel rounding cannot open a gap.
+    if (sw / sh > MAP_ASPECT) return { fw: Math.ceil(sw) + 1, fh: Math.ceil(sw / MAP_ASPECT) + 1 };
+    return { fw: Math.ceil(sh * MAP_ASPECT) + 1, fh: Math.ceil(sh) + 1 };
+  }
+
+  function layoutMapFrame() {
+    const stage = $("map-stage");
+    const frame = $("map-frame");
+    if (!stage || !frame) return null;
+    const sw = stage.clientWidth;
+    const sh = stage.clientHeight;
+    if (sw < 40 || sh < 40) return null;
+    const { fw, fh } = frameSize(sw, sh);
+    frame.style.width = `${fw}px`;
+    frame.style.height = `${fh}px`;
+    if (!mapFramed) {
+      mapCam.scale = 1;
+      const ys = CITIES.map((c) => (c.y / 800) * fh);
+      const xs = CITIES.map((c) => (c.x / 1200) * fw);
+      const top = Math.min(...ys) - 22;
+      const bot = Math.max(...ys) + 32;
+      const left = Math.min(...xs) - 64;
+      const right = Math.max(...xs) + 72;
+      mapCam.x = (sw - (right - left)) / 2 - left;
+      mapCam.y = (sh - (bot - top)) / 2 - top;
+      mapFramed = true;
+    }
+    return { sw, sh, fw, fh };
+  }
+
+  // Once, after the pins and labels exist, shift the opening view so the
+  // northern icon and the southern name both sit inside the stage.
+  function fitCityCam() {
+    if (mapFitted) return;
+    const stage = $("map-stage");
+    if (!stage) return;
+    const box = stage.getBoundingClientRect();
+    if (box.height < 40) return;
+    let minTop = Infinity;
+    let maxBot = -Infinity;
+    document.querySelectorAll(".city-node").forEach((node) => {
+      [node.querySelector(".map-icon"), node.querySelector(".city-label")].forEach((el) => {
+        if (!el) return;
+        const r = el.getBoundingClientRect();
+        if (r.width < 2 || r.height < 2) return;
+        minTop = Math.min(minTop, r.top);
+        maxBot = Math.max(maxBot, r.bottom);
+      });
+    });
+    if (!Number.isFinite(minTop)) return;
+    const pad = 6;
+    const overflowTop = box.top + pad - minTop;
+    const overflowBot = maxBot - (box.bottom - pad);
+    mapCam.y -= (overflowBot - overflowTop) / 2;
+    mapFitted = true;
+  }
+
   function applyMapCam() {
     const cam = $("map-cam");
     if (!cam) return;
+    layoutMapFrame();
+    clampCam();
     cam.style.transform = `translate(${mapCam.x}px, ${mapCam.y}px) scale(${mapCam.scale})`;
     $("btn-exit-site")?.classList.toggle("hidden", !siteView);
     $("map-stage")?.classList.toggle("site-open", Boolean(siteView));
@@ -4499,18 +4714,85 @@
       .join("");
   }
 
+  function edgeYAtX(a, b, x) {
+    const lo = Math.min(a[0], b[0]);
+    const hi = Math.max(a[0], b[0]);
+    if (x < lo - 0.15 || x > hi + 0.15) return null;
+    if (Math.abs(b[0] - a[0]) < 0.001) return Math.min(a[1], b[1]);
+    const t = (x - a[0]) / (b[0] - a[0]);
+    if (t < -0.05 || t > 1.05) return null;
+    const u = Math.max(0, Math.min(1, t));
+    return a[1] + (b[1] - a[1]) * u;
+  }
+
+  function highestInSpan(pts, x0, x1) {
+    let top = Infinity;
+    for (const p of pts) {
+      if (p[0] >= x0 - 0.3 && p[0] <= x1 + 0.3) top = Math.min(top, p[1]);
+    }
+    const steps = 8;
+    for (let i = 0; i <= steps; i += 1) {
+      const x = x0 + ((x1 - x0) * i) / steps;
+      for (let e = 0; e < pts.length; e += 1) {
+        const y = edgeYAtX(pts[e], pts[(e + 1) % pts.length], x);
+        if (y != null) top = Math.min(top, y);
+      }
+    }
+    return Number.isFinite(top) ? top : null;
+  }
+
+  function dcRoofFace(liveSlots) {
+    if (!liveSlots.length) return null;
+    const contiguous = liveSlots.every((s, i) => s === i);
+    const live = contiguous ? liveSlots.length : Math.max(...liveSlots) - Math.min(...liveSlots) + 1;
+    const origin = contiguous ? 1 : SLOTS.dc[Math.min(...liveSlots)].c;
+    return liftPts(gridQuad(origin, 0.96, live + 0.02, 0.42), 15.6 + 0.62);
+  }
+
+  function kitRoofFace(occ, type, slotIndex) {
+    if (type === "dc") {
+      const live = occ.dcPlan ? occ.dcPlan.live.slice() : [];
+      if (!live.includes(slotIndex)) live.push(slotIndex);
+      return dcRoofFace(live);
+    }
+    if (type === "mcs") {
+      const bay = insetQuad(gridQuad(0.08, 1.08, 0.84, 1.84), 0.02);
+      return liftPts(bay, 11.4 + 1.15);
+    }
+    if (type === "bess") {
+      const slot = SLOTS.bess[slotIndex] || SLOTS.bess[0];
+      const box = insetQuad(gridQuad(slot.c + 0.14, slot.r + 0.32, 0.72, 0.42), 0.02);
+      return liftPts(box, 5.2);
+    }
+    if (type === "lounge") {
+      const foot = insetQuad(gridQuad(0.12, 3.08, 1.76, 0.72), 0.02);
+      return liftPts(insetQuad(foot, -0.08), 6.6 + 1.6);
+    }
+    if (type === "market") {
+      const awning = insetQuad(gridQuad(2.16, 3.46, 1.66, 0.28), 0);
+      return liftPts(awning, 5.8 * 0.72 + 0.85);
+    }
+    return null;
+  }
+
   function popFx(occ) {
     prunePops();
     let g = "";
     for (const p of pops) {
       if (p.city !== occ.cityId || !BUILD[p.type]) continue;
       const slots = SLOTS[p.type] || [];
-      const slot = p.type === "dc" ? slots[p.slot] : slots[0];
+      const index = p.type === "dc" ? p.slot : Math.min(p.slot || 0, Math.max(0, slots.length - 1));
+      const slot = slots[index] || slots[0];
       if (!slot) continue;
       const mid = cellCenter(slot.c, slot.r);
       const label = `${signedMoney(Number.isFinite(p.delta) ? p.delta : 0)}/mo`;
+      const face = kitRoofFace(occ, p.type, Number.isInteger(index) ? index : 0);
+      const half = Math.max(7, label.length * 1.2);
+      const x = Math.min(86, Math.max(14, mid.x));
+      const roofY = face ? highestInSpan(face, x - half, x + half) : null;
+      const y = Math.min(90, Math.max(4.6, (roofY == null ? mid.y - 10 : roofY) - 3.2));
       g += `<circle class="site-pop-ring" cx="${mid.x.toFixed(2)}" cy="${mid.y.toFixed(2)}" r="5.4"/>`;
-      g += `<g class="site-pop-floater"><text x="${mid.x.toFixed(2)}" y="${(mid.y - 8.4).toFixed(2)}">${label}</text></g>`;
+      g += `<g class="site-pop-floater"><text x="${x.toFixed(2)}" y="${y.toFixed(2)}">${label}</text></g>`;
     }
     return g;
   }
@@ -5176,19 +5458,30 @@
         return;
       }
       const place = e.target.closest("[data-place], .site-pad-hit");
-      if (!e.target.closest("[data-inspect]") && hoverKit && siteView && state) {
+      if (!e.target.closest("[data-inspect]") && armedKit && siteView && state) {
         const pt = yardViewPoint(e.clientX, e.clientY);
         const cell = pt ? cellFromView(pt.x, pt.y) : null;
         if (place || cell) {
           e.preventDefault();
           e.stopPropagation();
-          const type = hoverKit;
+          const type = armedKit;
           const city = state.cities[siteView];
           const origin = cell ? cellCenter(cell.c, cell.r) : null;
           const snap = nearestOkSlot(city, type, origin);
           if (snap) rememberGhost(city, type, snap);
-          if (snap && canDeploy(type, siteView)) enqueue(type, siteView);
-          else {
+          const keep = e.shiftKey;
+          if (snap && canDeploy(type, siteView)) {
+            enqueue(type, siteView);
+            if (keep && siteView) {
+              armedKit = type;
+              hoverKit = type;
+              previewKit = type;
+              const cityNow = state.cities[siteView];
+              const again = nearestOkSlot(cityNow, type, origin || (cursorCell ? cellCenter(cursorCell.c, cursorCell.r) : null));
+              if (again) rememberGhost(cityNow, type, again);
+              renderSiteYard();
+            } else disarmKit();
+          } else {
             const why = blockedReason(type, siteView) || (cell && cellPlaceState(city, type, cell.c, cell.r).reason) || "";
             if (why) toast(`${BUILD[type].name} · ${why}`, "bad");
             renderSiteYard();
@@ -5231,6 +5524,7 @@
       const next = e.relatedTarget;
       if (next && next.closest && next.closest(".tray, #site-yard, #site-overlay")) return;
       hideKitTip();
+      if (armedKit) return;
       if (hoverKit || cursorCell || previewKit || ghostSlot) {
         hoverKit = null;
         previewKit = null;
@@ -5240,6 +5534,11 @@
         renderSiteYard();
       }
     });
+    yard.addEventListener("contextmenu", (e) => {
+      if (!armedKit) return;
+      e.preventDefault();
+      disarmKit();
+    });
     const overlay = $("site-overlay");
     if (overlay && !overlay.dataset.previewBound) {
       overlay.dataset.previewBound = "1";
@@ -5247,6 +5546,7 @@
         const next = e.relatedTarget;
         if (next && next.closest && next.closest(".tray, #site-overlay")) return;
         hideKitTip();
+        if (armedKit) return;
         if (hoverKit || previewKit || cursorCell || ghostSlot) {
           hoverKit = null;
           previewKit = null;
@@ -5255,6 +5555,11 @@
           slotOverride = null;
           renderSiteYard();
         }
+      });
+      overlay.addEventListener("contextmenu", (e) => {
+        if (!armedKit) return;
+        e.preventDefault();
+        disarmKit();
       });
     }
   }
@@ -5364,16 +5669,21 @@
 
   function clampCam() {
     const stage = $("map-stage");
-    if (!stage) return;
+    const frame = $("map-frame");
+    if (!stage || !frame) return;
     const sw = stage.clientWidth;
     const sh = stage.clientHeight;
+    if (sw < 40 || sh < 40) return;
+    const { fw, fh } = frameSize(sw, sh);
+    frame.style.width = `${fw}px`;
+    frame.style.height = `${fh}px`;
     mapCam.scale = Math.min(3.4, Math.max(1, mapCam.scale));
-    const slackX = sw * 0.45;
-    const slackY = sh * 0.45;
-    const minX = sw - sw * mapCam.scale - slackX;
-    const maxX = slackX;
-    const minY = sh - sh * mapCam.scale - slackY;
-    const maxY = slackY;
+    const visW = fw * mapCam.scale;
+    const visH = fh * mapCam.scale;
+    const minX = Math.min(0, sw - visW);
+    const maxX = 0;
+    const minY = Math.min(0, sh - visH);
+    const maxY = 0;
     mapCam.x = Math.min(maxX, Math.max(minX, mapCam.x));
     mapCam.y = Math.min(maxY, Math.max(minY, mapCam.y));
   }
@@ -5679,7 +5989,7 @@
         ? `${spec.name} raising ×${raisingN} in ${target.name} · ${soon ? `${soon.left} mo left` : ""}`
         : block
           ? `${spec.name} — ${block}`
-          : `Deploy ${spec.name} in ${target.name} · ${money(cost)} · ${spec.months} mo`;
+          : `Arm ${spec.name} · click the pad to place · ${money(cost)} · ${spec.months} mo`;
       const short = spec.id === "dc" ? "DC" : spec.name;
       const status = raisingN
         ? `<small class="ready">RAISING${raisingN > 1 ? ` ×${raisingN}` : ""}${soon ? ` · ${soon.left} MO` : ""}</small>`
@@ -5688,6 +5998,7 @@
           : `<small class="ready">${money(cost)} · ${spec.months} MO</small>`;
       btn.innerHTML = `<img src="${spec.icon}" alt="" draggable="false"><span class="deploy-copy"><b>${short}</b>${status}</span>`;
       btn.addEventListener("mouseenter", () => {
+        if (armedKit && armedKit !== spec.id) return;
         if (hoverKit !== spec.id) {
           slotOverride = null;
           ghostSlot = null;
@@ -5696,10 +6007,13 @@
         hoverKit = spec.id;
         renderSiteYard();
       });
-      btn.addEventListener("click", () => {
-        armedKit = spec.id;
-        if (!block) enqueue(spec.id, selected);
-        else renderTray();
+      btn.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        if (block) {
+          renderTray();
+          return;
+        }
+        armKit(spec.id);
       });
       grid.appendChild(btn);
     }
@@ -5820,12 +6134,17 @@
     renderInspector();
     renderTray();
     renderTicker();
-    applyMapCam();
     renderSiteYard();
     renderOps();
     renderWaypointHint();
     $("map-stage")?.classList.toggle("await-waypoint", Boolean(waypointCrew()) && !siteView);
+    applyMapCam();
     settleMapChrome();
+    if (!mapFitted && !siteView) {
+      fitCityCam();
+      applyMapCam();
+      settleMapChrome();
+    }
   }
 
   function hasSave() {
@@ -6273,9 +6592,18 @@
       b.addEventListener("click", () => setSpeed(Number(b.dataset.speed)));
     });
     window.addEventListener("resize", () => {
+      applyMapCam();
       settleMapChrome();
       const stack = $("site-stack");
       if (stack && siteView) frameSiteStack(stack, stack.style.aspectRatio || "220 / 131");
+    });
+
+    document.addEventListener("contextmenu", (e) => {
+      if (!armedKit || !state) return;
+      const board = $("board-screen");
+      if (!board || board.classList.contains("hidden")) return;
+      e.preventDefault();
+      disarmKit();
     });
 
     document.addEventListener("keydown", (e) => {
@@ -6294,6 +6622,10 @@
         if (e.key === "4") setSpeed(4);
       }
       if (e.key === "Escape") {
+        if (armedKit) {
+          disarmKit();
+          return;
+        }
         if (siteView) {
           exitSite();
           return;
@@ -6311,14 +6643,7 @@
       const kitKey = { c: "dc", m: "mcs", b: "bess", l: "lounge", k: "market" }[e.key.toLowerCase()];
       if (kitKey && selected) {
         e.preventDefault();
-        armedKit = kitKey;
-        previewKit = kitKey;
-        hoverKit = kitKey;
-        if (canDeploy(kitKey, selected)) enqueue(kitKey, selected);
-        else {
-          renderTray();
-          renderSiteYard();
-        }
+        armKit(kitKey);
       }
       if ((e.key === "r" || e.key === "R") && selected) {
         e.preventDefault();
@@ -6402,7 +6727,7 @@
   }
 
   window.__EMPIRE_SMOKE__ = {
-    build: "rts-yard-27",
+    build: "rts-yard-28",
     monthlyNet,
     cityNet: (id) => cityNet(state.cities[id], YOU),
     crewTruth,
@@ -6427,6 +6752,26 @@
     contestedCity: (id) => contestedCity(state.cities[id]),
     enterSite,
     enqueue,
+    deploy: (kind, slot) => deploy(kind, slot),
+    armed: () => armedKit,
+    disarm: () => disarmKit(),
+    arm: (kind) => armKit(kind),
+    holdPop: (type, slot) => {
+      const city = siteView || selected;
+      if (!state || !city || !BUILD[type || "dc"]) return false;
+      const kind = type || "dc";
+      const index = Number.isInteger(slot) ? slot : 0;
+      pops.push({
+        city,
+        type: kind,
+        slot: index,
+        until: Date.now() + 86400000,
+        delta: kitOutput(state.cities[city], kind),
+      });
+      yardFlash = { city, until: Date.now() + 86400000, hold: true };
+      renderSiteYard();
+      return true;
+    },
     applyPlayerPrice: (id, price) => applyPlayerPrice(state.cities[id], price),
     placementRead: (id, type) => placementRead(state.cities[id], type),
     traffic: (id) => trafficPlan(state.cities[id]),

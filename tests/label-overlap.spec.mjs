@@ -14,7 +14,7 @@ for (const [width, height] of [
   [1280, 720],
   [1600, 900],
 ]) {
-  test(`labels clear tags and sprites at ${width}x${height}`, async ({ page }) => {
+  test(`labels, claim tags, brackets, and crew chips stay apart at ${width}x${height}`, async ({ page }) => {
     const fresh = await overlaps(page, width, height, "map");
     expect(fresh, `opening map ${width}x${height}`).toEqual([]);
     const held = await overlaps(page, width, height, "contested-built");

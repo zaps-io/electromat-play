@@ -41,6 +41,9 @@
           if (!dc) throw new Error("no DC tray button");
           dc.click();
           await wait(250);
+          const armed = smoke.armed();
+          const queuedBeforePlace = smoke.getState().queue.some((q) => q.city === "flagstaff" && q.type === "dc");
+          const placed = smoke.deploy("dc");
           const state = smoke.getState();
           const after = {
             site: smoke.getSite(),
@@ -171,6 +174,9 @@
             after.site === "flagstaff" &&
             after.selected === "flagstaff" &&
             after.paused === true &&
+            armed === "dc" &&
+            queuedBeforePlace === false &&
+            placed === true &&
             flagDeployed &&
             flag.id === "flagstaff" &&
             tuc.id === "tucson" &&
@@ -184,8 +190,8 @@
             flagStillOpen &&
             smoke.rivalSite("la") === true &&
             smoke.rivalSite("flagstaff") === false &&
-            smoke.build === "rts-yard-27" &&
-            buildName === "rts-yard-27" &&
+            smoke.build === "rts-yard-28" &&
+            buildName === "rts-yard-28" &&
             cashPx > sharePx &&
             cashPx >= 28 &&
             /NEXT ·/.test(nextLine) &&
