@@ -1,4 +1,20 @@
-# Empire playtest — rts-yard-22
+# Empire playtest — rts-yard-23
+
+Replay stills (paused board, no title): `?shot=map` (faction cloth, radii, legend) · `?shot=footprint` (DC hover, dim hatch, footprint on the nearest open slot) · `?shot=raising` (mid-build, side panel in view) · `?shot=contested-built` (full Vegas yard, share header, crews off the kits).
+
+Checked-in frames: `yard-map-23.png` · `yard-hover-23.png` · `yard-panel-23.png` · `yard-contested-23.png` · `yard-map.png` · `yard-footprint.png` · `yard-midbuild.png` · `yard-five.png` · `yard-empty.png` · `yard-pad.png` · `yard-ghosts.png` · `yard-event.png` · `yard-raising.png` · `yard-full.png` · `yard-rival.png` · `yard-contested.png` · `yard-hover.png` · `yard-threat.png` · `yard-fork.png` · `yard-pop.png` · `yard-objective.png` · `yard-crew.png` · `yard-scout.png` · `yard-scout-map.png` · `yard-skirmish.png` · `yard-fog.png` · `yard-pin-fight.png` · `yard-waypoint.png`.
+
+## rts-yard-23
+
+Live play of rts-yard-22. Five reads that were stepping on each other.
+
+- **Side panel.** Build rows are one line (name, months, bar). The price slider sits in its own footer under the scrolling stats, so BESS and Lounge stay clear of it at 1600×900 and 1280×720.
+- **Raising chip.** The amber months chip is its own row between the pad and the ghost note.
+- **DC hover.** Cells that are not this kit are a light hatch. Strong red is only a real block, and it carries a reason. The footprint snaps to the nearest open grid slot.
+- **Contested yard.** The share header floats on the pad, so the yard scale stays the same as an empty dirt pad. Once a kit is complete, idle RAISE chips move to the margin instead of sitting on the building.
+- **Factions.** Zaps is red `#E63225`. Voltspan cyan, Gridhawk amber, Arcway violet, Rednode rose, Ampfield green. Flags and ownership radii use those colors. A legend sits on the map. Empty dirt is a neutral stake. Fog still marks an unrevealed rival.
+
+## rts-yard-22
 
 Replay stills (paused board, no title): `?shot=map` (flags, share bars, fog, objective rings) · `?shot=footprint` (empty Flagstaff, DC footprint snapped to the grid) · `?shot=raising` (mid-build scaffold and months ring) · `?shot=full` (five-kit yard) · `?shot=plate` · `?shot=edict` · `?shot=grade` · `?shot=contested` · `?shot=empty` · `?shot=ghosts` · `?shot=rival` · `?shot=event` · `?shot=hover` · `?shot=fork` · `?shot=pop` · `?shot=objective` · `?shot=crew` · `?shot=scout` · `?shot=scout-map` · `?shot=skirmish` · `?shot=fog` · `?shot=pin-fight` · `?shot=waypoint` · `?showcase=1`.
 

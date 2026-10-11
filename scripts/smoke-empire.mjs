@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* rts-yard-22: grid ghosts, kit silhouettes, HUD truth, map flags. */
+/* rts-yard-23: panel scroll, nearest-slot hover, faction colors. */
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,13 +16,13 @@ const fail = (msg) => {
 };
 const ok = (msg) => console.log(`OK   ${msg}`);
 
-if (!html.includes('content="rts-yard-22"') || !html.includes("styles.css?v=rts-yard-22") || !html.includes("game.js?v=rts-yard-22")) {
-  fail("index.html cache is not rts-yard-22");
-} else ok("index.html cache rts-yard-22");
+if (!html.includes('content="rts-yard-23"') || !html.includes("styles.css?v=rts-yard-23") || !html.includes("game.js?v=rts-yard-23")) {
+  fail("index.html cache is not rts-yard-23");
+} else ok("index.html cache rts-yard-23");
 
-if (!game.includes("rts-yard-22") || !css.includes("rts-yard-22") || !review.includes("rts-yard-22")) {
-  fail("game/styles/REVIEW cache is not rts-yard-22");
-} else ok("game/styles/REVIEW cache rts-yard-22");
+if (!game.includes("rts-yard-23") || !css.includes("rts-yard-23") || !review.includes("rts-yard-23")) {
+  fail("game/styles/REVIEW cache is not rts-yard-23");
+} else ok("game/styles/REVIEW cache rts-yard-23");
 
 if (!game.includes("function placementRead") || !game.includes("COMPLETES CANOPY") || !html.includes("site-consequence")) {
   fail("hover consequence line missing");
@@ -347,6 +347,34 @@ if (!process.exitCode) ok("map, footprint, mid-build, and five-kit stills");
 if (!review.includes("yard-map.png") || !review.includes("yard-footprint.png") || !review.includes("yard-midbuild.png") || !review.includes("yard-five.png")) {
   fail("REVIEW must list the yard-22 stills");
 } else ok("REVIEW lists yard-22 stills");
+
+if (!game.includes("site-cell-dim") || !game.includes("function nearestOkSlot") || !css.includes(".site-cell-dim")) {
+  fail("dim hatch or nearest-slot snap missing");
+} else ok("dim hatch and nearest valid slot");
+
+if (!html.includes('id="site-raising"') || !css.includes(".site-raising-row") || !html.includes('id="insp-foot"') || !html.includes('id="faction-legend"')) {
+  fail("raising row, price foot, or faction legend missing");
+} else ok("raising row, inspector foot, faction legend");
+
+if (!game.includes("function renderFactionLegend") || !game.includes("function neutralStakeSvg")) {
+  fail("faction legend renderer missing");
+} else ok("faction legend renderer");
+
+const yard23 = [
+  ["docs/shots/yard-map-23.png", 80000],
+  ["docs/shots/yard-hover-23.png", 80000],
+  ["docs/shots/yard-panel-23.png", 80000],
+  ["docs/shots/yard-contested-23.png", 80000],
+];
+for (const [rel, min] of yard23) {
+  const p = join(root, rel);
+  if (!existsSync(p)) fail(`${rel} missing`);
+  else if (statSync(p).size < min) fail(`${rel} too small (${statSync(p).size} bytes)`);
+}
+if (!process.exitCode) ok("yard-23 map, hover, panel, and contested stills");
+if (!review.includes("yard-map-23.png") || !review.includes("yard-hover-23.png") || !review.includes("yard-panel-23.png") || !review.includes("yard-contested-23.png")) {
+  fail("REVIEW must list the yard-23 stills");
+} else ok("REVIEW lists yard-23 stills");
 
 if (process.exitCode) {
   console.error("smoke-empire failed");

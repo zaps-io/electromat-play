@@ -1,4 +1,4 @@
-/* empire-build: rts-yard-22 */
+/* empire-build: rts-yard-23 */
 :root {
   --red: #e63225;
   --charcoal: #1e1e24;
@@ -810,6 +810,50 @@ button {
   position: relative;
   min-height: 0;
   container-type: size;
+}
+
+.site-yard > #site-plate,
+.site-yard > #site-overlay-intel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 16;
+  pointer-events: auto;
+}
+
+.site-yard > #site-plate {
+  top: 0;
+  padding: 0.22rem 0.75rem 0.26rem;
+  gap: 0.3rem 0.85rem;
+  background: rgba(30, 30, 36, 0.92);
+}
+
+.site-yard > #site-plate b,
+.site-yard > #site-plate .plate-income b {
+  font-size: 1.05rem;
+}
+
+.site-yard > #site-overlay-intel {
+  top: 0;
+  padding: 0.28rem 0.75rem 0.32rem;
+  background: rgba(18, 18, 23, 0.92);
+}
+
+.site-yard:has(#site-plate:not(.hidden)) > #site-overlay-intel:not(.hidden) {
+  top: 2.85rem;
+}
+
+.site-yard > #site-overlay-intel > p:not(.intel-line) {
+  margin: 0.12rem 0 0;
+  font-size: 0.66rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.site-yard.has-intel #site-consequence {
+  top: auto;
+  bottom: 0.45rem;
 }
 
 .site-stack {
@@ -2026,13 +2070,25 @@ button {
   margin: 0;
 }
 
+.site-raising-row {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 0;
+}
+
+.site-raising-row:empty {
+  display: none;
+}
+
 .site-raising {
-  position: absolute;
-  left: 50%;
-  bottom: auto;
-  top: calc(100% + 0.45rem);
-  transform: translateX(-50%);
+  position: relative;
+  left: auto;
+  top: auto;
+  transform: none;
   z-index: 12;
+  margin: 0.28rem 0.4rem 0.4rem;
   padding: 0.32rem 0.8rem;
   font-family: "Share Tech Mono", monospace;
   font-size: 0.7rem;
@@ -2159,6 +2215,43 @@ button {
   overflow: hidden;
 }
 
+.insp-compound.compact {
+  max-height: 88px;
+  margin: 0.2rem 0 0.3rem;
+  padding: 0.2rem 0.25rem;
+}
+
+.insp-compound.compact .insp-yard {
+  width: min(100%, 132px);
+}
+
+.insp-foot {
+  flex: 0 0 auto;
+  background: var(--charcoal);
+}
+
+.insp-foot .price-row {
+  position: static;
+  margin: 0;
+  padding: 0.4rem 0 0.1rem;
+  background: var(--charcoal);
+}
+
+.inspector > .kicker,
+.inspector > h2,
+.inspector > .insp-phase,
+.inspector > .context-plate,
+.inspector > .insp-triad,
+.inspector > .insp-blurb,
+.inspector > .insp-compound,
+.insp-foot {
+  flex-shrink: 0;
+}
+
+.insp-foot:empty {
+  display: none;
+}
+
 .insp-compound svg,
 .insp-sprite {
   display: block;
@@ -2194,15 +2287,24 @@ button {
 }
 
 .insp-queue .job {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.25rem;
-  margin-bottom: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.28rem;
   color: var(--cream);
+  white-space: nowrap;
+}
+
+.insp-queue .job > span:first-child {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .insp-queue .bar {
-  grid-column: 1 / -1;
+  flex: 1 1 auto;
+  min-width: 2.2rem;
   height: 4px;
   background: #2c2c34;
 }
@@ -2584,7 +2686,12 @@ button {
   color: var(--amber);
 }
 
+.insp-grid > div {
+  min-width: 0;
+}
+
 .insp-grid b {
+  display: block;
   color: var(--cream);
   font-weight: 500;
 }
@@ -2912,6 +3019,12 @@ button {
   }
 }
 
+@media (max-height: 940px) {
+  .insp-compound {
+    display: none;
+  }
+}
+
 @media (max-height: 820px) {
   .hud {
     padding: 0.45rem 0.75rem 0.4rem;
@@ -2922,13 +3035,30 @@ button {
   }
 
   .inspector h2 {
-    font-size: 1.45rem;
+    font-size: 1.3rem;
+    margin: 0;
   }
 
   .insp-compound {
-    max-height: 132px;
-    padding: 0.3rem 0.25rem;
-    margin: 0.3rem 0 0.35rem;
+    display: none;
+  }
+
+  .inspector .context-plate {
+    margin: 0 0 0.2rem;
+    padding: 0.18rem 0.3rem 0.22rem;
+  }
+
+  .inspector .context-plate b,
+  .inspector .context-plate .plate-income b {
+    font-size: 1rem;
+  }
+
+  .insp-blurb {
+    -webkit-line-clamp: 2;
+  }
+
+  .insp-triad {
+    margin: 0 0 0.25rem;
   }
 
   .insp-yard {
@@ -2979,6 +3109,7 @@ button {
 }
 
 .site-cell-valid,
+.site-cell-dim,
 .site-cell-blocked,
 .site-footprint {
   pointer-events: auto;
@@ -2989,6 +3120,13 @@ button {
   fill: rgba(0, 212, 245, 0.28);
   stroke: #00d4f5;
   stroke-width: 0.35;
+}
+
+.site-cell-dim {
+  fill: rgba(18, 18, 23, 0.14);
+  stroke: rgba(184, 188, 192, 0.42);
+  stroke-width: 0.22;
+  stroke-dasharray: 0.55 0.4;
 }
 
 .site-cell-blocked {
@@ -3059,27 +3197,87 @@ button {
 .own-radius {
   position: absolute;
   left: 50%;
-  bottom: 6px;
-  width: 64px;
-  height: 64px;
+  bottom: 4px;
+  width: 76px;
+  height: 76px;
   transform: translate(-50%, 0);
   border-radius: 50%;
-  border: 1px solid var(--own, #e63225);
-  background: color-mix(in srgb, var(--own, #e63225) 22%, transparent);
+  border: 2px solid var(--own, #e63225);
+  background: color-mix(in srgb, var(--own, #e63225) 28%, transparent);
   pointer-events: none;
   z-index: 0;
+}
+
+.own-radius.alt {
+  width: 96px;
+  height: 96px;
+  bottom: -6px;
+  background: transparent;
 }
 
 .faction-flag {
   position: absolute;
   left: 50%;
-  bottom: 18px;
-  width: 18px;
-  height: 24px;
-  transform: translateX(-70%);
+  bottom: 20px;
+  width: 28px;
+  height: 36px;
+  transform: translateX(-78%);
   z-index: 4;
   pointer-events: none;
   filter: drop-shadow(0 1px 1px #000);
+}
+
+.faction-flag.alt {
+  transform: translateX(8%);
+  z-index: 5;
+}
+
+.faction-legend {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 6;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.28rem 0.55rem;
+  max-width: 16rem;
+  padding: 0.32rem 0.5rem;
+  background: rgba(30, 30, 36, 0.9);
+  border: 1px solid rgba(245, 240, 232, 0.2);
+  pointer-events: none;
+}
+
+.faction-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  color: var(--cream);
+}
+
+.faction-legend i {
+  width: 10px;
+  height: 10px;
+  background: #e63225;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
+}
+
+.map-stage:has(.site-overlay:not(.hidden)) .faction-legend {
+  display: none;
+}
+
+.city-node .map-icon.is-stake {
+  width: 16px;
+  height: 24px;
+  bottom: 16px;
+}
+
+.stake-svg {
+  width: 16px;
+  height: 24px;
+  display: block;
 }
 
 .faction-flag .flag-svg {
