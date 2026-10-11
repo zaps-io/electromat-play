@@ -11,44 +11,64 @@
       href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Barlow+Condensed:wght@500;600;700&family=Share+Tech+Mono&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=empire-aoe" />
+    <link rel="stylesheet" href="styles.css?v=empire-design" />
   </head>
   <body>
     <canvas id="world"></canvas>
 
-    <header class="res-bar panel" aria-label="Resources">
-      <img class="wordmark" src="assets/brand/zaps-wordmark-only-cream.svg?v=canon-1823" alt="Zaps" />
-      <div class="res" title="Capital"><i class="ico ico-cap">$</i><b id="res-capital">0</b></div>
-      <div class="res" title="Grid capacity"><i class="ico ico-grid"></i><b id="res-grid">0</b><span>MW</span></div>
-      <div class="res" title="Permits"><i class="ico ico-permit"></i><b id="res-permits">0</b></div>
-      <div class="res" title="Copper"><i class="ico ico-copper"></i><b id="res-copper">0</b></div>
-      <div class="res" title="Steel"><i class="ico ico-steel"></i><b id="res-steel">0</b></div>
+    <header class="res-bar" aria-label="Resources">
+      <div class="chips">
+        <div class="chip" title="Capital"><i>💲</i><b id="res-capital">0</b></div>
+        <div class="chip" id="chip-grid" title="Grid MW used / capacity"><i>⚡</i><b id="res-grid">0/2</b></div>
+        <div class="chip" title="Permits"><i>📄</i><b id="res-permits">0</b></div>
+        <div class="chip" title="Copper / Steel"><i>🔩</i><b><span id="res-copper">0</span>/<span id="res-steel">0</span></b></div>
+        <div class="chip" title="Crews idle / total"><i>👷</i><b id="res-crews">0/0</b></div>
+      </div>
+      <div class="clock-block">
+        <b id="clock">10:00</b>
+        <button type="button" id="spd-0" title="Pause">❚❚</button>
+        <button type="button" id="spd-1" class="on" title="Normal">1</button>
+        <button type="button" id="spd-2" title="Fast">2</button>
+        <button type="button" id="spd-4" title="Faster">4</button>
+      </div>
     </header>
 
-    <div class="age-plate panel" id="age-plate">
-      <p id="age-name">PILOT AGE</p>
-      <p id="pop">0/0</p>
-      <button type="button" id="btn-age">Advance</button>
+    <img class="wordmark" src="assets/brand/zaps-wordmark-only-cream.svg?v=canon-1823" alt="Zaps" />
+
+    <div class="age-cluster panel" id="age-plate">
+      <div class="emblem" id="age-emblem">I</div>
+      <div class="age-copy">
+        <p id="age-name">PILOT AGE</p>
+        <p id="city-name">Phoenix</p>
+      </div>
+      <p id="share">0%</p>
+      <button type="button" id="btn-age">Research</button>
     </div>
 
-    <p id="objective" class="objective panel">Select a crew. Raise a DC row.</p>
-
-    <div class="cmd panel" id="cmd" aria-label="Command card"></div>
+    <button type="button" id="btn-idle" title="Idle crew (.)">0</button>
+    <canvas id="minimap" aria-label="Minimap"></canvas>
 
     <section class="select-panel panel" id="select-panel" aria-label="Selection">
-      <div id="select-swatch"></div>
-      <div>
-        <b id="select-name">No selection</b>
-        <p id="select-meta">Left-drag a box. Right-click to move or work.</p>
-        <div class="bar"><i id="select-bar"></i></div>
+      <canvas id="select-portrait" width="160" height="160"></canvas>
+      <div class="select-copy">
+        <b id="select-name">Western Interconnect</b>
+        <p id="select-meta">Box-select crews. Right-click to move or work.</p>
+        <label>HP <span class="bar"><i id="select-bar"></i></span></label>
+        <label>Utilisation <span class="bar"><i id="bar-use"></i></span></label>
+        <label>Queue <span class="bar"><i id="bar-queue"></i></span></label>
+        <div id="garrison" class="garrison"></div>
+        <label id="price-wrap" hidden>kWh price <input id="price-slider" type="range" min="70" max="140" value="100" /></label>
+        <div class="select-actions">
+          <button type="button" id="btn-garrison" hidden>Garrison crews</button>
+          <button type="button" id="btn-lawyer" hidden>Dispatch lawyer</button>
+        </div>
       </div>
     </section>
 
-    <canvas id="minimap" class="panel" aria-label="Minimap"></canvas>
-
+    <div id="cmd" aria-label="Command card"></div>
+    <div id="notes" aria-label="Notifications"></div>
     <div id="age-banner" class="age-banner" hidden>FLEET AGE</div>
-    <p id="help" class="help">Drag select · Right-click move · Arrows pan · Wheel zoom</p>
 
-    <script src="game.js?v=empire-aoe"></script>
+    <script src="game.js?v=empire-design"></script>
   </body>
 </html>

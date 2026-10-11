@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 const root = new URL("..", import.meta.url).pathname;
@@ -30,17 +30,20 @@ if (cream !== 1823 || red !== 1823) fail(`wordmarks must stay 1823 bytes (cream 
 else ok("official 1823-byte wordmarks");
 
 if (!html.includes("zaps-wordmark-only-cream.svg?v=canon-1823")) fail("cream wordmark not on the board");
-else ok("wordmark on the resource bar");
+else ok("wordmark on the board");
+
+if (!css.includes("hud-spec:")) fail("HUD spec marker missing");
+else ok("HUD spec boxes marked");
 
 for (const name of ["PILOT AGE", "FLEET AGE", "MEGAWATT AGE"]) {
   if (!game.includes(name)) fail(`missing age ${name}`);
 }
 if (!failed) ok("three ages");
 
-for (const kind of ["hq", "dc", "mcs", "bess", "lounge", "market", "substation", "depot"]) {
+for (const kind of ["hq", "dc", "mcs", "bess", "lounge", "market", "substation", "warehouse", "permit", "sales"]) {
   if (!game.includes(`${kind}:`)) fail(`missing building ${kind}`);
 }
-if (!failed) ok("command-card buildings");
+if (!failed) ok("spec buildings");
 
 for (const name of [
   "Compact EV hatch",
@@ -54,18 +57,28 @@ for (const name of [
 ]) {
   if (!game.includes(name)) fail(`missing vehicle ${name}`);
 }
-if (!game.includes('kind === "mcs"') && !game.includes("building.kind !== \"mcs\"")) {
-  /* semi gate is the explicit return below */
-}
 if (!game.includes('kind === "semi" && building.kind !== "mcs"')) fail("semis must be refused off MCS");
 else ok("eight vehicle types, semis on MCS only");
 
 if (!game.includes("window.__EMPIRE_SMOKE__")) fail("smoke handle missing");
 else ok("__EMPIRE_SMOKE__ successor");
-for (const fn of ["crewScreen", "padScreen", "fast", "paid", "age"]) {
-  if (!game.includes(`${fn}:`)) fail(`smoke.${fn} missing`);
+for (const fn of ["crewScreen", "padScreen", "fast", "paid", "age", "prepFleet"]) {
+  if (!game.includes(`${fn}:`) && !game.includes(`${fn}()`)) fail(`smoke.${fn} missing`);
 }
 if (!failed) ok("smoke can select, build, pay, and age");
+
+function walk(dir, hit) {
+  for (const name of readdirSync(dir)) {
+    if (name === "node_modules" || name === ".git") continue;
+    const p = join(dir, name);
+    if (statSync(p).isDirectory()) walk(p, hit);
+    else if (name.endsWith(".b64")) hit.push(p);
+  }
+}
+const b64 = [];
+walk(root, b64);
+if (b64.length) fail(`b64 art committed: ${b64.join(", ")}`);
+else ok("no b64 art in the tree");
 
 const stills = [
   "docs/shots/aoe-region.png",
@@ -75,6 +88,10 @@ const stills = [
   "docs/shots/aoe-age.png",
   "docs/shots/aoe-vehicles.png",
   "docs/shots/aoe-contest.png",
+  "docs/shots/aoe-traffic.png",
+  "docs/shots/aoe-convoy.png",
+  "docs/shots/aoe-alert.png",
+  "docs/shots/aoe-night.png",
 ];
 for (const rel of stills) {
   const p = join(root, rel);
@@ -82,7 +99,7 @@ for (const rel of stills) {
   else if (statSync(p).size < 80000) fail(`${rel} too small`);
   else if (!review.includes(rel.split("/").pop())) fail(`REVIEW missing ${rel}`);
 }
-if (!failed) ok("seven AoE stills listed");
+if (!failed) ok("AoE stills listed");
 
 if (failed) {
   console.error("smoke-empire failed");

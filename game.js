@@ -1,10 +1,12 @@
-/* ZAPS EMPIRE — one isometric Western Interconnect. AoE loop, Zaps brand. */
+/* ZAPS EMPIRE — AoE loop on the Western Interconnect.
+   Spec: docs/design/empire-aoe-design.md (section 9 build order). */
 (() => {
   const RED = "#E63225";
   const CHAR = "#1E1E24";
   const AMBER = "#E89A2E";
   const CYAN = "#00D4F5";
   const CREAM = "#F5F0E8";
+  const VIOLET = "#7A4CDB";
 
   const TW = 64;
   const TH = 32;
@@ -16,54 +18,65 @@
   const MAP_H = Math.ceil((COLS + ROWS) * (TH / 2) + 100);
 
   const DESERT = 0, SCRUB = 1, VALLEY = 2, MOUNTAIN = 3, WATER = 4, GRAVEL = 5, ROAD = 6;
-  const FACTION = { zaps: 1, voltspan: 2, gridhawk: 3, arcway: 4 };
-  const FACTION_NAME = ["", "Zaps", "Voltspan", "Gridhawk", "Arcway"];
-  const FACTION_COLOR = ["", RED, AMBER, CYAN, "#C6F54E"];
+  const FACTION = { zaps: 1, voltspan: 2, gridhawk: 3, arcway: 4, rednode: 5, ampfield: 6 };
+  const FACTION_NAME = ["", "Zaps", "Voltspan", "Gridhawk", "Arcway", "Rednode", "Ampfield"];
+  const FACTION_COLOR = ["", RED, AMBER, CYAN, VIOLET, "#C45CFF", "#F5F0E8"];
 
   const AGES = [
-    { name: "PILOT AGE" },
-    { name: "FLEET AGE", time: 16, cost: { capital: 700, permits: 3, copper: 60 } },
-    { name: "MEGAWATT AGE", time: 22, cost: { capital: 1400, permits: 6, steel: 80, grid: 10 } },
+    { name: "PILOT AGE", numeral: "I" },
+    { name: "FLEET AGE", numeral: "II", time: 60, cost: { capital: 120000, steel: 40, permits: 20 } },
+    { name: "MEGAWATT AGE", numeral: "III", time: 90, cost: { capital: 300000, steel: 100, permits: 60 } },
   ];
 
   const BUILD = {
-    hq: { name: "Site HQ", key: "q", w: 2, h: 2, age: 0, time: 14, cost: { capital: 280, copper: 40 } },
-    dc: { name: "DC Row", key: "w", w: 3, h: 1, age: 0, time: 10, cost: { capital: 280, copper: 30 } },
-    l2: { name: "L2 Stalls", key: "f", w: 2, h: 1, age: 0, time: 7, cost: { capital: 160, copper: 16 } },
-    lounge: { name: "Lounge", key: "t", w: 2, h: 2, age: 0, time: 9, cost: { capital: 300, permits: 1 } },
-    crew: { name: "Crew", key: "c", train: "crew", cost: { capital: 100 } },
-    mcs: { name: "MCS Bay", key: "e", w: 3, h: 2, age: 1, time: 16, cost: { capital: 720, steel: 50, grid: 8 } },
-    bess: { name: "BESS", key: "r", w: 2, h: 2, age: 1, time: 14, cost: { capital: 640, steel: 40 } },
-    market: { name: "Market", key: "a", w: 2, h: 2, age: 1, time: 12, cost: { capital: 420, permits: 2, copper: 20 } },
-    substation: { name: "Tie-in", key: "s", w: 2, h: 2, age: 2, time: 15, cost: { capital: 800, steel: 40, permits: 2 } },
-    depot: { name: "Depot", key: "d", w: 2, h: 2, age: 2, time: 12, cost: { capital: 540, copper: 20, steel: 20 } },
-    scout: { name: "Scout", key: "v", train: "scout", cost: { capital: 80 } },
+    hq: { name: "Site HQ", w: 3, h: 3, age: 0, time: 16, cost: { capital: 80000, permits: 30 } },
+    dc: { name: "DC Charger", w: 1, h: 1, age: 0, time: 8, cost: { capital: 20000, copper: 10 }, mw: 0.3 },
+    warehouse: { name: "Warehouse", w: 2, h: 2, age: 0, time: 8, cost: { capital: 15000 } },
+    market: { name: "Market", w: 2, h: 1, age: 0, time: 8, cost: { capital: 30000 } },
+    bess: { name: "BESS", w: 2, h: 1, age: 1, time: 12, cost: { capital: 40000, steel: 20 }, mwAdd: 2 },
+    lounge: { name: "Lounge", w: 2, h: 2, age: 1, time: 10, cost: { capital: 25000, copper: 10 } },
+    mcs: { name: "MCS Bay", w: 2, h: 3, age: 2, time: 14, cost: { capital: 60000, steel: 30, permits: 10 }, mw: 1 },
+    sales: { name: "Sales Depot", w: 2, h: 2, age: 1, time: 12, cost: { capital: 45000, steel: 20 } },
+    substation: { name: "Substation", w: 2, h: 2, age: 1, time: 14, cost: { capital: 70000, steel: 40, permits: 10 }, mwAdd: 5 },
+    permit: { name: "Permit Office", w: 1, h: 2, age: 1, time: 10, cost: { capital: 35000, permits: 10 } },
+    crew: { name: "Crew", train: "crew", cost: { capital: 15000 } },
+    scout: { name: "Scout", train: "scout", cost: { capital: 12000 } },
   };
-  const CARD = ["hq", "dc", "l2", "lounge", "crew", "mcs", "bess", "market", "substation", "depot", "scout"];
+  const CARD_PAGES = [
+    ["hq", "dc", "warehouse", "market", "bess", "lounge", "mcs", "sales", "substation"],
+    ["permit", "crew", "scout", "hq", "dc", "warehouse", "market", "bess", "lounge"],
+  ];
+  const HOTKEYS = ["q", "w", "e", "a", "s", "d", "z", "x", "c"];
+  const ORDERS = {
+    2: ["dc", "dc", "dc", "dc", "warehouse", "bess", "lounge", "expand"],
+    3: ["warehouse", "warehouse", "substation", "expand"],
+    4: ["dc", "sales", "protest", "expand"],
+  };
 
   const VEHICLES = {
-    hatch: { name: "Compact EV hatch", fare: 4, w: 0.42, h: 0.62, body: 9, cab: 12, color: "#6FCB9A", roof: "#D8FFF0" },
-    sedan: { name: "Sedan", fare: 6, w: 0.44, h: 0.74, body: 8, cab: 11, color: "#F5F0E8", roof: "#C9D2DC" },
-    suv: { name: "SUV", fare: 8, w: 0.5, h: 0.72, body: 12, cab: 15, color: "#2A2E33", roof: "#00D4F5" },
-    pickup: { name: "Pickup", fare: 7, w: 0.48, h: 0.86, body: 8, cab: 13, bed: true, color: "#E89A2E", roof: "#8A5A16" },
-    van: { name: "Delivery van", fare: 9, w: 0.48, h: 0.82, body: 14, cab: 15, color: "#E63225", roof: "#F5F0E8" },
-    box: { name: "Box truck", fare: 14, w: 0.52, h: 0.7, body: 16, cab: 14, trailer: { w: 0.52, h: 0.7, body: 18, color: "#E7E2D8" }, color: "#E63225", roof: "#1E1E24" },
-    semi: { name: "Class 8 semi", fare: 28, w: 0.5, h: 0.55, body: 12, cab: 16, trailer: { w: 0.52, h: 1.15, body: 20, color: "#F4F1EA" }, color: "#3E4650", roof: "#1E1E24" },
-    bus: { name: "Electric school bus", fare: 16, w: 0.5, h: 1.2, body: 15, cab: 16, windows: 5, color: "#F5C518", roof: "#1E1E24" },
+    hatch: { name: "Compact EV hatch", kWh: 20, wt: [35, 25, 15], w: 0.42, h: 0.55, body: 8, cab: 10, color: "#7DCAA0", roof: "#E7FFF4" },
+    sedan: { name: "Sedan", kWh: 40, wt: [50, 35, 25], w: 0.46, h: 0.78, body: 8, cab: 11, color: "#F5F0E8", roof: "#C5CED6" },
+    suv: { name: "SUV", kWh: 60, wt: [15, 20, 20], w: 0.52, h: 0.74, body: 13, cab: 16, color: "#2A2E33", roof: "#00D4F5" },
+    pickup: { name: "Pickup", kWh: 80, wt: [0, 10, 10], w: 0.5, h: 0.9, body: 9, cab: 13, bed: true, color: "#E89A2E", roof: "#8A5A16" },
+    van: { name: "Delivery van", kWh: 70, wt: [0, 8, 10], w: 0.5, h: 0.86, body: 15, cab: 16, color: "#E63225", roof: "#F5F0E8" },
+    box: { name: "Box truck", kWh: 150, wt: [0, 2, 8], w: 0.52, h: 0.62, body: 14, cab: 15, trailer: { w: 0.55, h: 0.7, body: 18, color: "#E7E2D8" }, color: "#E63225", roof: "#1E1E24" },
+    semi: { name: "Class 8 semi", kWh: 600, wt: [0, 0, 10], w: 0.52, h: 0.5, body: 12, cab: 16, trailer: { w: 0.56, h: 1.25, body: 20, color: "#F4F1EA" }, color: "#3E4650", roof: "#1E1E24" },
+    bus: { name: "Electric school bus", kWh: 300, wt: [0, 0, 2], w: 0.5, h: 1.25, body: 16, cab: 17, windows: 5, color: "#F5C518", roof: "#1E1E24" },
   };
 
   const ICONS = {
-    hq: `<svg viewBox="0 0 32 32" width="20" height="20"><path fill="#E63225" d="M6 26V14L16 6l10 8v12h-7v-7h-6v7z"/></svg>`,
-    dc: `<svg viewBox="0 0 32 32" width="20" height="20"><path fill="#F5F0E8" d="M4 20h24v3H4z"/><path fill="#00D4F5" d="M8 14h3v6H8zm6 0h3v6h-3zm7 0h3v6h-3z"/></svg>`,
-    l2: `<svg viewBox="0 0 32 32" width="20" height="20"><path fill="#E89A2E" d="M5 18h22v2H5z"/><path fill="#F5F0E8" d="M9 12h2v6H9zm12 0h2v6h-2z"/></svg>`,
-    lounge: `<svg viewBox="0 0 32 32" width="20" height="20"><path fill="#E63225" d="M4 16h24l-3 8H7z"/><path fill="#F5F0E8" d="M8 16V11h4v5zm12 0V11h4v5z"/></svg>`,
-    crew: `<svg viewBox="0 0 32 32" width="20" height="20"><path fill="#F5F0E8" d="M6 16h12v6H6z"/><path fill="#E63225" d="M18 14h8v8h-8z"/></svg>`,
-    mcs: `<svg viewBox="0 0 32 32" width="20" height="20"><path fill="#8d9298" d="M5 12h22v12H5z"/><path fill="#00D4F5" d="M8 16h16v3H8z"/></svg>`,
-    bess: `<svg viewBox="0 0 32 32" width="20" height="20"><path fill="#00D4F5" d="M6 10h6v12H6zm7 2h6v10h-6zm7-2h6v12h-6z"/></svg>`,
-    market: `<svg viewBox="0 0 32 32" width="20" height="20"><path fill="#E89A2E" d="M6 14h20l-2 10H8z"/><path fill="#E63225" d="M4 12h24l-2 3H6z"/></svg>`,
-    substation: `<svg viewBox="0 0 32 32" width="20" height="20"><path fill="#E89A2E" d="M15 4h2v20h-2z"/><path fill="#F5F0E8" d="M8 22h16v4H8zM10 14h4v4h-4zm8 0h4v4h-4z"/></svg>`,
-    depot: `<svg viewBox="0 0 32 32" width="20" height="20"><path fill="#8d9298" d="M4 14h16v12H4z"/><path fill="#C46A3A" d="M22 18h6v8h-6z"/></svg>`,
-    scout: `<svg viewBox="0 0 32 32" width="20" height="20"><path fill="#F5F0E8" d="M7 16h16v7H7z"/><circle cx="22" cy="11" r="4" fill="none" stroke="#00D4F5" stroke-width="2"/></svg>`,
+    hq: `<svg viewBox="0 0 32 32" width="22" height="22"><path fill="#E63225" d="M4 26V12l12-8 12 8v14H4z"/><path fill="#F5F0E8" d="M15 4h2v10h-2z"/></svg>`,
+    dc: `<svg viewBox="0 0 32 32" width="22" height="22"><path fill="#E63225" d="M4 12h24v4H4z"/><path fill="#F5F0E8" d="M8 16h3v10H8zm13 0h3v10h-3z"/></svg>`,
+    warehouse: `<svg viewBox="0 0 32 32" width="22" height="22"><path fill="#C4A574" d="M4 12h24v14H4z"/><path fill="#6B5340" d="M12 18h8v8h-8z"/></svg>`,
+    market: `<svg viewBox="0 0 32 32" width="22" height="22"><path fill="#E63225" d="M3 12h4l2 8H5zm6 0h4l2 8h-4zm6 0h4l2 8h-4zm6 0h4l2 8h-4z"/><path fill="#F5F0E8" d="M6 20h20v6H6z"/></svg>`,
+    bess: `<svg viewBox="0 0 32 32" width="22" height="22"><path fill="#F5F0E8" d="M3 12h26v10H3z"/><path fill="#00D4F5" d="M7 15h4v4H7zm7 0h4v4h-4zm7 0h4v4h-4z"/></svg>`,
+    lounge: `<svg viewBox="0 0 32 32" width="22" height="22"><path fill="#E89A2E" d="M2 14h28v4H2z"/><path fill="#F5F0E8" d="M6 18h20v8H6z"/><path fill="#E89A2E" d="M8 20h6v4H8zm10 0h6v4h-6z"/></svg>`,
+    mcs: `<svg viewBox="0 0 32 32" width="22" height="22"><path fill="#1A1C20" d="M4 8h4v16H4zm20 0h4v16h-4zM4 8h24v4H4z"/><path fill="#F5C518" d="M15 12h2v10h-2z"/></svg>`,
+    sales: `<svg viewBox="0 0 32 32" width="22" height="22"><path fill="#C8C2B8" d="M4 12h24v14H4z"/><path fill="#E63225" d="M4 18h24v3H4z"/><path fill="#F5F0E8" d="M18 20h8v6h-8z"/></svg>`,
+    substation: `<svg viewBox="0 0 32 32" width="22" height="22"><path fill="#8d9298" d="M16 4l8 20H8z"/><path fill="#F5F0E8" d="M8 16h5v3H8zm11 0h5v3h-5z"/></svg>`,
+    permit: `<svg viewBox="0 0 32 32" width="22" height="22"><path fill="#F3EDE2" d="M8 10h16v16H8z"/><path fill="#1E1E24" d="M15 6h2v8h-2z"/><path fill="#E63225" d="M17 6h8v4h-8z"/></svg>`,
+    crew: `<svg viewBox="0 0 32 32" width="22" height="22"><path fill="#E63225" d="M4 16h16v8H4z"/><path fill="#F5C518" d="M18 12h6v4h-6z"/></svg>`,
+    scout: `<svg viewBox="0 0 32 32" width="22" height="22"><path fill="#F5F0E8" d="M6 16h16v8H6z"/><circle cx="22" cy="12" r="4" fill="none" stroke="#00D4F5" stroke-width="2"/></svg>`,
   };
 
   const $ = (id) => document.getElementById(id);
@@ -84,9 +97,18 @@
   const buildings = [];
   const vehicles = [];
   const nodes = [];
+  const convoys = [];
+  const dust = [];
+  const hawks = [];
   const camera = { x: 0, y: 0, zoom: 0.9 };
   const keys = {};
   const pointer = { x: 0, y: 0, inside: false };
+  const purse = {
+    2: { capital: 90000, copper: 50, steel: 30, permits: 16 },
+    3: { capital: 90000, copper: 30, steel: 50, permits: 20 },
+    4: { capital: 60000, copper: 24, steel: 24, permits: 12 },
+  };
+  const plan = { 2: 0, 3: 0, 4: 0 };
   let seq = 1;
   let landCanvas = null;
   let fogCanvas = null;
@@ -96,24 +118,39 @@
   let drag = null;
   let pan = null;
   let visionAcc = 0;
-  let aiAcc = 2;
+  let aiAcc = 1.5;
   let fpsAcc = 0;
   let fpsFrames = 0;
+  let links = [];
 
   const state = {
     age: 0,
     aging: null,
-    res: { capital: 1600, grid: 24, permits: 8, copper: 120, steel: 60 },
+    res: { capital: 90000, permits: 24, copper: 60, steel: 36 },
+    tariff: 1,
+    rivalTariff: 1,
     paid: 0,
+    monthPaid: 0,
     floatCount: 0,
     liveFloats: 0,
     time: 0,
+    hour: 10.25,
+    speed: 1,
     build: null,
+    cardPage: 0,
     frozen: false,
     holdBanner: false,
     marquee: null,
     fps: 60,
     shot: null,
+    notes: [],
+    pings: [],
+    nextUndercut: 28,
+    nextMonth: 60,
+    wasBrown: false,
+    idleIx: -1,
+    portrait: false,
+    visKey: "",
   };
   const selection = new Set();
 
@@ -124,9 +161,7 @@
   }
   function idx(c, r) { return r * COLS + c; }
   function inside(c, r) { return c >= 0 && r >= 0 && c < COLS && r < ROWS; }
-  function iso(col, row) {
-    return { x: (col - row) * (TW / 2), y: (col + row) * (TH / 2) };
-  }
+  function iso(col, row) { return { x: (col - row) * (TW / 2), y: (col + row) * (TH / 2) }; }
   function viewW() { return canvas.clientWidth || window.innerWidth; }
   function viewH() { return canvas.clientHeight || window.innerHeight; }
   function worldToScreen(col, row) {
@@ -139,22 +174,44 @@
     return { col: y / TH + x / TW, row: y / TH - x / TW };
   }
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function money(n) { return "$" + Math.floor(n).toLocaleString("en-US"); }
+  function isNight() { return state.hour >= 19 || state.hour < 6; }
 
-  function canAfford(cost) {
+  function canAfford(cost, bank) {
+    const bag = bank || state.res;
     if (!cost) return true;
-    return Object.entries(cost).every(([k, v]) => state.res[k] >= v);
+    return Object.entries(cost).every(([k, v]) => (bag[k] || 0) >= v);
   }
-  function payCost(cost) {
+  function payCost(cost, bank) {
+    const bag = bank || state.res;
     if (!cost) return;
-    for (const [k, v] of Object.entries(cost)) state.res[k] -= v;
+    for (const [k, v] of Object.entries(cost)) bag[k] -= v;
   }
-  function popUsed() {
-    return units.filter((u) => u.faction === "zaps").length;
+  function crewsOf(faction) { return units.filter((u) => u.faction === faction && u.kind === "crew" && !u.garrison); }
+  function idleCrews() { return crewsOf(FACTION.zaps).filter((u) => !u.job); }
+  function popUsed() { return units.filter((u) => u.faction === FACTION.zaps && (u.kind === "crew" || u.kind === "scout" || u.kind === "van")).length; }
+  function popCap() { return 10 + state.age * 4; }
+
+  function gridCap() {
+    let cap = 2;
+    for (const b of buildings) {
+      if (!b.done || b.faction !== FACTION.zaps) continue;
+      if (b.kind === "bess") cap += 2;
+      if (b.kind === "substation") cap += 5;
+    }
+    return cap;
   }
-  function popCap() {
-    const hqs = buildings.filter((b) => b.kind === "hq" && b.faction === "zaps" && b.done).length;
-    return 8 + state.age * 4 + Math.max(0, hqs - 1) * 4;
+  function gridUsed() {
+    let used = 0;
+    for (const b of buildings) {
+      if (!b.done || b.faction !== FACTION.zaps) continue;
+      if (b.protested > state.time) continue;
+      if (b.kind === "dc") used += 0.3;
+      if (b.kind === "mcs") used += 1;
+    }
+    return Math.round(used * 10) / 10;
   }
+  function isBrownout() { return gridUsed() > gridCap() + 0.001; }
 
   function projectCities() {
     const raw = [
@@ -175,12 +232,9 @@
       ["elpaso", "El Paso", -106.49, 31.76, 75],
       ["dallas", "Dallas", -96.8, 32.78, 180],
     ].map(([id, name, lon, lat, demand]) => ({
-      id, name, demand,
+      id, name, demand, loyalty: 1, owner: 0, contest: 0, attacker: 0,
       col: ((lon + 122.8) / (122.8 - 95.4)) * (COLS - 18) + 9,
       row: ((41.8 - lat) / (41.8 - 30.4)) * (ROWS - 18) + 9,
-      owner: 0,
-      contest: 0,
-      attacker: 0,
     }));
     for (let n = 0; n < 12; n++) {
       for (let i = 0; i < raw.length; i++) {
@@ -207,16 +261,18 @@
   }
 
   function lineTiles(a, b, fn) {
-    let c = a.col;
-    let r = a.row;
-    const dc = Math.abs(b.col - a.col);
-    const dr = Math.abs(b.row - a.row);
-    const sc = a.col < b.col ? 1 : -1;
-    const sr = a.row < b.row ? 1 : -1;
+    let c = a.col | 0;
+    let r = a.row | 0;
+    const bc = b.col | 0;
+    const br = b.row | 0;
+    const dc = Math.abs(bc - c);
+    const dr = Math.abs(br - r);
+    const sc = c < bc ? 1 : -1;
+    const sr = r < br ? 1 : -1;
     let err = dc - dr;
     for (;;) {
       fn(c, r);
-      if (c === b.col && r === b.row) break;
+      if (c === bc && r === br) break;
       const e2 = 2 * err;
       if (e2 > -dr) { err -= dr; c += sc; }
       if (e2 < dc) { err += dc; r += sr; }
@@ -226,8 +282,8 @@
   function paintRiver() {
     const slc = cities.find((c) => c.id === "slc");
     const stg = cities.find((c) => c.id === "stgeorge");
-    const phx = cities.find((c) => c.id === "phoenix");
-    const pts = [slc, stg, { col: phx.col - 8, row: phx.row + 2 }, { col: phx.col - 6, row: ROWS - 4 }];
+    const ph = cities.find((c) => c.id === "phoenix");
+    const pts = [slc, stg, { col: ph.col - 8, row: ph.row + 2 }, { col: ph.col - 6, row: ROWS - 4 }];
     for (let i = 0; i < pts.length - 1; i++) {
       lineTiles(pts[i], pts[i + 1], (c, r) => {
         for (let dy = -1; dy <= 1; dy++) {
@@ -267,7 +323,7 @@
     }
     paintRiver();
     const byId = Object.fromEntries(cities.map((c) => [c.id, c]));
-    const links = [
+    links = [
       ["sacramento", "reno"], ["reno", "slc"], ["slc", "grandjunction"], ["grandjunction", "denver"],
       ["slc", "stgeorge"], ["stgeorge", "vegas"], ["vegas", "la"], ["la", "sandiego"],
       ["vegas", "flagstaff"], ["flagstaff", "phoenix"], ["phoenix", "tucson"], ["phoenix", "la"],
@@ -285,23 +341,34 @@
 
   function setPlotOwner(city, factionId) {
     city.owner = factionId;
+    const ci = cities.indexOf(city);
     for (let r = city.row - 3; r <= city.row + 3; r++) {
       for (let c = city.col - 3; c <= city.col + 3; c++) {
-        if (inside(c, r) && plotOf[idx(c, r)] === cities.indexOf(city)) owner[idx(c, r)] = factionId;
+        if (inside(c, r) && plotOf[idx(c, r)] === ci) owner[idx(c, r)] = factionId;
       }
     }
     landDirty = true;
     miniDirty = true;
   }
 
-  function cityIndex(city) { return cities.indexOf(city); }
-
-  function spawnNode(kind, col, row, cityIndex) {
-    nodes.push({ id: "n" + (++seq), kind, col, row, city: cityIndex, stock: 80 });
+  function phx() { return cities.find((c) => c.id === "phoenix"); }
+  function cityOf(ent) {
+    const c = ent.col | 0;
+    const r = ent.row | 0;
+    if (!inside(c, r)) return null;
+    const p = plotOf[idx(c, r)];
+    return p >= 0 ? cities[p] : null;
+  }
+  function sameCity(a, b) {
+    const ca = cityOf(a);
+    const cb = cityOf(b);
+    return ca && cb && ca.id === cb.id;
   }
 
+  function spawnNode(kind, col, row) { nodes.push({ id: "n" + (++seq), kind, col, row, stock: 80 }); }
+
   function nearestTile(col, row, pred) {
-    for (let rad = 1; rad < 8; rad++) {
+    for (let rad = 1; rad < 10; rad++) {
       for (let r = row - rad; r <= row + rad; r++) {
         for (let c = col - rad; c <= col + rad; c++) {
           if (!inside(c, r)) continue;
@@ -316,27 +383,30 @@
   function makeBuilding(kind, col, row, faction, progress) {
     const spec = BUILD[kind];
     return {
-      id: "b" + (++seq),
-      kind, col, row, w: spec.w, h: spec.h, faction,
-      progress, done: progress >= 1, time: spec.time, traffic: 1.4,
+      id: "b" + (++seq), kind, col, row, w: spec.w, h: spec.h, faction,
+      progress, done: progress >= 1, time: spec.time, traffic: 0.6, queue: [], protested: 0,
     };
   }
-
   function makeUnit(kind, faction, col, row) {
-    return {
-      id: "u" + (++seq),
-      kind, faction, col, row, job: null, facing: 1,
-    };
+    return { id: "u" + (++seq), kind, faction, col, row, job: null, facing: 1, hp: 1, garrison: null };
   }
-
   function buildingAt(c, r) {
     return buildings.find((b) => c >= b.col && r >= b.row && c < b.col + b.w && r < b.row + b.h);
+  }
+  function countKind(kind, faction) {
+    return buildings.filter((b) => b.kind === kind && b.faction === faction).length;
   }
 
   function fits(kind, col, row, faction) {
     const spec = BUILD[kind];
     if (!spec || spec.train) return false;
-    if (faction === "zaps" && state.age < spec.age) return false;
+    if (faction === FACTION.zaps && state.age < spec.age) return false;
+    if (kind === "substation") {
+      const n = countKind("substation", faction);
+      const max = faction === FACTION.zaps && state.age < 2 ? 1 : 2;
+      if (n >= max) return false;
+    }
+    let plot = -1;
     for (let dy = 0; dy < spec.h; dy++) {
       for (let dx = 0; dx < spec.w; dx++) {
         const c = col + dx;
@@ -346,8 +416,14 @@
         if (b === WATER || b === MOUNTAIN) return false;
         const p = plotOf[idx(c, r)];
         if (p < 0 || cities[p].owner !== faction) return false;
+        if (plot === -1) plot = p;
+        else if (plot !== p) return false;
         if (buildingAt(c, r)) return false;
       }
+    }
+    if (kind === "hq") {
+      if (buildings.some((b) => b.kind === "hq" && cityOf(b) && cityOf(b).id === cities[plot].id)) return false;
+      if (faction === FACTION.zaps && state.age < 1 && cities[plot].id !== "phoenix") return false;
     }
     return true;
   }
@@ -363,10 +439,7 @@
   }
 
   function seedOwners(play) {
-    const own = (id, faction) => {
-      const city = cities.find((c) => c.id === id);
-      setPlotOwner(city, FACTION[faction]);
-    };
+    const own = (id, faction) => setPlotOwner(cities.find((c) => c.id === id), FACTION[faction]);
     own("phoenix", "zaps");
     if (!play) {
       own("tucson", "zaps");
@@ -384,33 +457,37 @@
     seedOwners(play);
     for (const city of cities) {
       if (!city.owner) continue;
-      const hqC = city.col - 2;
-      const hqR = city.row - 2;
-      buildings.push(makeBuilding("hq", hqC, hqR, city.owner, 1));
-      if (city.owner !== FACTION.zaps && !play) {
-        const slot = findSlot(city, "dc");
-        if (slot) buildings.push(makeBuilding("dc", slot.c, slot.r, city.owner, 1));
-      }
-      const stand = { c: city.col + 0.3, r: city.row + 1.6 };
-      const crew = makeUnit("crew", city.owner, stand.c, stand.r);
-      units.push(crew);
-      if (city.owner !== FACTION.zaps) {
-        units.push(makeUnit("crew", city.owner, stand.c + 0.8, stand.r + 0.4));
-      }
+      buildings.push(makeBuilding("hq", city.col - 3, city.row - 3, city.owner, 1));
+      units.push(makeUnit("crew", city.owner, city.col + 0.2, city.row + 1.5));
+      if (city.owner !== FACTION.zaps) units.push(makeUnit("crew", city.owner, city.col + 1.1, city.row + 1.9));
     }
-    const phx = cities.find((c) => c.id === "phoenix");
-    units.push(makeUnit("crew", FACTION.zaps, phx.col + 1.1, phx.row + 1.5));
-    units.push(makeUnit("crew", FACTION.zaps, phx.col - 0.4, phx.row + 2.1));
-    units.push(makeUnit("scout", FACTION.zaps, phx.col + 1.8, phx.row + 2.2));
-    for (let i = 0; i < cities.length; i++) {
-      const city = cities[i];
+    const home = phx();
+    if (play) {
+      units.push(makeUnit("crew", FACTION.zaps, home.col + 0.9, home.row + 1.7));
+      units.push(makeUnit("crew", FACTION.zaps, home.col + 1.7, home.row + 1.4));
+    }
+    for (const city of cities) {
       const hall = nearestTile(city.col, city.row + 4, (c, r) => plotOf[idx(c, r)] < 0 && biome[idx(c, r)] !== WATER && biome[idx(c, r)] !== MOUNTAIN);
-      const tie = nearestTile(city.col - 4, city.row, (c, r) => road[idx(c, r)] === 0 && biome[idx(c, r)] !== WATER);
       const yard = nearestTile(city.col + 4, city.row + 1, (c, r) => road[idx(c, r)] === 0 && biome[idx(c, r)] !== WATER && biome[idx(c, r)] !== MOUNTAIN);
-      if (hall) spawnNode("hall", hall.c + 0.5, hall.r + 0.5, i);
-      if (tie) spawnNode("tie", tie.c + 0.5, tie.r + 0.5, i);
-      if (yard) spawnNode("yard", yard.c + 0.5, yard.r + 0.5, i);
+      if (hall) spawnNode("hall", hall.c + 0.5, hall.r + 0.5);
+      if (yard) spawnNode("yard", yard.c + 0.5, yard.r + 0.5);
     }
+    let n = 0;
+    const kinds = ["hatch", "sedan", "suv", "hatch", "sedan", "van"];
+    for (let r = 4; r < ROWS && n < 6; r += 8) {
+      for (let c = 4; c < COLS && n < 6; c += 11) {
+        if (!road[idx(c, r)]) continue;
+        vehicles.push({
+          id: "v" + (++seq), kind: kinds[n], buildingId: null, fare: 0,
+          col: c + 0.5, row: r + 0.5, facing: 1,
+          path: [{ c: c + 4.5, r: r + 0.5 }, { c: c + 0.5, r: r + 0.5 }],
+          i: 0, phase: "cruise", speed: 1.35,
+        });
+        n += 1;
+      }
+    }
+    for (let i = 0; i < 8; i++) dust.push({ col: 18 + i * 12, row: 24 + (i % 5) * 11, a: i });
+    hawks.push({ col: 36, row: 28, a: 0 }, { col: 78, row: 48, a: 2 });
   }
 
   function revealDisk(col, row, radius, level) {
@@ -420,13 +497,9 @@
     const c1 = Math.min(COLS - 1, Math.ceil(col + radius));
     for (let r = r0; r <= r1; r++) {
       for (let c = c0; c <= c1; c++) {
-        const d = Math.hypot(c + 0.5 - col, r + 0.5 - row);
-        if (d > radius) continue;
+        if (Math.hypot(c + 0.5 - col, r + 0.5 - row) > radius) continue;
         const i = idx(c, r);
-        if (level > vis[i]) {
-          vis[i] = level;
-          fogDirty = true;
-        }
+        if (level > vis[i]) { vis[i] = level; fogDirty = true; }
       }
     }
   }
@@ -434,11 +507,13 @@
   function refreshVision() {
     for (let i = 0; i < vis.length; i++) if (vis[i] === 2) vis[i] = 1;
     for (const b of buildings) {
-      if (b.faction === FACTION.zaps) revealDisk(b.col + b.w / 2, b.row + b.h / 2, b.kind === "hq" ? 7.2 : 4.6, 2);
+      if (b.faction === FACTION.zaps) revealDisk(b.col + b.w / 2, b.row + b.h / 2, b.kind === "hq" ? 11 : 6.5, 2);
     }
     for (const u of units) {
-      if (u.faction === FACTION.zaps) revealDisk(u.col, u.row, u.kind === "scout" ? 6.8 : 3.4, 2);
+      if (u.faction === FACTION.zaps && !u.garrison) revealDisk(u.col, u.row, u.kind === "scout" ? 8 : 5.2, 2);
     }
+    const home = phx();
+    if (home && home.owner === FACTION.zaps) revealDisk(home.col, home.row, 22, 1);
     fogDirty = true;
   }
 
@@ -449,7 +524,6 @@
     camera.y = viewH() / 2 - p.y * camera.zoom;
     clampCamera();
   }
-
   function clampCamera() {
     const minX = (0 - ROWS) * (TW / 2);
     const maxX = COLS * (TW / 2);
@@ -467,25 +541,15 @@
     const dx = tc - ent.col;
     const dy = tr - ent.row;
     const dist = Math.hypot(dx, dy);
-    if (dist < 0.08) {
-      ent.col = tc;
-      ent.row = tr;
-      return true;
-    }
+    if (dist < 0.08) { ent.col = tc; ent.row = tr; return true; }
     const step = Math.min(dist, speed * dt);
     ent.col += (dx / dist) * step;
     ent.row += (dy / dist) * step;
     ent.facing = dx - dy >= 0 ? 1 : -1;
     return false;
   }
-
-  function inPlot(ent, city) {
-    return Math.abs(ent.col - city.col) <= 3.4 && Math.abs(ent.row - city.row) <= 3.4;
-  }
-
-  function selectedCrews() {
-    return units.filter((u) => selection.has(u.id) && u.faction === FACTION.zaps && u.kind === "crew");
-  }
+  function inPlot(ent, city) { return Math.abs(ent.col - city.col) <= 3.4 && Math.abs(ent.row - city.row) <= 3.4; }
+  function selectedCrews() { return units.filter((u) => selection.has(u.id) && u.faction === FACTION.zaps && u.kind === "crew" && !u.garrison); }
 
   function placeBuilding(kind, col, row) {
     const spec = BUILD[kind];
@@ -497,10 +561,8 @@
     payCost(spec.cost);
     const b = makeBuilding(kind, col, row, FACTION.zaps, 0);
     buildings.push(b);
-    const standC = col + spec.w + 0.35;
-    const standR = row + spec.h * 0.5;
     crews.forEach((crew, i) => {
-      crew.job = { type: "build", id: b.id, c: standC, r: standR + i * 0.45 };
+      crew.job = { type: "build", id: b.id, c: col + spec.w + 0.35, r: row + spec.h * 0.45 + i * 0.4 };
     });
     state.build = null;
     return true;
@@ -511,21 +573,23 @@
     if (!canAfford(spec.cost) || popUsed() >= popCap()) return false;
     const hq = buildings.find((b) => b.kind === "hq" && b.faction === FACTION.zaps && b.done);
     if (!hq) return false;
+    if ((kind === "scout" || kind === "van") && !buildings.some((b) => b.kind === "sales" && b.faction === FACTION.zaps && b.done)) return false;
     payCost(spec.cost);
-    units.push(makeUnit(kind === "scout" ? "scout" : "crew", FACTION.zaps, hq.col + hq.w + 0.4, hq.row + hq.h * 0.5));
+    hq.queue.push({ kind, left: kind === "crew" ? 20 : 12 });
     return true;
   }
 
   function route(fromC, fromR, toC, toR) {
     const start = { c: fromC | 0, r: fromR | 0 };
     const goal = { c: toC | 0, r: toR | 0 };
+    if (!inside(start.c, start.r) || !inside(goal.c, goal.r)) return [{ c: toC, r: toR }];
     const key = (c, r) => c + r * COLS;
     const q = [start];
     const prev = new Map([[key(start.c, start.r), null]]);
     const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]];
     let guard = 0;
     let found = false;
-    while (q.length && guard++ < 3000) {
+    while (q.length && guard++ < 2500) {
       const n = q.shift();
       if (n.c === goal.c && n.r === goal.r) { found = true; break; }
       for (const [dc, dr] of dirs) {
@@ -535,8 +599,7 @@
         const near = Math.abs(c - goal.c) + Math.abs(r - goal.r) < 4;
         const plot = plotOf[idx(c, r)];
         const ok = road[idx(c, r)] || near || (plot >= 0 && plot === plotOf[idx(goal.c, goal.r)]);
-        if (!ok) continue;
-        if (biome[idx(c, r)] === WATER && !road[idx(c, r)]) continue;
+        if (!ok || (biome[idx(c, r)] === WATER && !road[idx(c, r)])) continue;
         prev.set(key(c, r), n);
         q.push({ c, r });
       }
@@ -553,184 +616,442 @@
   }
 
   function rollVehicle(building) {
-    const city = cities[plotOf[idx(building.col, building.row)]];
-    const demand = city ? city.demand : 80;
-    if (building.kind === "mcs") {
-      const bag = demand > 100 ? ["semi", "semi", "box", "bus"] : ["semi", "box", "bus"];
-      return bag[(Math.random() * bag.length) | 0];
+    const age = clamp(state.age, 0, 2);
+    const bag = [];
+    for (const [kind, spec] of Object.entries(VEHICLES)) {
+      const heavy = kind === "semi" || kind === "bus";
+      if (heavy && building.kind !== "mcs") continue;
+      if (!heavy && kind !== "box" && building.kind === "mcs") continue;
+      const w = spec.wt[age];
+      for (let i = 0; i < w; i++) bag.push(kind);
     }
-    const bag = ["hatch", "sedan", "sedan", "suv", "pickup", "van"];
-    if (demand > 130) bag.push("suv", "van", "pickup");
+    if (!bag.length) return null;
     return bag[(Math.random() * bag.length) | 0];
   }
 
+  function stallUse(v, building) {
+    if (!building || v.buildingId !== building.id) return 0;
+    if (v.phase === "leave" || v.phase === "balk" || v.phase === "cruise") return 0;
+    if (v.phase === "queue") return 0;
+    return v.kind === "box" && building.kind === "dc" ? 2 : 1;
+  }
+  function stallCap(building) { return building.kind === "mcs" ? 1 : 2; }
+
   function spawnTraffic(building) {
+    if (vehicles.length > 42) return;
     const kind = rollVehicle(building);
+    if (!kind) return;
     if (kind === "semi" && building.kind !== "mcs") return;
-    const spec = VEHICLES[kind];
-    const open = vehicles.filter((v) => v.buildingId === building.id && v.phase !== "leave").length;
-    const stalls = building.kind === "mcs" ? 1 : building.kind === "dc" ? 3 : 2;
-    if (open >= stalls) return;
+    if (kind === "bus" && building.kind !== "mcs") return;
+    const occ = kind === "box" && building.kind === "dc" ? 2 : 1;
+    const cap = stallCap(building);
+    let used = 0;
+    let queued = 0;
+    for (const v of vehicles) {
+      if (v.buildingId !== building.id) continue;
+      if (v.phase === "queue") queued += 1;
+      else used += stallUse(v, building);
+    }
+    if (queued >= cap * 3 && used + occ > cap) return;
+    const queueing = used + occ > cap;
+    const stallC = building.col + building.w * 0.45;
+    const stallR = building.row + building.h + 0.2;
     let from = null;
-    for (let rad = 8; rad < 18 && !from; rad++) {
+    for (let rad = 6; rad < 16 && !from; rad++) {
       from = nearestTile(building.col, building.row, (c, r) => road[idx(c, r)] && Math.abs(c - building.col) + Math.abs(r - building.row) > rad - 2);
     }
-    const destC = building.col + building.w * 0.5;
-    const destR = building.row + building.h + 0.4;
+    const destC = queueing ? stallC : stallC;
+    const destR = queueing ? stallR + 1.2 + queued * 0.65 : stallR;
     const path = from ? route(from.c, from.r, destC, destR) : [{ c: destC, r: destR }];
     vehicles.push({
-      id: "v" + (++seq),
-      kind, fare: spec.fare, buildingId: building.id,
+      id: "v" + (++seq), kind, buildingId: building.id, fare: 0,
       col: path[0].c, row: path[0].r, facing: 1,
-      path, i: 0, phase: "drive", wait: 2.4, speed: kind === "semi" ? 1.55 : 2.15,
+      path, i: 0, phase: "drive", queueing, wait: 0, cable: 0, charge: 0,
+      speed: kind === "semi" || kind === "bus" ? 1.4 : 2.05,
     });
   }
 
-  function spawnFloat(col, row, text) {
+  function spawnFloat(col, row, text, hold) {
     const p = worldToScreen(col, row);
     const el = document.createElement("div");
-    el.className = "float";
+    el.className = hold ? "float hold" : "float";
     el.textContent = text;
     el.style.left = `${p.x}px`;
     el.style.top = `${p.y}px`;
     document.body.appendChild(el);
+    if (hold) return el;
+    if (state.liveFloats >= 8) { el.remove(); return null; }
     state.liveFloats += 1;
-    setTimeout(() => {
-      el.remove();
-      state.liveFloats = Math.max(0, state.liveFloats - 1);
-    }, 1000);
+    const cap = $("res-capital");
+    if (cap) {
+      const r = cap.getBoundingClientRect();
+      const dx = r.left + r.width / 2 - p.x;
+      const dy = r.top + r.height / 2 - p.y;
+      el.animate(
+        [{ transform: "translate(0px, 0px)", opacity: 1 }, { transform: `translate(${dx}px, ${dy}px)`, opacity: 0.1 }],
+        { duration: 900, easing: "ease-in", fill: "forwards" }
+      );
+    }
+    setTimeout(() => { el.remove(); state.liveFloats = Math.max(0, state.liveFloats - 1); }, 950);
+    return el;
   }
 
-  function collectFare(v) {
-    state.res.capital += v.fare;
-    state.paid += v.fare;
+  function fareOf(v, building) {
+    const spec = VEHICLES[v.kind];
+    if (!spec) return 0;
+    const lounge = buildings.some((b) => b.kind === "lounge" && b.done && b.faction === building.faction && sameCity(b, building));
+    let n = spec.kWh * 8 * state.tariff;
+    if (lounge) n *= 1.5;
+    if (isBrownout()) n *= 0.5;
+    return Math.max(1, Math.round(n));
+  }
+
+  function collectFare(v, building) {
+    const n = fareOf(v, building);
+    v.fare = n;
+    if (building.faction !== FACTION.zaps) return;
+    state.res.capital += n;
+    state.paid += n;
+    state.monthPaid += n;
     state.floatCount += 1;
-    if (state.liveFloats < 8) spawnFloat(v.col, v.row, `+$${v.fare}`);
+    if (!state.shot) spawnFloat(v.col, v.row, `+$${n}`);
   }
 
-  function step(dt) {
-    if (state.frozen) return;
+  function notify(text, kind, col, row) {
+    state.notes.unshift({ text, kind, col, row });
+    if (state.notes.length > 5) state.notes.length = 5;
+    if (kind === "attack") {
+      state.pings.push({ col: col ?? 0, row: row ?? 0, life: 1, hold: !!state.shot });
+      if (!state.shot) horn();
+    }
+    renderNotes();
+  }
+  function horn() {
+    try {
+      const ac = state.audio || (state.audio = new AudioContext());
+      const o = ac.createOscillator();
+      const g = ac.createGain();
+      o.type = "sawtooth";
+      o.frequency.value = 196;
+      g.gain.value = 0.03;
+      o.connect(g);
+      g.connect(ac.destination);
+      o.start();
+      g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + 0.28);
+      o.stop(ac.currentTime + 0.3);
+    } catch (err) { /* horn is optional when audio is blocked */ }
+  }
+
+  function ageGate() {
+    if (state.aging) return "Researching";
+    if (state.age >= 2) return "Final age";
+    const next = AGES[state.age + 1];
+    if (state.age === 0) {
+      const dc = buildings.filter((b) => b.kind === "dc" && b.faction === FACTION.zaps && b.done).length;
+      const wh = buildings.some((b) => b.kind === "warehouse" && b.faction === FACTION.zaps && b.done);
+      if (dc < 4) return `Need ${dc}/4 DC`;
+      if (!wh) return "Need Warehouse";
+      if (!canAfford(next.cost)) return "Need resources";
+      return "";
+    }
+    const sub = buildings.some((b) => b.kind === "substation" && b.faction === FACTION.zaps && b.done);
+    const lounge = buildings.some((b) => b.kind === "lounge" && b.faction === FACTION.zaps && b.done);
+    const owned = cities.filter((c) => c.owner === FACTION.zaps).length;
+    if (!sub) return "Need Substation";
+    if (!lounge) return "Need Lounge";
+    if (owned < 2) return "Need 2 cities";
+    if (!canAfford(next.cost)) return "Need resources";
+    return "";
+  }
+
+  function finishAge() {
+    state.age = state.aging.to;
+    state.aging = null;
+    landDirty = true;
+    showBanner(AGES[state.age].name);
+    if (state.age === 1) spawnLate("rednode", "reno");
+    if (state.age === 2) spawnLate("ampfield", "albuquerque");
+  }
+  function spawnLate(name, prefer) {
+    const id = FACTION[name];
+    const city = cities.find((c) => c.id === prefer && !c.owner) || cities.find((c) => !c.owner);
+    if (!city) return;
+    setPlotOwner(city, id);
+    buildings.push(makeBuilding("hq", city.col - 3, city.row - 3, id, 1));
+    units.push(makeUnit("crew", id, city.col + 0.4, city.row + 1.6));
+    notify(`${FACTION_NAME[id]} claims ${city.name}`, "attack", city.col, city.row);
+  }
+
+  function simulate(dt) {
     state.time += dt;
+    state.hour = (state.hour + dt / 8) % 24;
+    for (const f of [2, 3, 4]) purse[f].capital += dt * 700;
+    const zapsCities = cities.filter((c) => c.owner === FACTION.zaps).length;
+    const permitOffices = buildings.filter((b) => b.kind === "permit" && b.faction === FACTION.zaps && b.done).length;
+    const warehouses = buildings.filter((b) => b.kind === "warehouse" && b.faction === FACTION.zaps && b.done).length;
+    state.res.permits += dt * (0.05 * zapsCities + 0.12 * permitOffices);
+    state.res.copper += dt * (0.08 + 0.22 * warehouses);
+    state.res.steel += dt * (0.045 + 0.14 * warehouses);
+
     if (state.aging) {
       state.aging.left -= dt;
-      if (state.aging.left <= 0) {
-        state.age = state.aging.to;
-        state.aging = null;
-        showBanner(AGES[state.age].name);
+      if (state.aging.left <= 0) finishAge();
+    }
+    for (const b of buildings) {
+      if (b.queue && b.queue.length) {
+        b.queue[0].left -= dt;
+        if (b.queue[0].left <= 0) {
+          const job = b.queue.shift();
+          units.push(makeUnit(job.kind, b.faction, b.col + b.w + 0.4, b.row + b.h * 0.5));
+        }
       }
     }
     for (const u of units) {
-      if (!u.job) continue;
-      if (u.job.type === "move" || u.job.type === "build" || u.job.type === "contest" || u.job.type === "gather") {
-        const arrived = moveToward(u, u.job.c, u.job.r, dt, u.kind === "scout" ? 2.4 : 1.85);
-        if (arrived && u.job.type === "move") u.job = null;
-        if (arrived && u.job?.type === "gather") {
-          u.job.phase = u.job.phase === "out" ? "work" : u.job.phase;
-          if (u.job.phase === "work") {
-            u.job.work -= dt;
-            if (u.job.work <= 0) {
-              const hq = buildings.find((b) => b.kind === "hq" && b.faction === u.faction && b.done);
-              if (!hq) { u.job = null; continue; }
-              u.job.phase = "back";
-              u.job.c = hq.col + hq.w * 0.5;
-              u.job.r = hq.row + hq.h + 0.3;
-            }
-          }
+      if (u.garrison || !u.job) continue;
+      const arrived = moveToward(u, u.job.c, u.job.r, dt, u.kind === "scout" ? 2.4 : 1.85);
+      if (arrived && u.job.type === "move") u.job = null;
+      if (u.job?.type === "gather" && arrived && u.job.phase === "out") u.job.phase = "work";
+      if (u.job?.type === "gather" && u.job.phase === "work") {
+        u.job.work -= dt;
+        if (u.job.work <= 0) {
+          const drop = buildings.find((b) => (b.kind === "warehouse" || b.kind === "hq") && b.faction === u.faction && b.done);
+          if (!drop) { u.job = null; continue; }
+          u.job.phase = "back";
+          u.job.c = drop.col + drop.w * 0.5;
+          u.job.r = drop.row + drop.h + 0.35;
         }
-        if (u.job?.type === "gather" && u.job.phase === "back" && arrived) {
-          const pack = u.job.pack;
-          state.res[pack.k] += pack.n;
-          if (state.liveFloats < 8) spawnFloat(u.col, u.row, `+${pack.n} ${pack.k}`);
-          u.job = null;
-        }
+      }
+      if (u.job?.type === "gather" && u.job.phase === "back" && arrived) {
+        state.res[u.job.pack.k] += u.job.pack.n;
+        if (state.liveFloats < 8) spawnFloat(u.col, u.row, `+${u.job.pack.n} ${u.job.pack.k}`);
+        u.job = null;
+      }
+      if (u.job?.type === "raid" && arrived) {
+        state.res.capital += 4000;
+        state.paid += 4000;
+        notify("Van stole share", "info", u.col, u.row);
+        u.job = null;
       }
     }
     for (const b of buildings) {
+      if (b.protested && state.time > b.protested) b.protested = 0;
       if (b.done) {
-        if ((b.kind === "dc" || b.kind === "mcs" || b.kind === "l2") && b.faction === FACTION.zaps) {
+        if ((b.kind === "dc" || b.kind === "mcs") && !(b.protested > state.time)) {
           b.traffic -= dt;
           if (b.traffic <= 0) {
             spawnTraffic(b);
-            b.traffic = b.kind === "mcs" ? 6.5 : 4.2;
+            const city = cityOf(b);
+            const elastic = clamp(1.35 - state.tariff, 0.45, 1.5);
+            const loyalty = city ? city.loyalty : 1;
+            const demand = ((city && city.demand) || 80) / 100;
+            b.traffic = clamp(4 / (demand * elastic * loyalty), 2, 6);
           }
-        }
-        if (b.kind === "substation" && b.faction === FACTION.zaps) state.res.grid += dt * 0.35;
-        if (b.kind === "depot" && b.faction === FACTION.zaps) {
-          state.res.copper += dt * 0.45;
-          state.res.steel += dt * 0.28;
         }
         continue;
       }
       let workers = 0;
       for (const u of units) {
         if (u.job?.type === "build" && u.job.id === b.id) {
-          const d = Math.hypot(u.col - (b.col + b.w / 2), u.row - (b.row + b.h / 2));
-          if (d < 2.6) workers += 1;
+          if (Math.hypot(u.col - (b.col + b.w / 2), u.row - (b.row + b.h / 2)) < 2.8) workers += 1;
         }
       }
       if (workers) b.progress = Math.min(1, b.progress + (dt * workers) / b.time);
       else if (b.faction !== FACTION.zaps) b.progress = Math.min(1, b.progress + dt / (b.time * 1.6));
       if (b.progress >= 1) {
         b.done = true;
-        b.traffic = 1.1;
+        b.traffic = 0.4;
+        landDirty = true;
         for (const u of units) if (u.job?.id === b.id) u.job = null;
       }
     }
-    for (const v of vehicles) {
-      if (v.phase === "drive" || v.phase === "leave") {
-        const wp = v.path[v.i];
-        if (!wp) { v.done = true; continue; }
-        if (moveToward(v, wp.c, wp.r, dt, v.speed)) {
-          v.i += 1;
-          if (v.i >= v.path.length) {
-            if (v.phase === "drive") v.phase = "charge";
-            else v.done = true;
-          }
-        }
-      } else if (v.phase === "charge") {
-        v.wait -= dt;
-        if (v.wait <= 0) {
-          collectFare(v);
-          v.phase = "leave";
-          v.path = v.path.slice().reverse();
-          v.i = 0;
-        }
-      }
-    }
+    for (const v of vehicles) stepVehicle(v, dt);
     for (let i = vehicles.length - 1; i >= 0; i--) if (vehicles[i].done) vehicles.splice(i, 1);
 
+    for (const c of convoys) {
+      c.eta = Math.max(0, c.eta - dt);
+      const wp = c.path[c.i];
+      if (!wp) continue;
+      if (moveToward(c, wp.c, wp.r, dt, c.speed)) {
+        c.i += 1;
+        if (c.i >= c.path.length) arriveConvoy(c);
+      }
+    }
     for (const city of cities) {
-      const attackers = units.filter((u) => u.faction !== city.owner && inPlot(u, city));
-      const defenders = units.filter((u) => u.faction === city.owner && inPlot(u, city));
+      const attackers = units.filter((u) => !u.garrison && u.faction !== city.owner && inPlot(u, city));
+      const defenders = units.filter((u) => !u.garrison && u.faction === city.owner && inPlot(u, city));
       if (attackers.length && !defenders.length) {
         city.contest = Math.min(1, city.contest + dt / 12);
         city.attacker = attackers[0].faction;
         if (city.contest >= 1) {
           setPlotOwner(city, attackers[0].faction);
           city.contest = 0;
+          notify(`${FACTION_NAME[attackers[0].faction]} took ${city.name}`, "attack", city.col, city.row);
         }
-      } else if (city.contest > 0) {
-        city.contest = Math.max(0, city.contest - dt / 9);
-      }
+      } else if (city.contest > 0) city.contest = Math.max(0, city.contest - dt / 9);
     }
+    if (state.time > state.nextUndercut) {
+      state.nextUndercut = state.time + 48;
+      state.rivalTariff = 0.9;
+      const city = cities.find((c) => c.owner === FACTION.zaps) || phx();
+      notify(`Undercut! VOLTSPAN undercut ${city.name}!`, "attack", city.col, city.row);
+    }
+    if (state.time > state.nextMonth) {
+      state.nextMonth = state.time + 60;
+      notify(`Month close ${money(state.monthPaid)}`, "info", phx().col, phx().row);
+      state.monthPaid = 0;
+    }
+    const brown = isBrownout();
+    if (brown && !state.wasBrown) notify("Brownout — stalls dark, income halved", "attack", phx().col, phx().row);
+    state.wasBrown = brown;
 
     aiAcc += dt;
-    if (aiAcc > 4) {
-      aiAcc = 0;
-      thinkAI();
-    }
+    if (aiAcc > 4) { aiAcc = 0; thinkAI(); }
     visionAcc += dt;
-    if (visionAcc > 0.4) {
+    if (visionAcc > 0.45) {
       visionAcc = 0;
-      const key = units
-        .filter((u) => u.faction === FACTION.zaps)
-        .map((u) => `${u.col | 0},${u.row | 0}`)
-        .join("|");
-      if (key !== state.visKey) {
-        state.visKey = key;
-        refreshVision();
-      }
+      const key = units.filter((u) => u.faction === FACTION.zaps && !u.garrison).map((u) => `${u.col | 0},${u.row | 0}`).join("|");
+      if (key !== state.visKey) { state.visKey = key; refreshVision(); }
     }
+    for (const d of dust) d.a += dt;
+    for (const h of hawks) h.a += dt * 0.35;
+  }
+
+  function stepVehicle(v, dt) {
+    if (v.phase === "drive" || v.phase === "leave" || v.phase === "balk" || v.phase === "cruise") {
+      const wp = v.path[v.i];
+      if (!wp) {
+        if (v.phase === "cruise") v.i = 0;
+        else v.done = true;
+        return;
+      }
+      if (moveToward(v, wp.c, wp.r, dt, v.speed || 1.6)) {
+        v.i += 1;
+        if (v.i >= v.path.length) {
+          if (v.phase === "drive") v.phase = v.queueing ? "queue" : "cable";
+          else if (v.phase === "cruise") v.i = 0;
+          else v.done = true;
+        }
+      }
+      return;
+    }
+    const building = buildings.find((b) => b.id === v.buildingId);
+    if (!building) { v.done = true; return; }
+    if (v.phase === "queue") {
+      v.wait += dt;
+      let used = 0;
+      for (const o of vehicles) used += stallUse(o, building);
+      const occ = v.kind === "box" && building.kind === "dc" ? 2 : 1;
+      if (used + occ <= stallCap(building)) {
+        v.queueing = false;
+        v.phase = "drive";
+        v.path = [{ c: building.col + building.w * 0.45, r: building.row + building.h + 0.2 }];
+        v.i = 0;
+      } else if (v.wait > 20) {
+        v.phase = "balk";
+        v.path = [{ c: v.col + 4, r: v.row + 3 }];
+        v.i = 0;
+        const city = cityOf(building);
+        if (city) city.loyalty = Math.max(0.35, city.loyalty - 0.08);
+        spawnFloat(v.col, v.row, "honk");
+      }
+      return;
+    }
+    if (v.phase === "cable") {
+      v.cable += dt * (isBrownout() ? 0.5 : 1);
+      if (v.cable > 0.7) v.phase = "charge";
+      return;
+    }
+    if (v.phase === "charge") {
+      v.charge += dt * (isBrownout() ? 0.5 : 1);
+      const need = Math.max(2.4, (VEHICLES[v.kind]?.kWh || 40) / 18);
+      if (v.charge >= need) v.phase = "pay";
+      return;
+    }
+    if (v.phase === "pay") {
+      if (!v.didPay) { collectFare(v, building); v.didPay = true; }
+      v.phase = "leave";
+      v.path = [{ c: v.col - 2.5, r: v.row + 4 }];
+      v.i = 0;
+    }
+  }
+
+  function arriveConvoy(c) {
+    c.done = true;
+    const city = cities.find((x) => x.id === c.dest);
+    if (!city || city.owner) return;
+    const raced = units.some((u) => u.faction === FACTION.zaps && !u.garrison && inPlot(u, city));
+    if (raced) {
+      notify(`You beat ${FACTION_NAME[c.faction]} to ${city.name}`, "info", city.col, city.row);
+      return;
+    }
+    setPlotOwner(city, c.faction);
+    buildings.push(makeBuilding("hq", city.col - 3, city.row - 3, c.faction, 0.2));
+    notify(`${FACTION_NAME[c.faction]} claims ${city.name}`, "attack", city.col, city.row);
+  }
+
+  function launchConvoy(faction, fromCity) {
+    if (convoys.some((c) => c.faction === faction && !c.done)) return false;
+    let dest = null;
+    let best = 1e9;
+    for (const city of cities) {
+      if (city.owner) continue;
+      const d = Math.hypot(city.col - fromCity.col, city.row - fromCity.row);
+      if (d < best) { best = d; dest = city; }
+    }
+    if (!dest) return false;
+    const path = route(fromCity.col, fromCity.row, dest.col, dest.row);
+    const eta = Math.max(18, path.length * 1.6);
+    convoys.push({
+      id: "c" + (++seq), faction, col: path[0].c, row: path[0].r,
+      path, i: 0, dest: dest.id, eta, max: eta, speed: 1.25, done: false,
+    });
+    return true;
+  }
+
+  function garrisoned(city) {
+    if (!city) return false;
+    return units.some((u) => u.garrison && buildings.some((b) => b.id === u.garrison && cityOf(b) && cityOf(b).id === city.id));
+  }
+  function hasLawyer(city) {
+    return buildings.some((b) => b.kind === "permit" && b.done && b.faction === FACTION.zaps && city && cityOf(b) && cityOf(b).id === city.id);
+  }
+  function protest(target) {
+    const city = cityOf(target);
+    if (hasLawyer(city) || garrisoned(city)) {
+      notify(`Lawyer held ${city ? city.name : "the site"}`, "info", target.col, target.row);
+      return true;
+    }
+    target.protested = state.time + 30;
+    notify(`ARCWAY protest at ${city ? city.name : "a site"}!`, "attack", target.col, target.row);
+    return true;
+  }
+
+  function thinkAI() {
+    for (const f of [FACTION.voltspan, FACTION.gridhawk, FACTION.arcway]) {
+      const stepName = (ORDERS[f] || [])[plan[f]];
+      if (!stepName) continue;
+      const home = cities.find((c) => c.owner === f);
+      if (!home) continue;
+      if (stepName === "expand") {
+        if (launchConvoy(f, home)) plan[f] += 1;
+        continue;
+      }
+      if (stepName === "protest") {
+        const target = buildings.find((b) => b.faction === FACTION.zaps && b.done && (b.kind === "dc" || b.kind === "mcs"));
+        if (target && protest(target)) plan[f] += 1;
+        continue;
+      }
+      const spec = BUILD[stepName];
+      if (!spec || !canAfford(spec.cost, purse[f])) continue;
+      const slot = findSlot(home, stepName);
+      if (!slot) continue;
+      payCost(spec.cost, purse[f]);
+      buildings.push(makeBuilding(stepName, slot.c, slot.r, f, 0.08));
+      plan[f] += 1;
+    }
+  }
+
+  function doPan(dt) {
     const panSpeed = 780 * dt;
     if (keys["arrowleft"]) camera.x += panSpeed;
     if (keys["arrowright"]) camera.x -= panSpeed;
@@ -746,55 +1067,34 @@
     clampCamera();
   }
 
-  function thinkAI() {
-    for (const faction of [FACTION.voltspan, FACTION.gridhawk, FACTION.arcway]) {
-      const crew = units.find((u) => u.faction === faction && !u.job);
-      if (crew) {
-        let best = null;
-        let bestD = 1e9;
-        for (const city of cities) {
-          if (city.owner === faction) continue;
-          const d = Math.hypot(city.col - crew.col, city.row - crew.row);
-          if (d < bestD) { bestD = d; best = city; }
-        }
-        if (best) crew.job = { type: "contest", c: best.col + 0.2, r: best.row + 0.2, city: best.id };
-      }
-      if (Math.random() < 0.45) {
-        const city = cities.find((c) => c.owner === faction);
-        const kind = Math.random() < 0.5 ? "dc" : "l2";
-        const slot = city && findSlot(city, kind);
-        if (slot) buildings.push(makeBuilding(kind, slot.c, slot.r, faction, 0.05));
-      }
-    }
-  }
-
   function tileColor(c, r) {
     const b = biome[idx(c, r)];
     const n = hash(c, r);
-    const pal = {
-      [DESERT]: [[196, 164, 116], [214, 184, 136], [168, 136, 92]],
+    const plot = plotOf[idx(c, r)];
+    let pal = {
+      [DESERT]: [[196, 164, 116], [214, 184, 136], [176, 142, 96]],
       [SCRUB]: [[112, 124, 78], [86, 102, 64], [138, 142, 88]],
       [VALLEY]: [[78, 118, 70], [102, 142, 78], [64, 96, 58]],
       [MOUNTAIN]: [[122, 116, 110], [96, 92, 88], [148, 144, 138]],
       [WATER]: [[42, 104, 146], [30, 82, 122], [58, 128, 168]],
-      [GRAVEL]: [[142, 126, 106], [158, 140, 118], [124, 110, 92]],
-      [ROAD]: [[54, 52, 58], [42, 40, 46], [70, 66, 62]],
+      [GRAVEL]: [[168, 142, 108], [186, 158, 122], [150, 126, 96]],
+      [ROAD]: [[58, 56, 62], [48, 46, 52], [72, 68, 64]],
     }[b];
+    if (plot >= 0 && cities[plot].owner === FACTION.zaps && (b === GRAVEL || b === ROAD)) {
+      if (state.age >= 2) pal = [[168, 164, 156], [184, 180, 172], [150, 146, 140]];
+      else if (state.age >= 1) pal = [[74, 76, 82], [62, 64, 70], [90, 92, 96]];
+    }
     const base = pal[(n * pal.length) | 0];
-    const lift = ((n - 0.5) * 18) | 0;
+    const lift = ((n - 0.5) * 16) | 0;
     return `rgb(${base[0] + lift},${base[1] + lift},${base[2] + lift})`;
   }
-
   function poly(g, pts) {
     g.beginPath();
     g.moveTo(pts[0].x, pts[0].y);
     for (let i = 1; i < pts.length; i++) g.lineTo(pts[i].x, pts[i].y);
     g.closePath();
   }
-
-  function tilePoly(c, r) {
-    return [iso(c, r), iso(c + 1, r), iso(c + 1, r + 1), iso(c, r + 1)];
-  }
+  function tilePoly(c, r) { return [iso(c, r), iso(c + 1, r), iso(c + 1, r + 1), iso(c, r + 1)]; }
 
   function paintMaps() {
     if (!landCanvas) {
@@ -822,28 +1122,23 @@
           const o = owner[idx(c, r)];
           if (o) {
             g.fillStyle = FACTION_COLOR[o];
-            g.globalAlpha = 0.14;
+            g.globalAlpha = 0.26;
             g.fill();
             g.globalAlpha = 1;
           }
           if (biome[idx(c, r)] === MOUNTAIN) {
             const peak = 12 + hash(c, r) * 22;
             const top = iso(c + 0.5, r + 0.5);
-            g.fillStyle = "rgba(0,0,0,0.18)";
+            g.fillStyle = "rgba(48,32,18,0.28)";
             g.beginPath();
             g.ellipse(top.x, top.y + 4, 14, 6, 0, 0, Math.PI * 2);
             g.fill();
-            poly(g, [
-              { x: top.x, y: top.y - peak },
-              { x: top.x + 12, y: top.y - 2 },
-              { x: top.x - 10, y: top.y - 1 },
-            ]);
+            poly(g, [{ x: top.x, y: top.y - peak }, { x: top.x + 12, y: top.y - 2 }, { x: top.x - 10, y: top.y - 1 }]);
             g.fillStyle = peak > 26 ? "#E7E2DA" : "#8C8680";
             g.fill();
           }
           if (biome[idx(c, r)] === WATER) {
-            g.strokeStyle = "rgba(210,236,255,0.35)";
-            g.lineWidth = 1;
+            g.strokeStyle = "rgba(210,236,255,0.45)";
             const a = iso(c + 0.2, r + 0.45);
             const b = iso(c + 0.8, r + 0.6);
             g.beginPath();
@@ -853,8 +1148,8 @@
           }
           if (road[idx(c, r)]) {
             g.strokeStyle = AMBER;
-            g.globalAlpha = 0.75;
-            g.lineWidth = 1.4;
+            g.globalAlpha = 0.8;
+            g.lineWidth = 1.6;
             g.setLineDash([5, 6]);
             const a = iso(c + 0.5, r + 0.15);
             const b = iso(c + 0.5, r + 0.85);
@@ -866,12 +1161,23 @@
             g.globalAlpha = 1;
           }
           const n = hash(c, r);
-          const p = iso(c + 0.55, r + 0.55);
-          if (biome[idx(c, r)] === DESERT && n > 0.94) {
-            g.fillStyle = "#2E6A38";
-            g.fillRect(p.x, p.y - 11, 2, 11);
-            g.fillRect(p.x - 5, p.y - 8, 5, 2);
+          const p = iso(c + 0.55, r + 0.45);
+          if (biome[idx(c, r)] === DESERT && n > 0.92) {
+            g.fillStyle = "rgba(48,32,18,0.35)";
+            g.beginPath();
+            g.ellipse(p.x, p.y + 2, 8, 3, 0, 0, Math.PI * 2);
+            g.fill();
+            g.fillStyle = "#2F6B3A";
+            g.fillRect(p.x - 1, p.y - 16, 3, 16);
+            g.fillRect(p.x - 7, p.y - 12, 6, 2);
+            g.fillRect(p.x - 7, p.y - 12, 2, 5);
+            g.fillRect(p.x + 2, p.y - 10, 6, 2);
+            g.fillRect(p.x + 6, p.y - 14, 2, 5);
           } else if ((biome[idx(c, r)] === SCRUB || biome[idx(c, r)] === VALLEY) && n > 0.9) {
+            g.fillStyle = "rgba(48,32,18,0.25)";
+            g.beginPath();
+            g.ellipse(p.x, p.y + 2, 6, 2.5, 0, 0, Math.PI * 2);
+            g.fill();
             g.fillStyle = n > 0.95 ? "#3E6A32" : "#6E8A3E";
             g.beginPath();
             g.ellipse(p.x, p.y, 5, 3, 0, 0, Math.PI * 2);
@@ -879,7 +1185,7 @@
           }
           if (o) {
             g.strokeStyle = FACTION_COLOR[o];
-            g.lineWidth = 2.6;
+            g.lineWidth = 2.4;
             g.beginPath();
             const edges = [[[0, 0], [1, 0], 0, -1], [[1, 0], [1, 1], 1, 0], [[1, 1], [0, 1], 0, 1], [[0, 1], [0, 0], -1, 0]];
             for (const [a, bpt, dc, dr] of edges) {
@@ -908,7 +1214,7 @@
           const v = vis[idx(c, r)];
           if (v === 2) continue;
           poly(g, tilePoly(c, r));
-          g.fillStyle = v === 0 ? "rgba(14,16,20,0.94)" : "rgba(12,14,18,0.5)";
+          g.fillStyle = v === 0 ? "rgba(62,44,28,0.9)" : "rgba(62,44,28,0.28)";
           g.fill();
         }
       }
@@ -918,18 +1224,19 @@
       mini.width = COLS;
       mini.height = ROWS;
       const img = mctx.createImageData(COLS, ROWS);
+      const dot = { 1: [230, 50, 37], 2: [232, 154, 46], 3: [0, 212, 245], 4: [122, 76, 219], 5: [196, 92, 255], 6: [245, 240, 232] };
       for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
           const o = owner[idx(c, r)];
-          let col = [90, 110, 70];
           const b = biome[idx(c, r)];
+          let col = [120, 132, 86];
           if (b === DESERT) col = [176, 146, 96];
           else if (b === MOUNTAIN) col = [120, 116, 112];
           else if (b === WATER) col = [40, 100, 150];
-          else if (b === ROAD) col = [60, 58, 64];
-          else if (b === GRAVEL) col = [140, 124, 104];
+          else if (b === ROAD) col = [70, 64, 58];
+          else if (b === GRAVEL) col = [150, 126, 96];
           else if (b === VALLEY) col = [70, 120, 68];
-          if (o) col = col.map((v, i) => (v * 0.45 + [230, 50, 37, 232, 154, 46, 0, 212, 245, 198, 245, 78][o * 3 - 3 + i] * 0.55));
+          if (o && dot[o]) col = col.map((v, i) => v * 0.4 + dot[o][i] * 0.6);
           const p = (r * COLS + c) * 4;
           img.data[p] = col[0];
           img.data[p + 1] = col[1];
@@ -938,30 +1245,9 @@
         }
       }
       mctx.putImageData(img, 0, 0);
-      miniDirty = false;
       mini._img = mctx.getImageData(0, 0, COLS, ROWS);
+      miniDirty = false;
     }
-  }
-
-  function drawBox(g, col, row, w, h, height, wall, roof) {
-    const top = iso(col, row);
-    const right = iso(col + w, row);
-    const bot = iso(col + w, row + h);
-    const left = iso(col, row + h);
-    const up = (p) => ({ x: p.x, y: p.y - height });
-    g.fillStyle = "rgba(0,0,0,0.28)";
-    poly(g, [top, right, bot, left]);
-    g.fill();
-    g.fillStyle = wall;
-    poly(g, [left, bot, up(bot), up(left)]);
-    g.fill();
-    g.fillStyle = shade(wall, -18);
-    poly(g, [bot, right, up(right), up(bot)]);
-    g.fill();
-    g.fillStyle = roof;
-    poly(g, [up(top), up(right), up(bot), up(left)]);
-    g.fill();
-    return up(bot);
   }
 
   function shade(hex, amt) {
@@ -969,106 +1255,232 @@
     const ch = (s) => clamp(((n >> s) & 255) + amt, 0, 255);
     return `#${[ch(16), ch(8), ch(0)].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
   }
+  function drawBox(g, col, row, w, h, height, wall, roof) {
+    const top = iso(col, row);
+    const right = iso(col + w, row);
+    const bot = iso(col + w, row + h);
+    const left = iso(col, row + h);
+    const up = (p) => ({ x: p.x, y: p.y - height });
+    g.fillStyle = "rgba(48,32,18,0.32)";
+    poly(g, [top, right, bot, left]);
+    g.fill();
+    g.fillStyle = wall;
+    poly(g, [left, bot, up(bot), up(left)]);
+    g.fill();
+    g.fillStyle = shade(wall, -22);
+    poly(g, [bot, right, up(right), up(bot)]);
+    g.fill();
+    g.fillStyle = roof;
+    poly(g, [up(top), up(right), up(bot), up(left)]);
+    g.fill();
+  }
+  function drawFlag(g, x, y, color) {
+    g.fillStyle = color || RED;
+    g.beginPath();
+    g.moveTo(x, y);
+    g.lineTo(x + 12, y + 4);
+    g.lineTo(x, y + 8);
+    g.fill();
+  }
+  function drawScaffold(g, b) {
+    g.strokeStyle = "#C4A574";
+    g.lineWidth = 1.6;
+    const h = 12 + 30 * b.progress;
+    const corners = [iso(b.col, b.row), iso(b.col + b.w, b.row), iso(b.col + b.w, b.row + b.h), iso(b.col, b.row + b.h)];
+    g.beginPath();
+    for (const p of corners) { g.moveTo(p.x, p.y); g.lineTo(p.x, p.y - h); }
+    g.moveTo(corners[0].x, corners[0].y - h * 0.55);
+    g.lineTo(corners[2].x, corners[2].y - h * 0.2);
+    g.moveTo(corners[1].x, corners[1].y - h * 0.35);
+    g.lineTo(corners[3].x, corners[3].y - h * 0.7);
+    g.stroke();
+  }
+  function drawProgress(g, b) {
+    const p = iso(b.col + b.w / 2, b.row);
+    g.fillStyle = "rgba(30,30,36,0.82)";
+    g.fillRect(p.x - 18, p.y - 48, 36, 6);
+    g.fillStyle = CYAN;
+    g.fillRect(p.x - 18, p.y - 48, 36 * b.progress, 6);
+  }
+
+  function drawHQ(g, b) {
+    const h = state.age >= 2 ? 68 : state.age >= 1 ? 50 : 34;
+    drawBox(g, b.col, b.row, b.w, b.h, h, RED, "#F7F4EE");
+    if (state.age >= 1) drawBox(g, b.col + 0.55, b.row + 0.55, 1.7, 1.7, h + 8, "#C4281C", "#F7F4EE");
+    if (state.age >= 2) drawBox(g, b.col + 0.95, b.row + 0.95, 0.9, 0.9, h + 26, "#A81E16", "#F7F4EE");
+    const p = iso(b.col + b.w * 0.5, b.row + 0.8);
+    g.strokeStyle = CREAM;
+    g.lineWidth = 1.4;
+    g.beginPath();
+    g.moveTo(p.x, p.y - h - 6);
+    g.lineTo(p.x, p.y - h - 36);
+    g.stroke();
+    drawFlag(g, p.x, p.y - h - 36, FACTION_COLOR[b.faction]);
+  }
+  function drawDC(g, b) {
+    const dark = isBrownout() || b.protested > state.time;
+    const canopy = dark ? "#3A3A42" : RED;
+    drawBox(g, b.col + 0.18, b.row + 0.62, 0.16, 0.16, 16, "#F7F4EE", "#FFFFFF");
+    drawBox(g, b.col + 0.66, b.row + 0.62, 0.16, 0.16, 16, "#F7F4EE", "#FFFFFF");
+    drawBox(g, b.col, b.row + 0.12, 1, 0.38, 22, canopy, shade(canopy, 18));
+    if (state.age >= 1 && !dark) {
+      const p = iso(b.col + 0.5, b.row + 0.15);
+      g.fillStyle = AMBER;
+      g.fillRect(p.x - 8, p.y - 30, 16, 3);
+    }
+  }
+  function drawMCS(g, b) {
+    const dark = isBrownout() || b.protested > state.time;
+    drawBox(g, b.col + 0.08, b.row + 0.25, 0.32, Math.max(0.4, b.h - 0.5), 46, "#1A1C20", "#2A2E33");
+    drawBox(g, b.col + b.w - 0.4, b.row + 0.25, 0.32, Math.max(0.4, b.h - 0.5), 46, "#1A1C20", "#2A2E33");
+    drawBox(g, b.col, b.row, b.w, 0.42, 50, "#14161A", "#2A2E33");
+    const a = iso(b.col + b.w / 2, b.row + 0.35);
+    g.strokeStyle = dark ? "#555860" : "#F5C518";
+    g.lineWidth = 2;
+    g.beginPath();
+    g.moveTo(a.x, a.y - 50);
+    g.lineTo(a.x + 2, a.y - 18);
+    g.stroke();
+  }
+  function drawBESS(g, b) {
+    drawBox(g, b.col, b.row, b.w, b.h, 16, "#F4F1EA", "#FFFFFF");
+    for (let i = 0; i < 3; i++) {
+      const p = iso(b.col + 0.35 + i * 0.55, b.row + b.h * 0.65);
+      g.fillStyle = CYAN;
+      g.fillRect(p.x, p.y - 14, 6, 3);
+    }
+  }
+  function drawSub(g, b) {
+    drawBox(g, b.col, b.row, b.w, b.h, 3, "#9AA0A6", "#C5C8CC");
+    const p = iso(b.col + 1, b.row + 1);
+    g.strokeStyle = "#8d9298";
+    g.lineWidth = 1.5;
+    g.beginPath();
+    g.moveTo(p.x - 12, p.y);
+    g.lineTo(p.x, p.y - 48);
+    g.lineTo(p.x + 12, p.y);
+    g.moveTo(p.x - 7, p.y - 18);
+    g.lineTo(p.x + 7, p.y - 18);
+    g.moveTo(p.x - 4, p.y - 32);
+    g.lineTo(p.x + 4, p.y - 32);
+    g.stroke();
+    g.fillStyle = CREAM;
+    g.fillRect(p.x - 9, p.y - 30, 4, 3);
+    g.fillRect(p.x + 5, p.y - 30, 4, 3);
+  }
+  function drawWarehouse(g, b) {
+    drawBox(g, b.col, b.row, b.w, b.h, 22, "#C4A574", "#A68455");
+    const p = iso(b.col + 0.35, b.row + b.h - 0.15);
+    g.fillStyle = "#6B5340";
+    g.fillRect(p.x, p.y - 18, 16, 16);
+    g.strokeStyle = "#3A2A1C";
+    g.lineWidth = 1;
+    for (let i = 0; i < 4; i++) {
+      g.beginPath();
+      g.moveTo(p.x, p.y - 16 + i * 4);
+      g.lineTo(p.x + 16, p.y - 16 + i * 4);
+      g.stroke();
+    }
+  }
+  function drawLounge(g, b) {
+    drawBox(g, b.col, b.row, b.w, b.h, 18, "#E7C48A", CREAM);
+    drawBox(g, b.col - 0.08, b.row - 0.05, b.w + 0.16, 0.32, 24, AMBER, "#F0C27A");
+    const p = iso(b.col + 0.35, b.row + b.h * 0.55);
+    g.fillStyle = "rgba(232,154,46,0.9)";
+    g.fillRect(p.x, p.y - 16, 18, 10);
+  }
+  function drawMarket(g, b) {
+    drawBox(g, b.col, b.row + 0.25, b.w, Math.max(0.4, b.h - 0.2), 12, CREAM, "#E7D7BC");
+    for (let i = 0; i < 5; i++) {
+      drawBox(g, b.col + i * (b.w / 5), b.row, b.w / 5, 0.36, 16, i % 2 ? RED : CREAM, i % 2 ? "#C4281C" : "#FFFFFF");
+    }
+  }
+  function drawPermit(g, b) {
+    drawBox(g, b.col, b.row, b.w, b.h, 24, "#F3EDE2", "#E7DCC8");
+    drawBox(g, b.col + 0.08, b.row + b.h - 0.28, 0.16, 0.16, 18, "#F7F4EE", "#FFFFFF");
+    drawBox(g, b.col + b.w - 0.28, b.row + b.h - 0.28, 0.16, 0.16, 18, "#F7F4EE", "#FFFFFF");
+    const p = iso(b.col + b.w * 0.5, b.row + 0.2);
+    g.strokeStyle = CHAR;
+    g.lineWidth = 1.3;
+    g.beginPath();
+    g.moveTo(p.x, p.y - 24);
+    g.lineTo(p.x, p.y - 42);
+    g.stroke();
+    drawFlag(g, p.x, p.y - 42, FACTION_COLOR[b.faction]);
+  }
+  function drawSales(g, b) {
+    drawBox(g, b.col, b.row, b.w, b.h, 20, "#C8C2B8", "#E7E2D8");
+    const a = iso(b.col, b.row + 0.2);
+    const d = iso(b.col + b.w, b.row + b.h - 0.2);
+    g.strokeStyle = RED;
+    g.lineWidth = 3;
+    g.beginPath();
+    g.moveTo(a.x, a.y - 18);
+    g.lineTo(d.x, d.y - 18);
+    g.stroke();
+    drawBox(g, b.col + b.w * 0.35, b.row + b.h - 0.2, 0.7, 0.5, 12, CREAM, RED);
+  }
 
   function drawBuilding(g, b) {
-    const age = state.age;
-    const progress = b.done ? 1 : b.progress;
-    const heightScale = 0.35 + 0.65 * progress;
-    const tint = FACTION_COLOR[b.faction] || RED;
-    let wall = "#C8B89A";
-    let roof = "#E7D7BC";
-    let hgt = 26;
-    if (age === 1) { wall = "#9AA3AD"; roof = "#D5DCE3"; }
-    if (age >= 2) { wall = "#3C444C"; roof = "#22282E"; }
-    if (b.kind === "hq") hgt = 48;
-    else if (b.kind === "mcs") hgt = 34;
-    else if (b.kind === "dc" || b.kind === "l2") hgt = 16;
-    else if (b.kind === "bess") hgt = 22;
-    else if (b.kind === "lounge") hgt = 20;
-    else if (b.kind === "substation") hgt = 18;
-    else if (b.kind === "depot") hgt = 28;
-    else if (b.kind === "market") hgt = 24;
-    hgt *= heightScale;
-    const front = drawBox(g, b.col, b.row, b.w, b.h, hgt, wall, roof);
-    if (b.kind === "dc" || b.kind === "l2") {
-      g.fillStyle = age >= 2 ? CYAN : AMBER;
-      for (let i = 0; i < b.w; i++) {
-        const p = iso(b.col + i + 0.5, b.row + b.h);
-        g.fillRect(p.x - 1, p.y - hgt - 6, 2, 8);
-      }
-    }
-    if (b.kind === "mcs") {
-      g.fillStyle = "#1A1C20";
-      const door = iso(b.col + 0.4, b.row + b.h - 0.1);
-      g.fillRect(door.x, door.y - hgt * 0.7, 14, hgt * 0.55);
-    }
-    if (b.kind === "bess") {
-      g.fillStyle = CYAN;
-      const p = iso(b.col + 0.3, b.row + 0.4);
-      g.fillRect(p.x, p.y - hgt - 2, 6, 4);
-    }
-    if (b.kind === "bus" ) { /* noop */ }
-    if (age >= 2 && b.done) {
-      g.strokeStyle = CYAN;
-      g.globalAlpha = 0.85;
+    if (!b.done) drawScaffold(g, b);
+    g.save();
+    g.globalAlpha = b.done ? 1 : 0.25 + b.progress * 0.7;
+    if (b.kind === "hq") drawHQ(g, b);
+    else if (b.kind === "dc") drawDC(g, b);
+    else if (b.kind === "mcs") drawMCS(g, b);
+    else if (b.kind === "bess") drawBESS(g, b);
+    else if (b.kind === "substation") drawSub(g, b);
+    else if (b.kind === "warehouse") drawWarehouse(g, b);
+    else if (b.kind === "lounge") drawLounge(g, b);
+    else if (b.kind === "market") drawMarket(g, b);
+    else if (b.kind === "permit") drawPermit(g, b);
+    else if (b.kind === "sales") drawSales(g, b);
+    else drawBox(g, b.col, b.row, b.w, b.h, 18, "#C8B89A", CREAM);
+    g.restore();
+    if (!b.done && !state.portrait) drawProgress(g, b);
+    if (selection.has(b.id) && !state.portrait) {
+      const p = iso(b.col + b.w / 2, b.row + b.h / 2);
+      g.strokeStyle = CREAM;
       g.lineWidth = 1.5;
-      const a = iso(b.col, b.row);
-      const d = iso(b.col + b.w, b.row + b.h);
       g.beginPath();
-      g.moveTo(a.x, a.y - hgt);
-      g.lineTo(d.x, d.y - hgt);
+      g.ellipse(p.x, p.y + 6, 18 + b.w * 6, 8 + b.h * 2, 0, 0, Math.PI * 2);
       g.stroke();
-      g.globalAlpha = 1;
     }
-    const flag = iso(b.col + b.w * 0.5, b.row + 0.2);
-    g.fillStyle = "#E7E1D6";
-    g.fillRect(flag.x, flag.y - hgt - 16, 1.6, 16);
-    g.fillStyle = tint;
-    g.beginPath();
-    g.moveTo(flag.x + 1.6, flag.y - hgt - 16);
-    g.lineTo(flag.x + 12, flag.y - hgt - 12);
-    g.lineTo(flag.x + 1.6, flag.y - hgt - 8);
-    g.fill();
-    if (!b.done) {
-      const base = iso(b.col, b.row + b.h);
-      const top = iso(b.col + b.w, b.row);
-      g.strokeStyle = "rgba(245,240,232,0.7)";
-      g.lineWidth = 1.2;
-      g.beginPath();
-      g.moveTo(base.x, base.y);
-      g.lineTo(base.x, base.y - 36 * progress - 8);
-      g.moveTo(top.x, top.y);
-      g.lineTo(top.x, top.y - 36 * progress - 8);
-      g.moveTo(base.x, base.y - 10);
-      g.lineTo(top.x, top.y - 28);
-      g.stroke();
-      const bar = iso(b.col + b.w / 2, b.row);
-      g.fillStyle = "rgba(0,0,0,0.55)";
-      g.fillRect(bar.x - 16, bar.y - hgt - 22, 32, 5);
-      g.fillStyle = CYAN;
-      g.fillRect(bar.x - 16, bar.y - hgt - 22, 32 * progress, 5);
-    }
-    return front;
   }
 
   function drawUnit(g, u) {
-    const spec = u.kind === "scout"
-      ? { w: 0.46, h: 0.7, body: 12, cab: 14, color: CREAM, roof: CYAN }
-      : { w: 0.48, h: 0.78, body: 10, cab: 13, color: CREAM, roof: FACTION_COLOR[u.faction] };
-    const ox = u.col - spec.w / 2;
-    const oy = u.row - spec.h / 2;
-    drawBox(g, ox, oy, spec.w, spec.h * 0.55, spec.body, spec.color, shade(spec.color, 20));
-    const cabC = u.facing > 0 ? ox + spec.w * 0.35 : ox;
-    drawBox(g, cabC, oy, spec.w * 0.62, spec.h * 0.4, spec.cab, shade(spec.color, -10), spec.roof);
-    if (u.kind === "scout") {
+    if (u.garrison) return;
+    const crew = u.kind === "crew";
+    const color = crew ? RED : CREAM;
+    const roof = crew ? "#F5C518" : CYAN;
+    const w = crew ? 0.52 : 0.48;
+    const h = crew ? 0.82 : 0.7;
+    drawBox(g, u.col - w / 2, u.row - h / 2, w, h * 0.55, crew ? 10 : 12, color, shade(color, 16));
+    drawBox(g, u.col - w * 0.2, u.row - h / 2, w * 0.62, h * 0.38, crew ? 14 : 15, shade(color, -12), roof);
+    if (crew) {
       const p = iso(u.col, u.row);
-      g.strokeStyle = CYAN;
-      g.lineWidth = 1.2;
+      g.fillStyle = "#F5C518";
       g.beginPath();
-      g.arc(p.x, p.y - 20, 6, Math.PI, 0);
-      g.stroke();
+      g.arc(p.x + 2, p.y - 20, 3.5, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = CREAM;
+      g.beginPath();
+      g.arc(p.x + 6, p.y - 16, 2.2, 0, Math.PI * 2);
+      g.fill();
     }
-    if (selection.has(u.id)) {
+    if (u.job?.type === "build" && !state.portrait) {
+      const p = iso(u.col, u.row);
+      const swing = Math.sin(state.time * 9) * 8;
+      g.strokeStyle = "#8A5A16";
+      g.lineWidth = 2;
+      g.beginPath();
+      g.moveTo(p.x + 6, p.y - 12);
+      g.lineTo(p.x + 14, p.y - 24 - swing);
+      g.stroke();
+      g.fillStyle = "#8d9298";
+      g.fillRect(p.x + 11, p.y - 28 - swing, 7, 4);
+    }
+    if (selection.has(u.id) && !state.portrait) {
       const p = iso(u.col, u.row);
       g.strokeStyle = CREAM;
       g.lineWidth = 1.5;
@@ -1080,60 +1492,202 @@
 
   function drawVehicle(g, v) {
     const spec = VEHICLES[v.kind];
+    if (!spec) return;
     const ox = v.col - spec.w / 2;
     const oy = v.row - (spec.trailer ? spec.h + spec.trailer.h : spec.h) / 2;
-    if (spec.trailer) {
-      drawBox(g, ox, oy + spec.h * 0.15, spec.trailer.w, spec.trailer.h, spec.trailer.body, spec.trailer.color, shade(spec.trailer.color, -12));
-    }
+    if (spec.trailer) drawBox(g, ox, oy + spec.h * 0.2, spec.trailer.w, spec.trailer.h, spec.trailer.body, spec.trailer.color, shade(spec.trailer.color, -12));
     drawBox(g, ox, oy, spec.w, spec.h, spec.body, spec.color, shade(spec.color, 16));
-    drawBox(g, ox + spec.w * 0.1, oy, spec.w * 0.8, spec.h * 0.42, spec.cab, shade(spec.color, -12), spec.roof);
-    if (spec.bed) {
-      drawBox(g, ox, oy + spec.h * 0.45, spec.w, spec.h * 0.5, spec.body * 0.45, shade(spec.color, -30), shade(spec.color, -40));
-    }
+    drawBox(g, ox + spec.w * 0.08, oy, spec.w * 0.72, spec.h * 0.4, spec.cab, shade(spec.color, -14), spec.roof);
+    if (spec.bed) drawBox(g, ox, oy + spec.h * 0.48, spec.w, spec.h * 0.45, spec.body * 0.4, shade(spec.color, -28), shade(spec.color, -36));
     if (spec.windows) {
-      g.fillStyle = "#1E1E24";
+      g.fillStyle = CHAR;
       for (let i = 0; i < spec.windows; i++) {
-        const p = iso(ox + spec.w * 0.7, oy + spec.h * (0.25 + i * 0.12));
+        const p = iso(ox + spec.w * 0.72, oy + spec.h * (0.2 + i * 0.12));
         g.fillRect(p.x, p.y - spec.body - 2, 3, 3);
       }
+    }
+    const building = buildings.find((b) => b.id === v.buildingId);
+    if (building && (v.phase === "cable" || v.phase === "charge" || v.phase === "pay")) {
+      const stall = iso(building.col + building.w * 0.5, building.row + 0.3);
+      const car = iso(v.col, v.row);
+      g.strokeStyle = "#F5C518";
+      g.lineWidth = 2;
+      g.beginPath();
+      g.moveTo(stall.x, stall.y - 20);
+      g.quadraticCurveTo((stall.x + car.x) / 2, Math.min(stall.y, car.y) - 16, car.x, car.y - 8);
+      g.stroke();
+      if (v.phase === "charge") {
+        const pulse = 0.45 + 0.55 * Math.abs(Math.sin(state.time * 10));
+        g.fillStyle = `rgba(0,212,245,${pulse})`;
+        g.beginPath();
+        g.arc(car.x, car.y - 8, 3, 0, Math.PI * 2);
+        g.fill();
+        const need = Math.max(2.4, spec.kWh / 18);
+        g.fillStyle = "rgba(30,30,36,0.8)";
+        g.fillRect(car.x - 14, car.y - 30, 28, 4);
+        g.fillStyle = CYAN;
+        g.fillRect(car.x - 14, car.y - 30, 28 * clamp(v.charge / need, 0, 1), 4);
+      }
+    }
+    if ((v.phase === "pay" || v.holdPay) && !state.portrait) {
+      const p = iso(v.col, v.row);
+      g.fillStyle = "#7CFF6B";
+      g.font = "700 16px Share Tech Mono, monospace";
+      g.textAlign = "center";
+      g.fillText(`+$${v.fare || fareOf(v, building || { faction: FACTION.zaps, col: v.col, row: v.row })}`, p.x, p.y - 34);
     }
     if (v.label) {
       const p = iso(v.col, v.row - 0.2);
       g.font = "700 13px Barlow Condensed, sans-serif";
       g.textAlign = "center";
-      const text = v.label;
-      const w = g.measureText(text).width + 10;
+      const w = g.measureText(v.label).width + 10;
       g.fillStyle = "rgba(30,30,36,0.88)";
-      g.fillRect(p.x - w / 2, p.y - 36, w, 16);
+      g.fillRect(p.x - w / 2, p.y - 40, w, 16);
       g.fillStyle = CREAM;
-      g.fillText(text, p.x, p.y - 24);
+      g.fillText(v.label, p.x, p.y - 28);
     }
   }
 
+  function drawConvoy(g, c) {
+    drawBox(g, c.col - 0.85, c.row - 0.32, 0.7, 0.62, 16, CYAN, "#E7FBFF");
+    drawBox(g, c.col - 0.2, c.row - 0.28, 0.95, 0.55, 18, "#D7F7FF", CYAN);
+    const p = iso(c.col, c.row);
+    drawFlag(g, p.x + 8, p.y - 28, FACTION_COLOR[c.faction] || AMBER);
+    if (state.portrait) return;
+    const frac = c.max ? clamp(c.eta / c.max, 0, 1) : 0.5;
+    g.fillStyle = "rgba(30,30,36,0.88)";
+    g.fillRect(p.x - 30, p.y - 46, 60, 7);
+    g.fillStyle = CYAN;
+    g.fillRect(p.x - 30, p.y - 46, 60 * frac, 7);
+    g.fillStyle = CREAM;
+    g.font = "700 12px Barlow Condensed, sans-serif";
+    g.textAlign = "center";
+    g.fillText(`${FACTION_NAME[c.faction] || "VOLTSPAN"} ETA`, p.x, p.y - 52);
+  }
+
   function drawNode(g, n) {
-    const color = n.kind === "hall" ? "#E7DCC8" : n.kind === "tie" ? AMBER : "#C46A3A";
-    drawBox(g, n.col - 0.35, n.row - 0.35, 0.7, 0.7, n.kind === "yard" ? 8 : 14, color, shade(color, 24));
-    if (n.kind === "tie") {
-      const p = iso(n.col, n.row);
-      g.strokeStyle = AMBER;
-      g.beginPath();
-      g.moveTo(p.x, p.y - 14);
-      g.lineTo(p.x, p.y - 28);
-      g.stroke();
+    const color = n.kind === "hall" ? "#E7DCC8" : "#C46A3A";
+    drawBox(g, n.col - 0.35, n.row - 0.35, 0.7, 0.7, n.kind === "yard" ? 8 : 14, color, shade(color, 20));
+  }
+
+  function fenceBox(city) {
+    const ci = cities.indexOf(city);
+    const mine = buildings.filter((b) => plotOf[idx(clamp(b.col | 0, 0, COLS - 1), clamp(b.row | 0, 0, ROWS - 1))] === ci);
+    if (!mine.length) return null;
+    let c0 = 999, r0 = 999, c1 = -1, r1 = -1;
+    for (const b of mine) {
+      c0 = Math.min(c0, b.col);
+      r0 = Math.min(r0, b.row);
+      c1 = Math.max(c1, b.col + b.w);
+      r1 = Math.max(r1, b.row + b.h);
+    }
+    return { c0: c0 - 0.35, r0: r0 - 0.35, c1: c1 + 0.35, r1: r1 + 0.35 };
+  }
+  function drawFence(g, city) {
+    const box = fenceBox(city);
+    if (!box) return;
+    const corners = [iso(box.c0, box.r0), iso(box.c1, box.r0), iso(box.c1, box.r1), iso(box.c0, box.r1)];
+    g.strokeStyle = state.age >= 1 ? "#C8C2B8" : "rgba(214,206,196,0.95)";
+    g.lineWidth = 1.3;
+    g.beginPath();
+    corners.forEach((p, i) => (i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)));
+    g.closePath();
+    g.stroke();
+    g.strokeStyle = "rgba(214,206,196,0.55)";
+    g.beginPath();
+    corners.forEach((p, i) => (i ? g.lineTo(p.x, p.y - 7) : g.moveTo(p.x, p.y - 7)));
+    g.closePath();
+    g.stroke();
+    for (const p of corners) {
+      g.fillStyle = "#D9D3C8";
+      g.fillRect(p.x - 1.2, p.y - 10, 2.4, 10);
     }
   }
 
   function drawGhost(g) {
-    if (!state.build || !pointer.inside) return;
+    if (!state.build || !pointer.inside || state.portrait) return;
     const spec = BUILD[state.build];
     if (!spec || spec.train) return;
     const w = screenToWorld(pointer.x, pointer.y);
     const col = Math.floor(w.col);
     const row = Math.floor(w.row);
     const ok = fits(state.build, col, row, FACTION.zaps);
-    g.globalAlpha = 0.55;
-    drawBox(g, col, row, spec.w, spec.h, 18, ok ? "#7DDEA0" : "#E63225", ok ? "#D8FFE8" : "#FFB0A8");
+    g.globalAlpha = 0.5;
+    drawBox(g, col, row, spec.w, spec.h, 16, ok ? "#7DDEA0" : RED, ok ? "#D8FFE8" : "#FFB0A8");
     g.globalAlpha = 1;
+  }
+
+  function drawGlows(g) {
+    if (!isNight() || isBrownout()) return;
+    for (const b of buildings) {
+      if (!b.done || b.protested > state.time) continue;
+      if (b.kind !== "dc" && b.kind !== "mcs" && b.kind !== "bess" && b.kind !== "lounge") continue;
+      if (!tileSeen(b.col, b.row)) continue;
+      const p = iso(b.col + b.w / 2, b.row + b.h / 2);
+      const col = b.kind === "bess" || b.kind === "mcs" ? "0,212,245" : "232,154,46";
+      const y = p.y - 18;
+      const rad = g.createRadialGradient(p.x, y, 2, p.x, y, 48);
+      rad.addColorStop(0, `rgba(${col},0.95)`);
+      rad.addColorStop(1, `rgba(${col},0)`);
+      g.fillStyle = rad;
+      g.beginPath();
+      g.arc(p.x, y, 48, 0, Math.PI * 2);
+      g.fill();
+    }
+  }
+
+  function drawPins() {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    const byId = Object.fromEntries(cities.map((c) => [c.id, c]));
+    ctx.strokeStyle = "rgba(58,40,24,0.85)";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (const [a, b] of links) {
+      const pa = worldToScreen(byId[a].col, byId[a].row);
+      const pb = worldToScreen(byId[b].col, byId[b].row);
+      ctx.moveTo(pa.x, pa.y);
+      ctx.lineTo(pb.x, pb.y);
+    }
+    ctx.stroke();
+    for (const city of cities) {
+      const c = clamp(city.col | 0, 0, COLS - 1);
+      const r = clamp(city.row | 0, 0, ROWS - 1);
+      if (vis[idx(c, r)] < 1 && state.shot !== "region") continue;
+      const p = worldToScreen(city.col, city.row);
+      ctx.fillStyle = city.owner ? FACTION_COLOR[city.owner] : "#8A8175";
+      ctx.globalAlpha = 0.92;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "#F7F1E4";
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y - 16);
+      ctx.lineTo(p.x + 8, p.y - 8);
+      ctx.lineTo(p.x - 8, p.y - 8);
+      ctx.fill();
+      ctx.fillStyle = city.owner ? FACTION_COLOR[city.owner] : "#6A6258";
+      ctx.fillRect(p.x - 6, p.y - 8, 12, 8);
+      ctx.font = "700 12px Barlow Condensed, sans-serif";
+      ctx.textAlign = "center";
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "rgba(245,236,214,0.9)";
+      ctx.strokeText(city.name, p.x, p.y + 18);
+      ctx.fillStyle = "#2A2118";
+      ctx.fillText(city.name, p.x, p.y + 18);
+    }
+  }
+
+  function seen(col, row) {
+    const c = clamp(col | 0, 0, COLS - 1);
+    const r = clamp(row | 0, 0, ROWS - 1);
+    if (state.shot === "vehicles" || state.shot === "region" || state.shot === "convoy" || state.shot === "night") return vis[idx(c, r)] >= 1;
+    return vis[idx(c, r)] === 2;
+  }
+  function tileSeen(col, row) {
+    const c = clamp(col | 0, 0, COLS - 1);
+    const r = clamp(row | 0, 0, ROWS - 1);
+    return vis[idx(c, r)] >= 1;
   }
 
   function draw() {
@@ -1141,22 +1695,61 @@
     const w = canvas.width;
     const h = canvas.height;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = "#17202A";
+    ctx.fillStyle = "#C4A474";
     ctx.fillRect(0, 0, w, h);
     ctx.setTransform(camera.zoom, 0, 0, camera.zoom, camera.x, camera.y);
     ctx.drawImage(landCanvas, ORIGIN_X, ORIGIN_Y);
     ctx.drawImage(fogCanvas, ORIGIN_X, ORIGIN_Y);
+    if (camera.zoom < 0.52) {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.fillStyle = "rgba(214,186,140,0.4)";
+      ctx.fillRect(0, 0, w, h);
+      ctx.setTransform(camera.zoom, 0, 0, camera.zoom, camera.x, camera.y);
+    }
+    if (state.age >= 1) {
+      ctx.fillStyle = state.age >= 2 ? "rgba(198,194,186,0.72)" : "rgba(52,54,60,0.78)";
+      for (const city of cities) {
+        if (city.owner !== FACTION.zaps || !tileSeen(city.col, city.row)) continue;
+        poly(ctx, [
+          iso(city.col - 3, city.row - 3),
+          iso(city.col + 4, city.row - 3),
+          iso(city.col + 4, city.row + 4),
+          iso(city.col - 3, city.row + 4),
+        ]);
+        ctx.fill();
+      }
+    }
+    for (const city of cities) if (tileSeen(city.col, city.row)) drawFence(ctx, city);
     const drawables = [];
     for (const n of nodes) drawables.push({ z: n.col + n.row, draw: () => seen(n.col, n.row) && drawNode(ctx, n) });
     for (const b of buildings) drawables.push({ z: b.col + b.row + b.w, draw: () => tileSeen(b.col, b.row) && drawBuilding(ctx, b) });
     for (const u of units) drawables.push({ z: u.col + u.row, draw: () => seen(u.col, u.row) && drawUnit(ctx, u) });
-    for (const v of vehicles) drawables.push({ z: v.col + v.row, draw: () => (state.shot === "vehicles" || seen(v.col, v.row)) && drawVehicle(ctx, v) });
+    for (const v of vehicles) drawables.push({ z: v.col + v.row, draw: () => (state.shot === "vehicles" || state.shot === "traffic" || seen(v.col, v.row)) && drawVehicle(ctx, v) });
+    for (const c of convoys) if (!c.done) drawables.push({ z: c.col + c.row + 0.2, draw: () => (state.shot === "convoy" || seen(c.col, c.row)) && drawConvoy(ctx, c) });
     drawables.sort((a, b) => a.z - b.z);
     for (const d of drawables) d.draw();
+    for (const d of dust) {
+      const p = iso(d.col + Math.sin(d.a) * 0.8, d.row + (d.a % 6));
+      if (!seen(d.col, d.row) && state.shot !== "night") continue;
+      ctx.fillStyle = "rgba(196,164,116,0.35)";
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, 12, 4, d.a, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    for (const hk of hawks) {
+      const p = iso(hk.col + hk.a * 3, hk.row + Math.sin(hk.a) * 2);
+      ctx.strokeStyle = "rgba(30,30,36,0.7)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(p.x - 7, p.y);
+      ctx.lineTo(p.x, p.y + 3);
+      ctx.lineTo(p.x + 7, p.y);
+      ctx.stroke();
+    }
     for (const city of cities) {
       if (city.contest > 0.02 && seen(city.col, city.row)) {
         const p = iso(city.col, city.row - 1.2);
-        ctx.fillStyle = "rgba(0,0,0,0.65)";
+        ctx.fillStyle = "rgba(30,30,36,0.75)";
         ctx.fillRect(p.x - 22, p.y - 16, 44, 8);
         ctx.fillStyle = FACTION_COLOR[city.attacker] || AMBER;
         ctx.fillRect(p.x - 22, p.y - 16, 44 * city.contest, 8);
@@ -1168,40 +1761,55 @@
     }
     drawGhost(ctx);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
+    if (isNight()) {
+      ctx.fillStyle = "rgba(10,16,40,0.5)";
+      ctx.fillRect(0, 0, w, h);
+    }
+    ctx.setTransform(camera.zoom, 0, 0, camera.zoom, camera.x, camera.y);
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    drawGlows(ctx);
+    ctx.restore();
+    if (camera.zoom < 0.52) drawPins();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     if (state.marquee) {
       const m = state.marquee;
       const x = Math.min(m.x1, m.x2);
       const y = Math.min(m.y1, m.y2);
-      const rw = Math.abs(m.x2 - m.x1);
-      const rh = Math.abs(m.y2 - m.y1);
       ctx.fillStyle = "rgba(0,212,245,0.14)";
       ctx.strokeStyle = CYAN;
       ctx.lineWidth = 1.5;
-      ctx.fillRect(x, y, rw, rh);
-      ctx.strokeRect(x, y, rw, rh);
+      ctx.fillRect(x, y, Math.abs(m.x2 - m.x1), Math.abs(m.y2 - m.y1));
+      ctx.strokeRect(x, y, Math.abs(m.x2 - m.x1), Math.abs(m.y2 - m.y1));
     }
     paintMinimapFrame();
-  }
-
-  function seen(col, row) {
-    if (state.shot === "vehicles" || state.shot === "region") return vis[idx(clamp(col | 0, 0, COLS - 1), clamp(row | 0, 0, ROWS - 1))] >= 1;
-    const c = clamp(col | 0, 0, COLS - 1);
-    const r = clamp(row | 0, 0, ROWS - 1);
-    return vis[idx(c, r)] === 2;
-  }
-  function tileSeen(col, row) {
-    const c = clamp(col | 0, 0, COLS - 1);
-    const r = clamp(row | 0, 0, ROWS - 1);
-    return vis[idx(c, r)] >= 1;
   }
 
   function paintMinimapFrame() {
     if (!mini._img) return;
     mctx.putImageData(mini._img, 0, 0);
-    mctx.fillStyle = RED;
+    const dot = { 1: RED, 2: AMBER, 3: CYAN, 4: VIOLET, 5: "#C45CFF", 6: CREAM };
     for (const u of units) {
-      if (u.faction === FACTION.zaps) mctx.fillRect(u.col, u.row, 2, 2);
+      if (u.garrison) continue;
+      mctx.fillStyle = dot[u.faction] || CREAM;
+      mctx.fillRect(u.col - 0.5, u.row - 0.5, 2, 2);
     }
+    for (const c of convoys) {
+      if (c.done) continue;
+      mctx.fillStyle = CYAN;
+      mctx.fillRect(c.col - 1, c.row - 1, 3, 3);
+    }
+    const pulse = 0.45 + 0.55 * Math.sin(performance.now() / 180);
+    for (const ping of state.pings) {
+      if (!ping.hold && ping.life <= 0) continue;
+      mctx.strokeStyle = `rgba(232,154,46,${0.45 + pulse * 0.55})`;
+      mctx.lineWidth = 1.5;
+      mctx.beginPath();
+      mctx.arc(ping.col, ping.row, 6 + pulse * 7, 0, Math.PI * 2);
+      mctx.stroke();
+      if (!ping.hold) ping.life -= 0.02;
+    }
+    state.pings = state.pings.filter((p) => p.hold || p.life > 0);
     const corners = [screenToWorld(0, 0), screenToWorld(viewW(), 0), screenToWorld(viewW(), viewH()), screenToWorld(0, viewH())];
     mctx.strokeStyle = CREAM;
     mctx.lineWidth = 1;
@@ -1216,98 +1824,208 @@
     el.hidden = false;
     el.textContent = text;
     el.classList.toggle("hold", state.holdBanner);
-    if (!state.holdBanner) {
-      el.classList.remove("show");
-      void el.offsetWidth;
-      el.classList.add("show");
-      setTimeout(() => { el.hidden = true; }, 2800);
+    if (!state.holdBanner) setTimeout(() => { if (!state.holdBanner) el.hidden = true; }, 2800);
+  }
+
+  function focusCity() {
+    const w = screenToWorld(viewW() / 2, viewH() / 2);
+    let best = cities[0];
+    let d = 1e9;
+    for (const c of cities) {
+      const dd = Math.hypot(c.col - w.col, c.row - w.row);
+      if (dd < d) { d = dd; best = c; }
+    }
+    return best;
+  }
+  function sharePct() {
+    let owned = 0;
+    let total = 0;
+    for (const c of cities) {
+      total += c.demand;
+      if (c.owner === FACTION.zaps) owned += c.demand;
+    }
+    return total ? Math.round((100 * owned) / total) : 0;
+  }
+
+  function paintPortrait(ent) {
+    const cnv = $("select-portrait");
+    const g = cnv.getContext("2d");
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.fillStyle = "#141418";
+    g.fillRect(0, 0, 160, 160);
+    if (!ent) return;
+    g.save();
+    state.portrait = true;
+    try {
+      const anchor = ent.w ? iso(ent.col + ent.w / 2, ent.row + ent.h / 2) : iso(ent.col, ent.row);
+      g.setTransform(1.3, 0, 0, 1.3, 80 - anchor.x * 1.3, 96 - anchor.y * 1.3);
+      if (ent.w) drawBuilding(g, ent);
+      else if (VEHICLES[ent.kind]) drawVehicle(g, ent);
+      else drawUnit(g, ent);
+    } finally {
+      state.portrait = false;
+      g.restore();
+    }
+  }
+
+  function renderNotes() {
+    const root = $("notes");
+    if (!root) return;
+    root.innerHTML = "";
+    for (const n of state.notes.slice(0, 5)) {
+      const el = document.createElement("button");
+      el.type = "button";
+      el.className = "note" + (n.kind === "attack" ? " attack" : "");
+      el.textContent = n.text;
+      el.addEventListener("click", () => { if (n.col != null) focus(n.col, n.row, Math.max(camera.zoom, 0.8)); });
+      root.appendChild(el);
     }
   }
 
   function syncHud() {
-    $("res-capital").textContent = Math.floor(state.res.capital).toLocaleString();
-    $("res-grid").textContent = Math.floor(state.res.grid);
+    $("res-capital").textContent = money(state.res.capital);
+    const used = gridUsed();
+    const cap = gridCap();
+    $("res-grid").textContent = `${used % 1 ? used.toFixed(1) : used}/${cap}`;
+    $("chip-grid").classList.toggle("brown", isBrownout());
     $("res-permits").textContent = Math.floor(state.res.permits);
     $("res-copper").textContent = Math.floor(state.res.copper);
     $("res-steel").textContent = Math.floor(state.res.steel);
-    $("age-name").textContent = AGES[state.age].name;
-    $("pop").textContent = `${popUsed()}/${popCap()}`;
-    const next = AGES[state.age + 1];
-    const ageBtn = $("btn-age");
-    if (state.aging) {
-      ageBtn.disabled = true;
-      ageBtn.textContent = `Aging ${Math.round((1 - state.aging.left / state.aging.total) * 100)}%`;
-    } else if (!next) {
-      ageBtn.disabled = true;
-      ageBtn.textContent = "Final age";
-    } else {
-      ageBtn.disabled = !canAfford(next.cost);
-      ageBtn.textContent = `Advance · ${next.name.replace(" AGE", "")}`;
+    const idle = idleCrews().length;
+    const total = units.filter((u) => u.faction === FACTION.zaps && u.kind === "crew").length;
+    $("res-crews").textContent = `${idle}/${total}`;
+    const hh = Math.floor(state.hour) % 24;
+    const mm = Math.floor((state.hour % 1) * 60);
+    $("clock").textContent = `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+    for (const id of ["0", "1", "2", "4"]) {
+      const btn = $("spd-" + id);
+      if (btn) btn.classList.toggle("on", String(state.speed) === id);
     }
-    const hasDc = buildings.some((b) => b.kind === "dc" && b.faction === FACTION.zaps && b.done);
-    $("objective").textContent = !hasDc
-      ? "Select a crew and raise a DC row"
-      : state.age === 0
-        ? "Traffic is paying. Advance to Fleet Age"
-        : state.age === 1
-          ? "Raise an MCS bay so semis can charge"
-          : "Tie in a substation. Hold the corridor";
+    $("age-name").textContent = AGES[state.age].name;
+    $("age-emblem").textContent = AGES[state.age].numeral;
+    const city = focusCity();
+    $("city-name").textContent = city ? city.name : "West";
+    $("share").textContent = `${sharePct()}%`;
+    const gate = ageGate();
+    const ageBtn = $("btn-age");
+    const next = AGES[state.age + 1];
+    ageBtn.disabled = !!gate;
+    ageBtn.textContent = gate || (next ? `Research ${next.name.replace(" AGE", "")}` : "Final age");
+    const idleBtn = $("btn-idle");
+    idleBtn.textContent = String(idle);
+    idleBtn.classList.toggle("hot", idle > 0);
     for (const btn of document.querySelectorAll("#cmd button")) {
       const spec = BUILD[btn.dataset.build];
+      if (!spec) continue;
       const locked = spec.age != null && state.age < spec.age;
       const poor = !canAfford(spec.cost);
       const full = spec.train && popUsed() >= popCap();
       btn.disabled = locked || poor || full;
       btn.classList.toggle("locked", locked);
+      btn.classList.toggle("poor", poor || full);
       btn.classList.toggle("armed", state.build === btn.dataset.build);
     }
     const selected = [...selection].map((id) => units.find((u) => u.id === id) || buildings.find((b) => b.id === id)).filter(Boolean);
     const first = selected[0];
+    const price = $("price-wrap");
+    const garrBtn = $("btn-garrison");
+    const lawBtn = $("btn-lawyer");
+    price.hidden = true;
+    garrBtn.hidden = true;
+    lawBtn.hidden = true;
+    const slots = $("garrison");
+    slots.innerHTML = "";
+    for (let i = 0; i < 4; i++) {
+      const s = document.createElement("i");
+      slots.appendChild(s);
+    }
     if (!first) {
       $("select-name").textContent = "Western Interconnect";
       $("select-meta").textContent = "Box-select crews. Right-click to move or work.";
       $("select-bar").style.width = "0";
-      $("select-swatch").style.background = CHAR;
-    } else if (first.kind && first.faction && !first.w) {
-      const names = selected.map((u) => (u.kind === "scout" ? "Scout van" : "Crew truck"));
-      $("select-name").textContent = selected.length > 1 ? `${selected.length} units` : names[0];
+      $("bar-use").style.width = "0";
+      $("bar-queue").style.width = "0";
+      paintPortrait(null);
+    } else if (first.faction && !first.w) {
+      const label = first.kind === "scout" ? "Scout van" : first.kind === "van" ? "Raid van" : "Crew truck";
+      $("select-name").textContent = selected.length > 1 ? `${selected.length} units` : label;
       $("select-meta").textContent = `${FACTION_NAME[first.faction]} · ${first.job ? first.job.type : "idle"}`;
-      $("select-bar").style.width = "100%";
-      $("select-swatch").style.background = FACTION_COLOR[first.faction];
+      $("select-bar").style.width = `${Math.round((first.hp || 1) * 100)}%`;
+      $("bar-use").style.width = first.job ? "100%" : "0%";
+      $("bar-queue").style.width = "0%";
+      paintPortrait(first);
     } else {
       $("select-name").textContent = BUILD[first.kind]?.name || first.kind;
       $("select-meta").textContent = first.done ? `${FACTION_NAME[first.faction]} · online` : `Raising ${Math.round(first.progress * 100)}%`;
-      $("select-bar").style.width = `${Math.round((first.done ? 1 : first.progress) * 100)}%`;
-      $("select-swatch").style.background = FACTION_COLOR[first.faction] || AMBER;
+      $("select-bar").style.width = first.done ? "100%" : `${Math.round(first.progress * 100)}%`;
+      const mine = vehicles.filter((v) => v.buildingId === first.id && v.phase !== "leave" && v.phase !== "cruise");
+      const capN = first.kind === "dc" || first.kind === "mcs" ? stallCap(first) : 1;
+      $("bar-use").style.width = `${Math.round(clamp(mine.length / capN, 0, 1) * 100)}%`;
+      const q = (first.queue ? first.queue.length : 0) + mine.filter((v) => v.phase === "queue").length;
+      $("bar-queue").style.width = `${Math.min(100, q * 25)}%`;
+      const held = units.filter((u) => u.garrison === first.id);
+      [...slots.children].forEach((s, i) => s.classList.toggle("on", i < held.length));
+      if (first.kind === "hq" || first.kind === "market") price.hidden = false;
+      if (first.kind === "hq" && first.faction === FACTION.zaps) garrBtn.hidden = false;
+      if (first.kind === "permit" && first.faction === FACTION.zaps) lawBtn.hidden = false;
+      paintPortrait(first);
     }
+    renderNotes();
   }
 
+  function cardSlots() { return CARD_PAGES[state.cardPage]; }
+  function costTitle(spec) {
+    const bits = [];
+    if (spec.cost) {
+      for (const [k, v] of Object.entries(spec.cost)) {
+        if (k === "capital") bits.push(money(v));
+        else bits.push(`${v} ${k}`);
+      }
+    }
+    if (spec.mw) bits.push(`${spec.mw} MW`);
+    if (spec.mwAdd) bits.push(`+${spec.mwAdd} MW`);
+    if (spec.age) bits.push(AGES[spec.age].name);
+    return `${spec.name} — ${bits.join(" · ") || "ready"}`;
+  }
   function buildCard() {
     const root = $("cmd");
     root.innerHTML = "";
-    for (const id of CARD) {
+    cardSlots().forEach((id, i) => {
       const spec = BUILD[id];
       const btn = document.createElement("button");
       btn.type = "button";
       btn.dataset.build = id;
-      btn.innerHTML = `${ICONS[id]}<span>${spec.name}</span><kbd>${spec.key.toUpperCase()}</kbd>`;
-      btn.title = spec.cost ? Object.entries(spec.cost).map(([k, v]) => `${v} ${k}`).join(" · ") : spec.name;
+      btn.innerHTML = `<kbd>${HOTKEYS[i].toUpperCase()}</kbd>${ICONS[id] || ""}<span>${spec.name}</span>`;
+      btn.title = costTitle(spec);
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
+        if (btn.disabled) return;
         if (spec.train) train(spec.train);
         else state.build = state.build === id ? null : id;
         syncHud();
       });
       root.appendChild(btn);
-    }
+    });
   }
+
+  function cycleIdle() {
+    const idle = idleCrews();
+    if (!idle.length) return;
+    state.idleIx = (state.idleIx + 1) % idle.length;
+    const u = idle[state.idleIx];
+    selection.clear();
+    selection.add(u.id);
+    focus(u.col, u.row, Math.max(camera.zoom, 1));
+    syncHud();
+  }
+  function setSpeed(n) { state.speed = n; syncHud(); }
 
   function pickAt(sx, sy) {
     const w = screenToWorld(sx, sy);
     let best = null;
-    let bestD = 0.7;
+    let bestD = 0.72;
     for (const u of units) {
-      if (!seen(u.col, u.row)) continue;
+      if (u.garrison || !seen(u.col, u.row)) continue;
       const d = Math.hypot(u.col - w.col, u.row - w.row);
       if (d < bestD) { bestD = d; best = u; }
     }
@@ -1317,7 +2035,7 @@
     if (inside(c, r) && vis[idx(c, r)] >= 1) {
       const b = buildingAt(c, r);
       if (b) return b;
-      return nodes.find((n) => Math.hypot(n.col - w.col, n.row - w.row) < 0.6) || null;
+      return nodes.find((n) => Math.hypot(n.col - w.col, n.row - w.row) < 0.65) || null;
     }
     return null;
   }
@@ -1325,28 +2043,33 @@
   function commandAt(sx, sy) {
     const w = screenToWorld(sx, sy);
     const crews = selectedCrews();
-    const scouts = units.filter((u) => selection.has(u.id) && u.kind === "scout");
-    const node = nodes.find((n) => Math.hypot(n.col - w.col, n.row - w.row) < 0.7);
+    const node = nodes.find((n) => Math.hypot(n.col - w.col, n.row - w.row) < 0.75);
     if (node && crews.length) {
       crews.forEach((crew) => {
-        const pack = node.kind === "hall" ? { k: "permits", n: 1 } : node.kind === "tie" ? { k: "grid", n: 4 } : { k: Math.random() < 0.5 ? "copper" : "steel", n: 12 };
-        crew.job = { type: "gather", c: node.col, r: node.row, phase: "out", work: 2.5, pack };
+        const pack = node.kind === "hall" ? { k: "permits", n: 2 } : { k: Math.random() < 0.55 ? "copper" : "steel", n: 12 };
+        crew.job = { type: "gather", c: node.col, r: node.row, phase: "out", work: 3, pack };
       });
       return;
     }
     const c = Math.floor(w.col);
     const r = Math.floor(w.row);
     const b = inside(c, r) ? buildingAt(c, r) : null;
-    if (b && !b.done && crews.length) {
-      crews.forEach((crew, i) => {
-        crew.job = { type: "build", id: b.id, c: b.col + b.w + 0.3, r: b.row + i * 0.4 };
-      });
+    if (b && b.kind === "hq" && b.done && crews.length) {
+      crews.forEach((crew) => { crew.garrison = b.id; crew.job = null; });
       return;
     }
-    const movers = crews.length ? crews : scouts;
-    movers.forEach((u, i) => {
-      u.job = { type: "move", c: w.col + (i % 3) * 0.45, r: w.row + Math.floor(i / 3) * 0.45 };
-    });
+    if (b && !b.done && crews.length) {
+      crews.forEach((crew, i) => { crew.job = { type: "build", id: b.id, c: b.col + b.w + 0.35, r: b.row + i * 0.4 }; });
+      return;
+    }
+    const vans = units.filter((u) => selection.has(u.id) && u.kind === "van");
+    const city = cities.find((ct) => Math.hypot(ct.col - w.col, ct.row - w.row) < 3 && ct.owner && ct.owner !== FACTION.zaps);
+    if (city && vans.length) {
+      vans.forEach((u) => { u.job = { type: "raid", c: city.col, r: city.row }; });
+      return;
+    }
+    const movers = crews.length ? crews : units.filter((u) => selection.has(u.id) && u.faction === FACTION.zaps && !u.garrison);
+    movers.forEach((u, i) => { u.job = { type: "move", c: w.col + (i % 3) * 0.4, r: w.row + Math.floor(i / 3) * 0.4 }; });
   }
 
   function boxSelect(x1, y1, x2, y2) {
@@ -1356,7 +2079,7 @@
     const maxY = Math.max(y1, y2);
     if (!keys["shift"]) selection.clear();
     for (const u of units) {
-      if (u.faction !== FACTION.zaps) continue;
+      if (u.faction !== FACTION.zaps || u.garrison) continue;
       const p = worldToScreen(u.col, u.row);
       if (p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY) selection.add(u.id);
     }
@@ -1365,17 +2088,36 @@
   function bind() {
     window.addEventListener("resize", resize);
     window.addEventListener("keydown", (e) => {
+      if (e.target && e.target.matches && e.target.matches("input, textarea")) return;
       keys[e.key.toLowerCase()] = true;
-      if (e.repeat) return;
       const k = e.key.toLowerCase();
-      const specId = Object.keys(BUILD).find((id) => BUILD[id].key === k);
-      if (specId) {
+      if (k === "tab") {
         e.preventDefault();
-        const spec = BUILD[specId];
-        if (spec.train) train(spec.train);
-        else state.build = state.build === specId ? null : specId;
+        state.cardPage = state.cardPage ? 0 : 1;
+        state.build = null;
+        buildCard();
+        syncHud();
+        return;
       }
+      if (e.repeat) return;
+      const slot = HOTKEYS.indexOf(k);
+      if (slot >= 0) {
+        e.preventDefault();
+        const id = cardSlots()[slot];
+        const spec = BUILD[id];
+        const locked = spec.age != null && state.age < spec.age;
+        if (!locked && canAfford(spec.cost)) {
+          if (spec.train) train(spec.train);
+          else state.build = state.build === id ? null : id;
+        }
+      }
+      if (k === ".") { e.preventDefault(); cycleIdle(); }
       if (k === "escape") state.build = null;
+      if (k === " " || k === "p") { e.preventDefault(); setSpeed(state.speed === 0 ? 1 : 0); }
+      if (k === "1") setSpeed(1);
+      if (k === "2") setSpeed(2);
+      if (k === "4") setSpeed(4);
+      syncHud();
     });
     window.addEventListener("keyup", (e) => { keys[e.key.toLowerCase()] = false; });
     canvas.addEventListener("contextmenu", (e) => e.preventDefault());
@@ -1383,17 +2125,15 @@
       pointer.inside = true;
       pointer.x = e.clientX;
       pointer.y = e.clientY;
-      if (e.button === 1 || e.button === 2 && e.altKey) {
-        pan = { x: e.clientX, y: e.clientY };
-        return;
-      }
+      if (e.button === 1 || (e.button === 2 && e.altKey)) { pan = { x: e.clientX, y: e.clientY }; return; }
       if (e.button === 2) {
         if (state.build) state.build = null;
         else commandAt(e.clientX, e.clientY);
+        syncHud();
         return;
       }
       if (e.button !== 0) return;
-      drag = { x: e.clientX, y: e.clientY, x2: e.clientX, y2: e.clientY, moved: false };
+      drag = { x: e.clientX, y: e.clientY, moved: false };
     });
     canvas.addEventListener("pointermove", (e) => {
       pointer.x = e.clientX;
@@ -1413,7 +2153,7 @@
         state.marquee = { x1: drag.x, y1: drag.y, x2: e.clientX, y2: e.clientY };
       }
     });
-    canvas.addEventListener("pointerup", (e) => {
+    window.addEventListener("pointerup", (e) => {
       if (pan && (e.button === 1 || e.button === 2)) { pan = null; return; }
       if (!drag || e.button !== 0) return;
       if (drag.moved) boxSelect(drag.x, drag.y, e.clientX, e.clientY);
@@ -1423,12 +2163,11 @@
       } else {
         const hit = pickAt(e.clientX, e.clientY);
         if (!keys["shift"]) selection.clear();
-        if (hit) selection.add(hit.id);
+        if (hit && hit.id) selection.add(hit.id);
       }
-      if (!state.holdBanner) state.marquee = state.marqueeHold || null;
-      else state.marquee = state.marqueeHold || null;
       drag = null;
       if (!state.marqueeHold) state.marquee = null;
+      else state.marquee = state.marqueeHold;
       syncHud();
     });
     canvas.addEventListener("pointerleave", () => { pointer.inside = false; });
@@ -1443,15 +2182,32 @@
     }, { passive: false });
     mini.addEventListener("pointerdown", (e) => {
       const rect = mini.getBoundingClientRect();
-      const col = ((e.clientX - rect.left) / rect.width) * COLS;
-      const row = ((e.clientY - rect.top) / rect.height) * ROWS;
-      focus(col, row, camera.zoom);
+      focus(((e.clientX - rect.left) / rect.width) * COLS, ((e.clientY - rect.top) / rect.height) * ROWS, Math.max(camera.zoom, 0.7));
     });
     $("btn-age").addEventListener("click", () => {
+      if (ageGate()) return;
       const next = AGES[state.age + 1];
-      if (!next || state.aging || !canAfford(next.cost)) return;
       payCost(next.cost);
       state.aging = { to: state.age + 1, left: next.time, total: next.time };
+      syncHud();
+    });
+    $("btn-idle").addEventListener("click", (e) => { e.stopPropagation(); cycleIdle(); });
+    $("spd-0").addEventListener("click", () => setSpeed(0));
+    $("spd-1").addEventListener("click", () => setSpeed(1));
+    $("spd-2").addEventListener("click", () => setSpeed(2));
+    $("spd-4").addEventListener("click", () => setSpeed(4));
+    $("price-slider").addEventListener("input", (e) => { state.tariff = Number(e.target.value) / 100; });
+    $("btn-garrison").addEventListener("click", () => {
+      const hq = [...selection].map((id) => buildings.find((b) => b.id === id)).find((b) => b && b.kind === "hq");
+      if (!hq) return;
+      const crews = selectedCrews();
+      if (crews.length) crews.forEach((c) => { c.garrison = hq.id; c.job = null; });
+      else units.filter((u) => u.garrison === hq.id).forEach((u) => { u.garrison = null; u.col = hq.col + hq.w + 0.4; u.row = hq.row + hq.h; });
+      syncHud();
+    });
+    $("btn-lawyer").addEventListener("click", () => {
+      for (const b of buildings) if (b.protested > state.time) b.protested = 0;
+      notify("Lawyer cleared the protest", "info", phx().col, phx().row);
       syncHud();
     });
   }
@@ -1462,88 +2218,119 @@
     if (state.shot) frameShot(state.shot);
   }
 
-  function phx() { return cities.find((c) => c.id === "phoenix"); }
+  function parkVehicle(kind, col, row, phase, extra) {
+    const spec = VEHICLES[kind];
+    vehicles.push({
+      id: "v" + (++seq), kind, buildingId: extra?.buildingId || null,
+      col, row, facing: 1, path: [{ c: col, r: row }], i: 0, phase, queueing: phase === "queue",
+      wait: phase === "queue" ? 6 : 0, cable: phase === "cable" ? 0.4 : 0,
+      charge: phase === "charge" ? (spec.kWh / 18) * 0.55 : 0,
+      speed: 0, fare: extra?.fare || Math.round(spec.kWh * 8), holdPay: phase === "pay",
+      label: extra?.label || "",
+    });
+  }
 
   function applyShot(name) {
     state.shot = name;
     state.frozen = true;
+    const city = phx();
     if (name === "region") {
       for (let i = 0; i < vis.length; i++) vis[i] = (i % COLS) < 8 ? 0 : 1;
-      for (const city of cities) if (city.owner) revealDisk(city.col, city.row, 9, 2);
+      for (const c of cities) if (c.owner) revealDisk(c.col, c.row, 8, 2);
       fogDirty = true;
     } else if (name === "compound") {
-      state.age = 1;
-      const city = phx();
-      buildings.push(makeBuilding("dc", city.col + 1, city.row - 3, FACTION.zaps, 1));
-      buildings.push(makeBuilding("l2", city.col - 3, city.row + 1, FACTION.zaps, 1));
-      buildings.push(makeBuilding("lounge", city.col + 1, city.row + 1, FACTION.zaps, 1));
-      buildings.push(makeBuilding("bess", city.col + 1, city.row - 1, FACTION.zaps, 1));
-      buildings.push(makeBuilding("mcs", city.col - 3, city.row + 2, FACTION.zaps, 1));
-      revealDisk(city.col, city.row, 8, 2);
+      state.age = 2;
+      buildings.push(makeBuilding("dc", city.col + 2, city.row - 3, FACTION.zaps, 1));
+      buildings.push(makeBuilding("bess", city.col, city.row - 3, FACTION.zaps, 1));
+      buildings.push(makeBuilding("mcs", city.col + 1, city.row - 2, FACTION.zaps, 1));
+      buildings.push(makeBuilding("lounge", city.col - 3, city.row + 1, FACTION.zaps, 1));
+      buildings.push(makeBuilding("warehouse", city.col + 1, city.row + 2, FACTION.zaps, 1));
+      buildings.push(makeBuilding("market", city.col - 1, city.row + 2, FACTION.zaps, 1));
       const dc = buildings.find((b) => b.kind === "dc" && b.faction === FACTION.zaps);
-      if (dc) {
-        for (const kind of ["sedan", "suv", "hatch"]) {
-          vehicles.push({
-            id: "v" + (++seq), kind, fare: VEHICLES[kind].fare, buildingId: dc.id,
-            col: dc.col + 0.4, row: dc.row + 1.4, facing: 1, path: [], i: 0, phase: "charge", wait: 9, speed: 0,
-          });
-        }
-      }
+      parkVehicle("sedan", dc.col + 0.2, dc.row + 1.15, "charge", { buildingId: dc.id });
+      parkVehicle("hatch", dc.col + 1.1, dc.row + 1.5, "cable", { buildingId: dc.id });
+      parkVehicle("suv", city.col + 3.2, city.row + 1.2, "drive");
+      revealDisk(city.col, city.row, 24, 2);
     } else if (name === "build") {
-      const city = phx();
-      const b = makeBuilding("dc", city.col + 1, city.row - 2, FACTION.zaps, 0.42);
+      const b = makeBuilding("dc", city.col + 1, city.row - 2, FACTION.zaps, 0.5);
       buildings.push(b);
       const crew = units.find((u) => u.faction === FACTION.zaps && u.kind === "crew");
-      crew.col = b.col + b.w + 0.3;
-      crew.row = b.row + 0.4;
+      crew.col = b.col + b.w + 0.45;
+      crew.row = b.row + 0.35;
       crew.job = { type: "build", id: b.id, c: crew.col, r: crew.row };
       selection.add(crew.id);
-      revealDisk(city.col, city.row, 8, 2);
+      revealDisk(city.col, city.row, 18, 2);
     } else if (name === "select") {
-      const city = phx();
       const crews = units.filter((u) => u.faction === FACTION.zaps && u.kind === "crew");
       crews.forEach((u, i) => {
-        u.col = city.col - 0.2 + i * 0.7;
-        u.row = city.row + 1.4;
+        u.col = city.col - 0.2 + i * 0.75;
+        u.row = city.row + 1.5;
         selection.add(u.id);
       });
-      revealDisk(city.col, city.row, 8, 2);
-      state.marqueeHold = { x1: 0, y1: 0, x2: 10, y2: 10 };
+      revealDisk(city.col, city.row, 16, 2);
     } else if (name === "age") {
       state.age = 1;
       state.holdBanner = true;
-      const city = phx();
       buildings.push(makeBuilding("dc", city.col + 1, city.row - 2, FACTION.zaps, 1));
-      buildings.push(makeBuilding("mcs", city.col - 3, city.row + 1, FACTION.zaps, 1));
-      revealDisk(city.col, city.row, 8, 2);
+      buildings.push(makeBuilding("warehouse", city.col + 1, city.row + 1, FACTION.zaps, 1));
+      buildings.push(makeBuilding("bess", city.col - 1, city.row + 2, FACTION.zaps, 1));
+      revealDisk(city.col, city.row, 18, 2);
     } else if (name === "vehicles") {
       for (let i = 0; i < vis.length; i++) vis[i] = 2;
       fogDirty = true;
-      const order = ["hatch", "sedan", "suv", "pickup", "van", "box", "semi", "bus"];
-      order.forEach((kind, i) => {
-        vehicles.push({
-          id: "v" + (++seq), kind, fare: VEHICLES[kind].fare,
-          col: 100 + (i % 4) * 2.2, row: 36 + Math.floor(i / 4) * 3.2,
-          facing: 1, path: [], i: 0, phase: "charge", wait: 99, speed: 0,
-          label: VEHICLES[kind].name,
-        });
+      ["hatch", "sedan", "suv", "pickup", "van", "box", "semi", "bus"].forEach((kind, i) => {
+        parkVehicle(kind, 100 + (i % 4) * 2.4, 36 + Math.floor(i / 4) * 3.4, "charge", { label: VEHICLES[kind].name });
       });
     } else if (name === "contest") {
-      const city = cities.find((c) => c.id === "flagstaff");
-      setPlotOwner(city, FACTION.zaps);
-      if (!buildings.some((b) => b.kind === "hq" && Math.hypot(b.col - city.col, b.row - city.row) < 3)) {
-        buildings.push(makeBuilding("hq", city.col - 2, city.row - 2, FACTION.zaps, 1));
-      }
+      const flag = cities.find((c) => c.id === "flagstaff");
+      setPlotOwner(flag, FACTION.zaps);
       const rival = units.find((u) => u.faction === FACTION.voltspan);
-      rival.col = city.col + 1.2;
-      rival.row = city.row + 0.4;
+      rival.col = flag.col + 1.1;
+      rival.row = flag.row + 0.3;
       rival.job = { type: "contest", c: rival.col, r: rival.row };
-      city.contest = 0.66;
-      city.attacker = FACTION.voltspan;
-      revealDisk(city.col, city.row, 8, 2);
+      flag.contest = 0.66;
+      flag.attacker = FACTION.voltspan;
       const crew = units.find((u) => u.faction === FACTION.zaps && u.kind === "crew");
-      crew.col = city.col - 4.2;
-      crew.row = city.row + 1;
+      crew.col = flag.col - 4.4;
+      crew.row = flag.row + 1;
+      revealDisk(flag.col, flag.row, 12, 2);
+    } else if (name === "traffic") {
+      const dc = makeBuilding("dc", city.col + 1, city.row - 1, FACTION.zaps, 1);
+      buildings.push(dc);
+      parkVehicle("hatch", city.col + 3.4, city.row + 2.5, "drive", { buildingId: dc.id });
+      parkVehicle("sedan", city.col + 1.3, city.row + 1.7, "queue", { buildingId: dc.id });
+      parkVehicle("suv", dc.col + 0.15, dc.row + 1.25, "cable", { buildingId: dc.id });
+      parkVehicle("sedan", dc.col + 0.85, dc.row + 1.45, "charge", { buildingId: dc.id });
+      parkVehicle("hatch", dc.col + 0.4, dc.row + 0.85, "pay", { buildingId: dc.id, fare: 320 });
+      revealDisk(city.col, city.row, 16, 2);
+    } else if (name === "convoy") {
+      const vegas = cities.find((c) => c.id === "vegas");
+      let best = null;
+      let bestD = 1e9;
+      const mx = (vegas.col + city.col) / 2;
+      const my = (vegas.row + city.row) / 2;
+      lineTiles(vegas, city, (c, r) => {
+        const d = Math.hypot(c - mx, r - my);
+        if (d < bestD) { bestD = d; best = { c, r }; }
+      });
+      convoys.push({
+        id: "c" + (++seq), faction: FACTION.voltspan,
+        col: best.c + 0.5, row: best.r + 0.5, path: [], i: 0,
+        dest: "phoenix", eta: 42, max: 76, speed: 0, done: false,
+      });
+      revealDisk(best.c, best.r, 14, 2);
+    } else if (name === "alert") {
+      state.notes.unshift({ text: "Undercut! VOLTSPAN undercut Phoenix!", kind: "attack", col: city.col, row: city.row });
+      state.pings.push({ col: city.col, row: city.row, life: 1, hold: true });
+      revealDisk(city.col, city.row, 16, 2);
+    } else if (name === "night") {
+      state.age = 2;
+      state.hour = 21.5;
+      buildings.push(makeBuilding("dc", city.col + 1, city.row - 2, FACTION.zaps, 1));
+      buildings.push(makeBuilding("mcs", city.col - 1, city.row + 1, FACTION.zaps, 1));
+      buildings.push(makeBuilding("bess", city.col + 2, city.row + 1, FACTION.zaps, 1));
+      buildings.push(makeBuilding("lounge", city.col - 3, city.row + 1, FACTION.zaps, 1));
+      revealDisk(city.col, city.row, 20, 2);
     }
   }
 
@@ -1552,11 +2339,12 @@
     if (name === "region") {
       const c = cities.reduce((s, x) => s + x.col, 0) / cities.length;
       const r = cities.reduce((s, x) => s + x.row, 0) / cities.length;
-      focus(c, r - 2, 0.42);
-    } else if (name === "compound" || name === "age") focus(city.col, city.row, 1.15);
-    else if (name === "build") focus(city.col + 1, city.row - 1, 1.35);
+      focus(c, r - 1, 0.4);
+    } else if (name === "compound" || name === "night") focus(city.col + 0.2, city.row + 0.2, 1.02);
+    else if (name === "age") focus(city.col + 0.4, city.row + 0.6, 1.48);
+    else if (name === "build") focus(city.col + 1.4, city.row - 1.2, 1.4);
     else if (name === "select") {
-      focus(city.col, city.row + 1.2, 1.2);
+      focus(city.col + 0.6, city.row + 1.5, 1.15);
       const crews = units.filter((u) => selection.has(u.id));
       const pts = crews.map((u) => worldToScreen(u.col, u.row));
       state.marqueeHold = {
@@ -1566,21 +2354,61 @@
         y2: Math.max(...pts.map((p) => p.y)) + 22,
       };
       state.marquee = state.marqueeHold;
-    } else if (name === "vehicles") focus(103.2, 37.6, 1.35);
+    } else if (name === "vehicles") focus(103.2, 37.8, 1.28);
     else if (name === "contest") {
       const f = cities.find((c) => c.id === "flagstaff");
       focus(f.col, f.row, 1.05);
-    }
+    } else if (name === "traffic") focus(city.col + 1.2, city.row + 0.8, 1.28);
+    else if (name === "convoy") {
+      const c = convoys[convoys.length - 1];
+      focus(c.col, c.row, 1.2);
+    } else if (name === "alert") focus(city.col, city.row + 0.4, 0.95);
   }
 
   function fast(seconds) {
-    const was = state.frozen;
-    state.frozen = false;
     const steps = Math.max(1, Math.round(seconds / 0.05));
-    for (let i = 0; i < steps; i++) step(0.05);
-    state.frozen = was;
+    for (let i = 0; i < steps; i++) simulate(0.05);
     syncHud();
     draw();
+  }
+
+  function prepFleet() {
+    const city = phx();
+    const spots = [[2, -3], [3, -3], [-3, 2], [3, -1], [0, 3], [3, 2], [-3, 3], [2, 3]];
+    let guard = 0;
+    while (buildings.filter((b) => b.kind === "dc" && b.faction === FACTION.zaps && b.done).length < 4 && guard++ < 12) {
+      let placed = false;
+      for (const [dc, dr] of spots) {
+        const c = city.col + dc;
+        const r = city.row + dr;
+        if (fits("dc", c, r, FACTION.zaps)) {
+          buildings.push(makeBuilding("dc", c, r, FACTION.zaps, 1));
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) break;
+    }
+    if (!buildings.some((b) => b.kind === "warehouse" && b.faction === FACTION.zaps && b.done)) {
+      const tries = [[1, 2], [-1, 2], [1, 1], [-3, 1], [0, 2]];
+      for (const [dc, dr] of tries) {
+        const c = city.col + dc;
+        const r = city.row + dr;
+        if (fits("warehouse", c, r, FACTION.zaps)) {
+          buildings.push(makeBuilding("warehouse", c, r, FACTION.zaps, 1));
+          break;
+        }
+      }
+    }
+    state.res.capital = Math.max(state.res.capital, 250000);
+    state.res.steel = Math.max(state.res.steel, 80);
+    state.res.permits = Math.max(state.res.permits, 40);
+    syncHud();
+    return {
+      dc: buildings.filter((b) => b.kind === "dc" && b.faction === FACTION.zaps && b.done).length,
+      warehouse: buildings.some((b) => b.kind === "warehouse" && b.faction === FACTION.zaps && b.done),
+      gate: ageGate(),
+    };
   }
 
   function boot() {
@@ -1589,21 +2417,29 @@
     const shot = params.get("shot");
     seedStart(!shot || shot === "build" || shot === "select");
     if (shot) applyShot(shot);
-    else refreshVision();
+    else {
+      refreshVision();
+      const vegas = cities.find((c) => c.id === "vegas");
+      if (vegas) launchConvoy(FACTION.voltspan, vegas);
+    }
     buildCard();
     bind();
     resize();
-    if (!shot) {
-      const home = phx();
-      focus(home.col, home.row + 0.4, 0.92);
-    }
+    if (!shot) focus(phx().col, phx().row + 0.4, 0.92);
     if (shot === "age") showBanner("FLEET AGE");
+    if (shot === "traffic") {
+      const pay = vehicles.find((v) => v.phase === "pay");
+      if (pay) spawnFloat(pay.col, pay.row, "+$320", true);
+    }
     syncHud();
     let last = performance.now();
     const loop = (now) => {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
-      step(dt);
+      if (!state.frozen) {
+        if (state.speed > 0) simulate(dt * state.speed);
+        doPan(dt);
+      }
       draw();
       syncHud();
       fpsFrames += 1;
@@ -1616,11 +2452,10 @@
       requestAnimationFrame(loop);
     };
     requestAnimationFrame(loop);
-
     window.__EMPIRE_SMOKE__ = {
       ready: true,
-      build: "empire-aoe",
-      resources: () => ({ ...state.res }),
+      build: "empire-aoe-design",
+      resources: () => ({ ...state.res, grid: gridUsed(), gridCap: gridCap() }),
       age: () => AGES[state.age].name,
       ageIndex: () => state.age,
       paid: () => state.paid,
@@ -1631,21 +2466,24 @@
       vehicles: () => vehicles.map((v) => v.kind),
       vehicleTypes: () => Object.keys(VEHICLES),
       buildings: () => buildings.map((b) => ({ kind: b.kind, progress: b.progress, done: b.done, faction: b.faction })),
+      notes: () => state.notes.map((n) => n.text),
+      brownout: () => isBrownout(),
+      convoys: () => convoys.filter((c) => !c.done).length,
       crewScreen: () => {
-        const u = units.find((x) => x.faction === FACTION.zaps && x.kind === "crew");
+        const u = units.find((x) => x.faction === FACTION.zaps && x.kind === "crew" && !x.garrison);
         return worldToScreen(u.col, u.row);
       },
-      padScreen: () => {
-        const city = phx();
-        return worldToScreen(city.col + 1.4, city.row - 1.6);
-      },
+      padScreen: () => worldToScreen(phx().col + 1.4, phx().row - 1.6),
       fast: (s) => fast(s),
       place: (kind, col, row) => placeBuilding(kind, col, row),
       train: (kind) => train(kind),
       focus: (col, row, zoom) => focus(col, row, zoom),
+      prepFleet: () => prepFleet(),
     };
   }
 
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(boot);
-  else boot();
+  let started = false;
+  function start() { if (!started) { started = true; boot(); } }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(start);
+  setTimeout(start, 1500);
 })();
