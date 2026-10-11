@@ -517,11 +517,11 @@
     fogDirty = true;
   }
 
-  function focus(col, row, zoom) {
+  function focus(col, row, zoom, lift = 0) {
     camera.zoom = clamp(zoom, 0.32, 1.85);
     const p = iso(col, row);
     camera.x = viewW() / 2 - p.x * camera.zoom;
-    camera.y = viewH() / 2 - p.y * camera.zoom;
+    camera.y = viewH() / 2 - p.y * camera.zoom - lift;
     clampCamera();
   }
   function clampCamera() {
@@ -1426,17 +1426,7 @@
             g.fill();
             g.globalAlpha = 1;
           }
-          if (biome[idx(c, r)] === MOUNTAIN) {
-            const peak = 12 + hash(c, r) * 22;
-            const top = iso(c + 0.5, r + 0.5);
-            g.fillStyle = "rgba(48,32,18,0.28)";
-            g.beginPath();
-            g.ellipse(top.x, top.y + 4, 14, 6, 0, 0, Math.PI * 2);
-            g.fill();
-            poly(g, [{ x: top.x, y: top.y - peak }, { x: top.x + 12, y: top.y - 2 }, { x: top.x - 10, y: top.y - 1 }]);
-            g.fillStyle = peak > 26 ? "#E7E2DA" : "#8C8680";
-            g.fill();
-          }
+          if (biome[idx(c, r)] === MOUNTAIN) drawMesa(g, c, r);
           if (road[idx(c, r)]) drawRoadMarks(g, c, r);
           const n = hash(c, r);
           const zone = hash((c / 3) | 0, (r / 3) | 0);
@@ -1875,10 +1865,129 @@
     g.fillText(`${FACTION_NAME[c.faction] || "VOLTSPAN"} ETA`, p.x, p.y - 52);
   }
 
+  function drawMesa(g, c, r) {
+    const n = hash(c, r);
+    const peak = 14 + n * 18;
+    const top = iso(c + 0.5, r + 0.42);
+    const apex = { x: top.x + (n - 0.5) * 4, y: top.y - peak };
+    const footL = iso(c + 0.12, r + 0.78);
+    const footR = iso(c + 0.88, r + 0.78);
+    const footB = iso(c + 0.5, r + 0.92);
+    g.fillStyle = "rgba(48,32,18,0.3)";
+    g.beginPath();
+    g.ellipse(top.x, top.y + 5, 16, 6, 0, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = n > 0.5 ? "#5E5954" : "#6A645E";
+    poly(g, [apex, footL, footB]);
+    g.fill();
+    g.fillStyle = n > 0.5 ? "#9A948C" : "#B0AAA2";
+    poly(g, [apex, footB, footR]);
+    g.fill();
+    g.strokeStyle = "rgba(40,32,28,0.35)";
+    g.lineWidth = 1;
+    g.beginPath();
+    g.moveTo(apex.x, apex.y);
+    g.lineTo(footB.x, footB.y);
+    g.stroke();
+    if (peak > 22) {
+      const s = 0.28;
+      g.fillStyle = "#F7F4EE";
+      poly(g, [
+        apex,
+        { x: apex.x + (footL.x - apex.x) * s, y: apex.y + (footL.y - apex.y) * s },
+        { x: apex.x + (footB.x - apex.x) * s, y: apex.y + (footB.y - apex.y) * s },
+      ]);
+      g.fill();
+      g.fillStyle = "#E4E0D8";
+      poly(g, [
+        apex,
+        { x: apex.x + (footB.x - apex.x) * s, y: apex.y + (footB.y - apex.y) * s },
+        { x: apex.x + (footR.x - apex.x) * s, y: apex.y + (footR.y - apex.y) * s },
+      ]);
+      g.fill();
+    }
+  }
   function drawNode(g, n) {
-    const color = n.kind === "hall" ? "#E7DCC8" : "#C46A3A";
-    dropShadow(g, n.col, n.row, 12, 5);
-    drawBox(g, n.col - 0.35, n.row - 0.35, 0.7, 0.7, n.kind === "yard" ? 8 : 14, color, shade(color, 20));
+    if (n.kind === "hall") drawPermitStake(g, n);
+    else drawSpoolPallet(g, n);
+  }
+  function drawPermitStake(g, n) {
+    const p = iso(n.col, n.row);
+    g.fillStyle = "rgba(90,62,32,0.28)";
+    g.beginPath();
+    g.ellipse(p.x, p.y + 2, 12, 5, 0, 0, Math.PI * 2);
+    g.fill();
+    g.strokeStyle = "#7A5230";
+    g.lineWidth = 2;
+    g.beginPath();
+    g.moveTo(p.x, p.y + 1);
+    g.lineTo(p.x, p.y - 26);
+    g.stroke();
+    g.fillStyle = "#F3EDE2";
+    g.beginPath();
+    g.moveTo(p.x - 7, p.y - 16);
+    g.lineTo(p.x + 6, p.y - 20);
+    g.lineTo(p.x + 5, p.y - 8);
+    g.lineTo(p.x - 8, p.y - 6);
+    g.closePath();
+    g.fill();
+    g.strokeStyle = "#C4B8A4";
+    g.lineWidth = 1;
+    g.stroke();
+    g.strokeStyle = "#8A8175";
+    g.beginPath();
+    g.moveTo(p.x - 4, p.y - 14);
+    g.lineTo(p.x + 3, p.y - 16);
+    g.moveTo(p.x - 4, p.y - 11);
+    g.lineTo(p.x + 2, p.y - 13);
+    g.stroke();
+    g.fillStyle = RED;
+    g.beginPath();
+    g.moveTo(p.x, p.y - 26);
+    g.lineTo(p.x + 11, p.y - 22);
+    g.lineTo(p.x, p.y - 18);
+    g.closePath();
+    g.fill();
+  }
+  function drawSpoolPallet(g, n) {
+    const p = iso(n.col, n.row);
+    g.fillStyle = "rgba(48,32,18,0.28)";
+    g.beginPath();
+    g.ellipse(p.x, p.y + 3, 16, 6, 0, 0, Math.PI * 2);
+    g.fill();
+    const a = iso(n.col - 0.32, n.row - 0.16);
+    const b = iso(n.col + 0.34, n.row - 0.16);
+    const c = iso(n.col + 0.34, n.row + 0.28);
+    const d = iso(n.col - 0.32, n.row + 0.28);
+    g.fillStyle = "#8A5A32";
+    poly(g, [a, b, c, d]);
+    g.fill();
+    g.strokeStyle = "#5C3A20";
+    g.lineWidth = 1;
+    g.beginPath();
+    g.moveTo(a.x, a.y + 3);
+    g.lineTo(c.x, c.y - 1);
+    g.moveTo(b.x, b.y + 3);
+    g.lineTo(d.x, d.y - 1);
+    g.stroke();
+    const copper = hash(n.col | 0, n.row | 0) > 0.45;
+    for (let i = 0; i < 3; i++) {
+      const s = iso(n.col - 0.16 + i * 0.16, n.row + 0.02);
+      const body = copper ? "#A8642C" : "#7E868E";
+      const lip = copper ? "#E2A15A" : "#D5DCE2";
+      g.fillStyle = body;
+      g.beginPath();
+      g.ellipse(s.x, s.y - 7, 5.5, 6.5, 0, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = lip;
+      g.beginPath();
+      g.ellipse(s.x, s.y - 10, 5.5, 2.4, 0, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = "#3A2414";
+      g.beginPath();
+      g.ellipse(s.x, s.y - 10, 1.7, 0.8, 0, 0, Math.PI * 2);
+      g.fill();
+    }
   }
 
   function fenceBox(city) {
@@ -2620,6 +2729,7 @@
     } else if (name === "compound") {
       state.age = 2;
       dressCompound(city, true);
+      keepNear(city, 7.5);
       revealDisk(city.col, city.row, 24, 2);
     } else if (name === "build") {
       const b = makeBuilding("dc", city.col + 1, city.row - 2, FACTION.zaps, 0.5);
@@ -2697,7 +2807,14 @@
       state.age = 2;
       state.hour = 21.5;
       dressCompound(city, false);
+      keepNear(city, 7.5);
       revealDisk(city.col, city.row, 20, 2);
+    }
+  }
+  function keepNear(city, radius) {
+    for (let i = buildings.length - 1; i >= 0; i--) {
+      const b = buildings[i];
+      if (Math.hypot(b.col + b.w / 2 - city.col, b.row + b.h / 2 - city.row) > radius) buildings.splice(i, 1);
     }
   }
 
@@ -2731,7 +2848,7 @@
       const c = cities.reduce((s, x) => s + x.col, 0) / cities.length;
       const r = cities.reduce((s, x) => s + x.row, 0) / cities.length;
       focus(c, r - 1, 0.4);
-    } else if (name === "compound" || name === "night") focus(city.col + 0.35, city.row + 0.15, 0.92);
+    } else if (name === "compound" || name === "night") focus(city.col + 0.15, city.row + 0.55, 1.12, 100);
     else if (name === "age") focus(city.col + 0.4, city.row + 0.6, 1.48);
     else if (name === "build") focus(city.col + 1.4, city.row - 1.2, 1.4);
     else if (name === "select") {
@@ -2816,7 +2933,7 @@
     buildCard();
     bind();
     resize();
-    if (!shot) focus(phx().col, phx().row + 0.4, 0.92);
+    if (!shot) focus(phx().col, phx().row + 0.8, 1.02, 80);
     if (shot === "age") showBanner("FLEET AGE");
     if (shot === "traffic") {
       const pay = vehicles.find((v) => v.phase === "pay");
