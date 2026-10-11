@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* rts-yard-26: ghost slot follows the hovered cell, city names clear of HQ. */
+/* rts-yard-27: pad fills the viewport, traffic, kit states, territory. */
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,13 +16,13 @@ const fail = (msg) => {
 };
 const ok = (msg) => console.log(`OK   ${msg}`);
 
-if (!html.includes('content="rts-yard-26"') || !html.includes("styles.css?v=rts-yard-26") || !html.includes("game.js?v=rts-yard-26")) {
-  fail("index.html cache is not rts-yard-26");
-} else ok("index.html cache rts-yard-26");
+if (!html.includes('content="rts-yard-27"') || !html.includes("styles.css?v=rts-yard-27") || !html.includes("game.js?v=rts-yard-27")) {
+  fail("index.html cache is not rts-yard-27");
+} else ok("index.html cache rts-yard-27");
 
-if (!game.includes("rts-yard-26") || !css.includes("rts-yard-26") || !review.includes("rts-yard-26")) {
-  fail("game/styles/REVIEW cache is not rts-yard-26");
-} else ok("game/styles/REVIEW cache rts-yard-26");
+if (!game.includes("rts-yard-27") || !css.includes("rts-yard-27") || !review.includes("rts-yard-27")) {
+  fail("game/styles/REVIEW cache is not rts-yard-27");
+} else ok("game/styles/REVIEW cache rts-yard-27");
 
 if (!game.includes("function placementRead") || !game.includes("COMPLETES CANOPY") || !html.includes("site-consequence")) {
   fail("hover consequence line missing");
@@ -431,6 +431,30 @@ if (!process.exitCode) ok("yard-26 hover, map, and pop stills");
 if (!review.includes("yard-hover-left-26.png") || !review.includes("yard-hover-right-26.png") || !review.includes("yard-map-26.png") || !review.includes("yard-pop-26.png")) {
   fail("REVIEW must list the yard-26 stills");
 } else ok("REVIEW lists yard-26 stills");
+
+if (!game.includes("function trafficPlan") || !game.includes("assets/sprites/vehicles/sedan-") || !game.includes("CLAIM ·")) {
+  fail("traffic or objective claim tag missing");
+} else ok("traffic sprites and CLAIM tag");
+for (const name of ["sedan-0", "sedan-1", "sedan-2", "sedan-3", "truck-0", "truck-1", "truck-2", "truck-3"]) {
+  const p = join(root, `assets/sprites/vehicles/${name}.png`);
+  if (!existsSync(p) || statSync(p).size < 1000) fail(`${name}.png missing`);
+}
+if (!process.exitCode) ok("eight grey vehicle sprites");
+
+const yard27 = [
+  ["docs/shots/yard-traffic-27.png", 80000],
+  ["docs/shots/yard-states-27.png", 80000],
+  ["docs/shots/yard-map-27.png", 80000],
+];
+for (const [rel, min] of yard27) {
+  const p = join(root, rel);
+  if (!existsSync(p)) fail(`${rel} missing`);
+  else if (statSync(p).size < min) fail(`${rel} too small (${statSync(p).size} bytes)`);
+}
+if (!process.exitCode) ok("yard-27 traffic, kit states, and ownership map");
+if (!review.includes("yard-traffic-27.png") || !review.includes("yard-states-27.png") || !review.includes("yard-map-27.png")) {
+  fail("REVIEW must list the yard-27 stills");
+} else ok("REVIEW lists yard-27 stills");
 
 if (process.exitCode) {
   console.error("smoke-empire failed");

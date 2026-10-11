@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-yard-26 */
+/* empire-build: rts-yard-27 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -22,7 +22,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-yard-26";
+  const SPRITE_V = "rts-yard-27";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -43,7 +43,7 @@
     voltspan: "240 / 204",
     rival: "240 / 167",
   };
-  const KIT_V = "rts-yard-26";
+  const KIT_V = "rts-yard-27";
   const KIT_SPRITES = {
     dc: `assets/kits/dc.svg?v=${KIT_V}`,
     mcs: `assets/kits/mcs.svg?v=${KIT_V}`,
@@ -2645,6 +2645,12 @@
     strip.dataset.bound = "1";
     strip.addEventListener("click", (e) => {
       if (!state) return;
+      if (e.target.closest(".ops-objective")) {
+        const target = objectiveTargets()[0];
+        if (siteView) exitSite();
+        if (target) panToCity(target);
+        return;
+      }
       const posture = e.target.closest("[data-posture]");
       if (posture) {
         const next = posture.getAttribute("data-posture") === "respond" ? "respond" : "raise";
@@ -2862,6 +2868,56 @@
       .join("");
   }
 
+  function territoryHtml() {
+    let html = "";
+    for (const meta of CITIES) {
+      const city = state.cities[meta.id];
+      if (!city) continue;
+      const you = playerClaiming(city);
+      const rival = strongestRival(city);
+      if (!you && !rival) continue;
+      const hidden = rivalSite(city) && !cityRevealed(meta.id);
+      const veil = hidden ? 0.55 : 1;
+      const radius = 22 + meta.demand * 0.34;
+      const youShare = city.share[YOU] || 0;
+      const rivShare = rival ? city.share[rival.id] || 0 : 0;
+      if (you && rival) {
+        const fade = Math.max(0.16, Math.min(0.55, (0.12 + Math.max(youShare, rivShare) * 0.4) * veil));
+        const x = meta.x;
+        const y = meta.y;
+        const r = radius;
+        html +=
+          `<g class="territory contested">` +
+          `<path d="M ${x} ${y - r} A ${r} ${r} 0 0 0 ${x} ${y + r} Z" fill="${PAL.red}" opacity="${fade.toFixed(2)}"/>` +
+          `<path d="M ${x} ${y - r} A ${r} ${r} 0 0 1 ${x} ${y + r} Z" fill="${rival.color}" opacity="${fade.toFixed(2)}"/>` +
+          `<line class="territory-seam" x1="${x}" y1="${(y - r).toFixed(1)}" x2="${x}" y2="${(y + r).toFixed(1)}"/>` +
+          `</g>`;
+      } else {
+        const color = you ? PAL.red : rival.color;
+        const share = you ? youShare : rivShare;
+        const fade = Math.max(0.1, Math.min(0.42, (0.08 + share * 0.34) * veil));
+        html += `<circle class="territory" cx="${meta.x}" cy="${meta.y}" r="${radius.toFixed(1)}" fill="${color}" opacity="${fade.toFixed(2)}"/>`;
+      }
+    }
+    return html;
+  }
+
+  function panToCity(id) {
+    const meta = CITY_BY_ID[id];
+    const stage = $("map-stage");
+    if (!meta || !stage) return;
+    const sw = stage.clientWidth;
+    const sh = stage.clientHeight;
+    if (sw < 40 || sh < 40) return;
+    mapCam.scale = 1.85;
+    const cx = (meta.x / 1200) * sw;
+    const cy = (meta.y / 800) * sh;
+    mapCam.x = sw * 0.46 - cx * mapCam.scale;
+    mapCam.y = sh * 0.42 - cy * mapCam.scale;
+    clampCam();
+    applyMapCam();
+  }
+
   function renderCorridors() {
     const svg = $("corridor-layer");
     if (!svg) return;
@@ -2870,7 +2926,7 @@
       return;
     }
     const seen = new Set();
-    let html = "";
+    let html = territoryHtml();
     for (const meta of CITIES) {
       const alpha = pulseAlpha(meta.id);
       if (alpha <= 0) continue;
@@ -3325,7 +3381,7 @@
     const kind = mapSpriteKind(city, resolved);
     if (playerYard(city) || kind === "dirt" || kind === "flag") {
       const baseKind = yardBaseKind(city, resolved);
-      return `<div class="insp-yard" data-kind="${baseKind}">${yardArtHtml(city, resolved, { banner: false })}</div>`;
+      return `<div class="insp-yard" data-kind="${baseKind}">${yardArtHtml(city, resolved, { banner: false, traffic: false })}</div>`;
     }
     const src = MAP_SPRITES[kind] || MAP_SPRITES.flag;
     return `<img class="insp-sprite" src="${src}" alt="" data-kind="${kind}" draggable="false">`;
@@ -3511,7 +3567,7 @@
         ring.className = "obj-ring";
         const tag = document.createElement("em");
         tag.className = "obj-mo";
-        tag.textContent = `${Math.max(0, state.objective.left)} MO`;
+        tag.textContent = `CLAIM · ${Math.max(0, state.objective.left)} MO`;
         btn.append(ring, tag);
       }
       const pulse = pulseMonths(meta.id);
@@ -3855,11 +3911,12 @@
     return a.r - a.c - (b.r - b.c) || a.r - b.r || b.c - a.c;
   }
 
-  function stallPaint(c, r) {
+  function stallPaint(c, r, idle) {
     const stall = insetQuad(gridQuad(c + 0.16, r + 0.38, 0.68, 0.48), 0);
     const mid = insetQuad(gridQuad(c + 0.47, r + 0.42, 0.06, 0.38), 0);
+    const cls = idle ? "site-stall idle" : "site-stall";
     return (
-      `<polygon class="site-stall" points="${svgPts(stall)}" />` +
+      `<polygon class="${cls}" points="${svgPts(stall)}" />` +
       `<polygon class="site-stall-hash" points="${svgPts(mid)}" />`
     );
   }
@@ -4158,6 +4215,27 @@
     return null;
   }
 
+  function kitProgress(foot, pct) {
+    const top = Math.min(...foot.map((p) => p[1]));
+    const cx = foot.reduce((s, p) => s + p[0], 0) / 4;
+    const w = 7.4;
+    const h = 1.2;
+    const x = cx - w / 2;
+    const y = top - 2.6;
+    const fill = Math.max(0.6, w * Math.max(0.08, Math.min(1, pct || 0.15)));
+    return (
+      `<g class="kit-progress">` +
+      `<rect class="kit-progress-track" x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${w}" height="${h}"/>` +
+      `<rect class="kit-progress-fill" x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${fill.toFixed(2)}" height="${h}"/>` +
+      `</g>`
+    );
+  }
+
+  function raisingDress(foot, fullH, job) {
+    if (!job || job.preview) return "";
+    return scaffoldFrame(foot, fullH) + kitProgress(foot, job.pct);
+  }
+
   function scaffoldFrame(foot, fullH) {
     const top = liftPts(foot, fullH);
     const lines = [
@@ -4283,7 +4361,11 @@
         const pct = mark.pct || 0.12;
         reserve += `<polygon class="site-tile-progress kind-${mark.kind}" points="${svgPts(insetQuad(quad, 0.18 + (1 - pct) * 0.28))}" />`;
       }
-      if (kind === "dc") paint += stallPaint(c, r);
+      if (kind === "dc") {
+        const slot = SLOTS.dc.findIndex((s) => s.c === c && s.r === r);
+        const live = occ.dcPlan ? occ.dcPlan.live.includes(slot) : slot >= 0 && slot < occ.live.dc;
+        paint += stallPaint(c, r, !live);
+      }
       if (kind === "mcs") {
         paint += `<polygon class="site-stall mcs" points="${svgPts(insetQuad(quad, 0.2))}" />`;
       }
@@ -4327,7 +4409,7 @@
       g += faceRect(box, 0.14, 0.48, 0.72, 0.08, ghost ? "#243038" : "#141418");
       if (!ghost && i === 1) g += faceRect(box, 0.72, 0.1, 0.14, 0.1, PAL.red);
     });
-    if (ghost) g += scaffoldFrame(insetQuad(gridQuad(0.08, 0.22, 3.84, 0.7), 0), fullH + 0.8);
+    if (ghost && !job?.preview) g += raisingDress(insetQuad(gridQuad(0.08, 0.22, 3.84, 0.7), 0), fullH + 0.8, job);
     return wrapBldg("kit-bess", ghost, g, slotPop(occ, "bess", 0), job?.preview);
   }
 
@@ -4373,7 +4455,7 @@
     g += `<polygon class="site-mcs-edge" points="${svgPts(insetQuad(roof.top, 0.08))}" />`;
     g += `<polygon class="site-mcs-amber" points="${svgPts(insetQuad(roof.top, 0.2))}" />`;
     g += `<polygon class="site-roof-under" points="${svgPts(insetQuad(roof.top, 0.18))}" />`;
-    if (bayGhost || raising) g += scaffoldFrame(bay, lift + 1.2);
+    if (raising && occ.preview !== "mcs") g += raisingDress(bay, lift + 1.2, slotJob(occ, "mcs", 0));
     return wrapBldg("kit-mcs", bayGhost, g, slotPop(occ, "mcs", 0) && live >= 1, occ.preview === "mcs" && live < 1);
   }
 
@@ -4395,7 +4477,7 @@
     const holsterL = isoPrism(liftPts(leftHook, h * 0.48), 1.2, ghost ? ghostTone("dc") : SURF.charcoal);
     const holsterR = isoPrism(liftPts(rightHook, h * 0.48), 1.2, ghost ? ghostTone("dc") : SURF.charcoal);
     unit += holsterL.g + holsterR.g;
-    if (ghost) unit += scaffoldFrame(foot, fullH);
+    if (ghost) unit += raisingDress(foot, fullH, job);
     if (!ghost) {
       const a = holsterL.sw;
       const b = holsterR.se;
@@ -4488,7 +4570,7 @@
     if (!ghost) {
       g += `<polygon class="site-portal-glow" points="${svgPts(subQuad(front, 0.1, 0.22, 0.39, 0.48))}" />`;
       g += `<polygon class="site-portal-glow" points="${svgPts(subQuad(front, 0.53, 0.22, 0.82, 0.48))}" />`;
-    } else g += scaffoldFrame(foot, fullH + 1.4);
+    } else g += raisingDress(foot, fullH + 1.4, job);
     return wrapBldg("kit-lounge", ghost, g, slotPop(occ, "lounge", 0), job?.preview);
   }
 
@@ -4513,7 +4595,7 @@
       const stripe = subQuad(awning.top, i / 4 + 0.02, 0.08, (i + 0.42) / 4, 0.92);
       g += `<polygon class="site-market-stripe" points="${svgPts(stripe)}" />`;
     }
-    if (ghost) g += scaffoldFrame(foot, fullH + 1.2);
+    if (ghost) g += raisingDress(foot, fullH + 1.2, job);
     return wrapBldg("kit-market", ghost, g, slotPop(occ, "market", 0), job?.preview);
   }
 
@@ -4718,12 +4800,74 @@
     );
   }
 
-  function yardArtHtml(city, meta, { banner = true } = {}) {
+  function gridStrained(city) {
+    const site = city && city.sites[YOU];
+    if (!site) return false;
+    return site.dc + site.mcs > 0 && site.bess < 1;
+  }
+
+  function trafficPlan(city) {
+    const meta = CITY_BY_ID[city.id];
+    const site = city.sites[YOU];
+    const empty = { parked: 0, queue: 0, trucks: 0, arrivals: 0 };
+    if (!meta || !site || rivalSite(city)) return empty;
+    const share = city.share[YOU] || 0;
+    if (share <= 0 && !hasCap(site)) return empty;
+    const weight = Math.max(share, hasCap(site) ? 0.35 : 0);
+    const arrivals = Math.max(0, Math.round((meta.demand * weight) / 10));
+    const parked = site.dc > 0 ? Math.min(site.dc, Math.max(site.dc, arrivals)) : 0;
+    const queue = Math.min(5, Math.max(0, arrivals - site.dc));
+    const trucks = site.mcs > 0 ? Math.min(2, site.mcs) : 0;
+    return { parked: site.dc > 0 ? site.dc : 0, queue, trucks, arrivals };
+  }
+
+  function vehicleHtml(city) {
+    const plan = trafficPlan(city);
+    if (!plan.parked && !plan.queue && !plan.trucks) return "";
+    const bits = [];
+    const live = city.sites[YOU].dcSlots && city.sites[YOU].dcSlots.length === city.sites[YOU].dc
+      ? city.sites[YOU].dcSlots
+      : Array.from({ length: Math.min(4, plan.parked) }, (_, i) => i);
+    live.slice(0, plan.parked).forEach((idx, n) => {
+      const slot = SLOTS.dc[idx];
+      if (!slot) return;
+      const mid = cellCenter(slot.c, slot.r);
+      const dir = n % 4;
+      bits.push(
+        `<img class="yard-vehicle sedan" data-vehicle="sedan" src="assets/sprites/vehicles/sedan-${dir}.png?v=${SPRITE_V}" alt="" draggable="false" style="left:${mid.x.toFixed(2)}%;top:${(mid.y + 3.2).toFixed(2)}%">`
+      );
+    });
+    for (let i = 0; i < plan.trucks; i += 1) {
+      const slot = SLOTS.mcs[i] || SLOTS.mcs[0];
+      const mid = cellCenter(slot.c, slot.r);
+      bits.push(
+        `<img class="yard-vehicle truck" data-vehicle="truck" src="assets/sprites/vehicles/truck-${i % 4}.png?v=${SPRITE_V}" alt="" draggable="false" style="left:${(mid.x + 1.4).toFixed(2)}%;top:${(mid.y + 2.4).toFixed(2)}%">`
+      );
+    }
+    for (let i = 0; i < plan.queue; i += 1) {
+      const mid = cellCenter(4.15, 2.15);
+      const x = mid.x + 6.2 + i * 4.6;
+      const y = mid.y + 1.2 + i * 2.4;
+      bits.push(
+        `<img class="yard-vehicle sedan queue" data-vehicle="queue" src="assets/sprites/vehicles/sedan-${(i + 1) % 4}.png?v=${SPRITE_V}" alt="" draggable="false" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%">`
+      );
+    }
+    if (plan.queue) {
+      const mid = cellCenter(4.15, 2.15);
+      bits.push(
+        `<span class="yard-queue-tag" style="left:${(mid.x + 8).toFixed(2)}%;top:${(mid.y - 6).toFixed(2)}%">QUEUE · ${plan.queue}</span>`
+      );
+    }
+    return bits.join("");
+  }
+
+  function yardArtHtml(city, meta, { banner = true, traffic = true } = {}) {
     const baseKind = yardBaseKind(city, meta);
     const base = MAP_SPRITES[baseKind] || MAP_SPRITES.dirt;
     let html = `<img class="site-base" src="${base}" alt="" draggable="false" data-kind="${baseKind}">`;
     if (baseKind === "dirt" || baseKind === "flag") html += kitLayersHtml(city);
     if (rivalSite(city)) html += rivalCutHtml(city);
+    if (traffic && (baseKind === "dirt" || baseKind === "flag")) html += vehicleHtml(city);
     if (banner) html += siteRaisingBanner(meta.id);
     return html;
   }
@@ -4746,7 +4890,9 @@
     const boxH = yard.clientHeight;
     if (boxW < 40 || boxH < 40) return;
     const ratio = aw / ah;
-    const maxW = Math.min(boxW * 0.76, 800);
+    const floorW = Math.min(boxW * 0.76, 800);
+    const viewW = window.innerWidth || boxW;
+    const gridSpanX = 0.70;
     const yardEl = $("site-yard");
     const intelOpen = yardEl && yardEl.classList.contains("has-intel");
     let head = 0;
@@ -4757,29 +4903,34 @@
       });
     }
     const gutter = intelOpen ? 12 : 0;
-    const availH = intelOpen ? Math.max(96, boxH - head - gutter - 8) : Math.min(boxH * 0.92, 520);
-    const maxH = Math.min(availH, 520);
-    let w = maxW;
+    const availH = intelOpen ? Math.max(160, boxH - head - gutter - 4) : Math.max(160, boxH * 0.96);
+    let w = Math.min(boxW * 0.98, availH * ratio);
     let h = w / ratio;
-    if (h > maxH) {
-      h = maxH;
+    if (h > availH) {
+      h = availH;
       w = h * ratio;
     }
+    if (w < floorW) w = floorW;
+    const havePad = w * gridSpanX;
+    const wantPad = viewW * 0.68;
+    const zoom = Math.max(1, wantPad / Math.max(1, havePad));
+    stack.style.aspectRatio = css;
     stack.style.width = `${Math.round(w)}px`;
-    stack.style.maxWidth = `${Math.round(w)}px`;
+    stack.style.maxWidth = "none";
+    stack.dataset.padFrac = viewW ? ((havePad * zoom) / viewW).toFixed(2) : "";
+    stack.style.transformOrigin = intelOpen ? "center 18%" : "center center";
     if (intelOpen) {
-      const extra = Math.max(0, boxH - head - gutter - h);
       stack.style.position = "relative";
-      stack.style.left = "auto";
+      stack.style.left = "50%";
       stack.style.top = "auto";
-      stack.style.transform = "none";
-      stack.style.margin = `${gutter + Math.round(extra / 2)}px auto 0`;
+      stack.style.margin = `${gutter}px 0 0`;
+      stack.style.transform = `translateX(-50%) scale(${zoom.toFixed(3)})`;
     } else {
       stack.style.position = "";
       stack.style.left = "";
       stack.style.top = "50%";
-      stack.style.transform = "";
       stack.style.margin = "";
+      stack.style.transform = `translate(-50%, -50%) scale(${zoom.toFixed(3)})`;
     }
   }
 
@@ -4988,6 +5139,8 @@
     stack.dataset.sealed = sealed ? "1" : "0";
     if (rival && (sealed || contested)) stack.dataset.rival = rival.id;
     else delete stack.dataset.rival;
+    const strained = gridStrained(city);
+    stack.classList.toggle("strained", strained);
     const flashing = yardFlash && yardFlash.city === city.id && (yardFlash.hold || yardFlash.until > Date.now());
     const popping = pops.some((p) => p.city === city.id && p.until > Date.now());
     stack.classList.toggle("yard-flash", Boolean(flashing));
@@ -5669,6 +5822,13 @@
       selected = "phoenix";
       return null;
     }
+    if (name === "states" || name === "midbuild") {
+      z("flagstaff").dc = 1;
+      z("flagstaff").dcSlots = [0];
+      state.queue.push({ faction: YOU, city: "flagstaff", type: "dc", left: 1, cost: 0, slot: 2 });
+      selected = "flagstaff";
+      return "flagstaff";
+    }
     if (name === "pop" || name === "complete") {
       z("flagstaff").dc = 2;
       selected = "flagstaff";
@@ -5992,6 +6152,14 @@
       const site = params.get("site") || shotCity;
       if (site && CITY_BY_ID[site]) enterSite(site);
       if (state.pendingEvent || state.pendingDeal || state.pendingFork || state.pendingEdict) openDealSheet();
+      if (shot === "states" || shot === "midbuild") {
+        hoverKit = "dc";
+        previewKit = "dc";
+        cursorCell = { c: 4, r: 1 };
+        const snap = nearestOkSlot(state.cities.flagstaff, "dc", cellCenter(4, 1));
+        rememberGhost(state.cities.flagstaff, "dc", snap);
+        renderSiteYard();
+      }
       if (shot === "hover" || shot === "consequence" || shot === "footprint") {
         hoverKit = "dc";
         if (shot === "footprint") {
@@ -6017,7 +6185,7 @@
   }
 
   window.__EMPIRE_SMOKE__ = {
-    build: "rts-yard-26",
+    build: "rts-yard-27",
     monthlyNet,
     cityNet: (id) => cityNet(state.cities[id], YOU),
     crewTruth,
@@ -6044,6 +6212,9 @@
     enqueue,
     applyPlayerPrice: (id, price) => applyPlayerPrice(state.cities[id], price),
     placementRead: (id, type) => placementRead(state.cities[id], type),
+    traffic: (id) => trafficPlan(state.cities[id]),
+    strained: (id) => gridStrained(state.cities[id]),
+    panToCity: (id) => panToCity(id),
     smartSlot: (id) => {
       const plan = dcPlacement(state.cities[id], null);
       return smartDcSlot(plan.used, state.cities[id]);

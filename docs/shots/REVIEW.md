@@ -1,4 +1,20 @@
-# Empire playtest — rts-yard-26
+# Empire playtest — rts-yard-27
+
+Replay stills: `?shot=contested-built` (sedans at the DC stalls, a truck at MCS, a queue past the stalls) · `?shot=states` (faint planned footprint, red scaffold with a progress bar, finished kit) · exit a contested yard at 1280×720 (territory fields, CLAIM tags, selected bracket).
+
+Checked-in frames: `yard-traffic-27.png` · `yard-states-27.png` · `yard-map-27.png` · `yard-hover-left-26.png` · `yard-hover-right-26.png` · `yard-map-26.png` · `yard-pop-26.png`.
+
+## rts-yard-27
+
+Live play of rts-yard-26.
+
+- **Pad scale.** The yard zooms so the diamond covers at least 65% of the viewport width. Grid snap and the screen-matrix pointer pick stay on the same cells.
+- **Traffic.** Grey sedans sit on DC stalls and grey semis on MCS. Arrival count is demand times share. Cars past the stalls are the unmet queue.
+- **Kit states.** A planned slot is a faint footprint. A raising kit wears a faction-red scaffold and a progress bar on the building. A finished kit is solid and drops the scaffold.
+- **Strain.** With chargers and no BESS, cable glow flickers amber and idle stalls dim.
+- **Ownership.** Each held city has a soft field sized by demand and faded by share. A contested city splits the two colors with a seam. Objective cities pulse with a CLAIM · N MO tag, the selected city gets a bracket, and the other markers stay the same size. The objective banner pans to the target. The terrain is darker so the labels read.
+
+## rts-yard-26
 
 Replay stills: game start (Phoenix HQ clear of Flagstaff) · `?shot=empty` then a real pointer on the far-left cell and the far-right cell · `?shot=pop` (build-complete bounce, cyan ring, income floater).
 
