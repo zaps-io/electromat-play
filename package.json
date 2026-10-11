@@ -1,0 +1,10 @@
+{
+  "name": "electromat-play",
+  "private": true,
+  "scripts": {
+    "test:pointer": "playwright test tests/pad-pointer.spec.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1"
+  }
+}

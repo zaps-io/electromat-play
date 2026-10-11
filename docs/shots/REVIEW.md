@@ -1,4 +1,18 @@
-# Empire playtest — rts-yard-24
+# Empire playtest — rts-yard-25
+
+Replay stills: game start (rings beside the dot, subtitle clear) · `?shot=empty` then a real pointer across the pad (two DC slots) · `?shot=contested-built` (yard below the undercut row).
+
+Checked-in frames: `yard-map-25.png` · `yard-hover-a-25.png` · `yard-hover-b-25.png` · `yard-contested-25.png` · `yard-map-24.png` · `yard-hover-a-24.png` · `yard-hover-b-24.png` · `yard-contested-24.png`.
+
+## rts-yard-25
+
+Live play of rts-yard-24.
+
+- **Pointer.** A real pointermove uses the SVG screen matrix (yard translate, viewBox scale, device pixel ratio) and the isometric inverse. Every point on the pad art picks a cell, and the footprint moves to the nearest free slot. Left and right halves of the pad are different slots.
+- **Contested yard.** The share and undercut header is in the column above the pad, with about 12 px of margin. The back row stays visible at 1600×900 and 1280×720.
+- **Names.** Rings and flags sit on the dot, so Los Angeles, Albuquerque, and St. George stay clear, and the Salt Lake City ring no longer covers the map subtitle.
+
+## rts-yard-24
 
 Replay stills: game start (legend under the interconnect label, clear of the build-order strip) · `?shot=footprint` (DC hover, two cursor cells) · `?shot=contested-built` (contested yard).
 

@@ -1,4 +1,4 @@
-/* empire-build: rts-yard-24 */
+/* empire-build: rts-yard-25 */
 :root {
   --red: #e63225;
   --charcoal: #1e1e24;
@@ -813,6 +813,8 @@ button {
   position: relative;
   min-height: 0;
   container-type: size;
+  display: flex;
+  flex-direction: column;
 }
 
 .site-yard > #site-plate,
@@ -844,6 +846,16 @@ button {
 
 .site-yard:has(#site-plate:not(.hidden)) > #site-overlay-intel:not(.hidden) {
   top: 2.85rem;
+}
+
+.site-yard.has-intel > #site-plate,
+.site-yard.has-intel > #site-overlay-intel,
+.site-yard.has-intel:has(#site-plate:not(.hidden)) > #site-overlay-intel:not(.hidden) {
+  position: relative;
+  top: auto;
+  left: auto;
+  right: auto;
+  flex: 0 0 auto;
 }
 
 .site-yard > #site-overlay-intel > p:not(.intel-line) {
@@ -3207,10 +3219,10 @@ button {
 .own-radius {
   position: absolute;
   left: auto;
-  right: -22px;
-  bottom: 30px;
-  width: 46px;
-  height: 46px;
+  right: -32px;
+  bottom: 10px;
+  width: 16px;
+  height: 16px;
   transform: none;
   border-radius: 50%;
   border: 2px solid var(--own, #e63225);
@@ -3220,20 +3232,20 @@ button {
 }
 
 .own-radius.alt {
-  width: 60px;
-  height: 60px;
-  right: -30px;
-  bottom: 24px;
+  width: 18px;
+  height: 18px;
+  right: -46px;
+  bottom: 8px;
   background: transparent;
 }
 
 .faction-flag {
   position: absolute;
   left: auto;
-  right: -6px;
-  bottom: 48px;
-  width: 22px;
-  height: 28px;
+  right: -30px;
+  bottom: 6px;
+  width: 14px;
+  height: 14px;
   transform: none;
   z-index: 4;
   pointer-events: none;
@@ -3241,8 +3253,8 @@ button {
 }
 
 .faction-flag.alt {
-  right: 10px;
-  bottom: 62px;
+  right: -46px;
+  bottom: 18px;
   z-index: 5;
 }
 
@@ -3356,10 +3368,10 @@ button {
 .city-node.obj-target .obj-ring {
   position: absolute;
   left: auto;
-  right: -16px;
-  bottom: 26px;
-  width: 44px;
-  height: 44px;
+  right: -34px;
+  bottom: 8px;
+  width: 18px;
+  height: 18px;
   transform: none;
   border: 1.5px dashed #e89a2e;
   border-radius: 50%;
@@ -3389,11 +3401,11 @@ button {
 @keyframes obj-pulse {
   0%,
   100% {
-    opacity: 0.45;
-    transform: scale(0.92);
+    opacity: 0.55;
+    transform: scale(0.96);
   }
   50% {
     opacity: 1;
-    transform: scale(1.06);
+    transform: scale(1.04);
   }
 }

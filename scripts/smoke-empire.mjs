@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* rts-yard-24: pad raycast, legend clear of the strip, readable city names. */
+/* rts-yard-25: real pointer pick, yard below the header, rings off names. */
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,13 +16,13 @@ const fail = (msg) => {
 };
 const ok = (msg) => console.log(`OK   ${msg}`);
 
-if (!html.includes('content="rts-yard-24"') || !html.includes("styles.css?v=rts-yard-24") || !html.includes("game.js?v=rts-yard-24")) {
-  fail("index.html cache is not rts-yard-24");
-} else ok("index.html cache rts-yard-24");
+if (!html.includes('content="rts-yard-25"') || !html.includes("styles.css?v=rts-yard-25") || !html.includes("game.js?v=rts-yard-25")) {
+  fail("index.html cache is not rts-yard-25");
+} else ok("index.html cache rts-yard-25");
 
-if (!game.includes("rts-yard-24") || !css.includes("rts-yard-24") || !review.includes("rts-yard-24")) {
-  fail("game/styles/REVIEW cache is not rts-yard-24");
-} else ok("game/styles/REVIEW cache rts-yard-24");
+if (!game.includes("rts-yard-25") || !css.includes("rts-yard-25") || !review.includes("rts-yard-25")) {
+  fail("game/styles/REVIEW cache is not rts-yard-25");
+} else ok("game/styles/REVIEW cache rts-yard-25");
 
 if (!game.includes("function placementRead") || !game.includes("COMPLETES CANOPY") || !html.includes("site-consequence")) {
   fail("hover consequence line missing");
@@ -395,6 +395,26 @@ if (!process.exitCode) ok("yard-24 map, two hovers, and contested stills");
 if (!review.includes("yard-map-24.png") || !review.includes("yard-hover-a-24.png") || !review.includes("yard-hover-b-24.png") || !review.includes("yard-contested-24.png")) {
   fail("REVIEW must list the yard-24 stills");
 } else ok("REVIEW lists yard-24 stills");
+
+if (!game.includes("getScreenCTM") || !game.includes("previewKit")) {
+  fail("screen-space pad pick missing");
+} else ok("screen-space pad pick");
+
+const yard25 = [
+  ["docs/shots/yard-map-25.png", 80000],
+  ["docs/shots/yard-hover-a-25.png", 80000],
+  ["docs/shots/yard-hover-b-25.png", 80000],
+  ["docs/shots/yard-contested-25.png", 80000],
+];
+for (const [rel, min] of yard25) {
+  const p = join(root, rel);
+  if (!existsSync(p)) fail(`${rel} missing`);
+  else if (statSync(p).size < min) fail(`${rel} too small (${statSync(p).size} bytes)`);
+}
+if (!process.exitCode) ok("yard-25 map, two real-pointer hovers, and contested stills");
+if (!review.includes("yard-map-25.png") || !review.includes("yard-hover-a-25.png") || !review.includes("yard-hover-b-25.png") || !review.includes("yard-contested-25.png")) {
+  fail("REVIEW must list the yard-25 stills");
+} else ok("REVIEW lists yard-25 stills");
 
 if (process.exitCode) {
   console.error("smoke-empire failed");
