@@ -4,7 +4,7 @@
 
 The station is not built yet. The continent already is.
 
-An Age of Empires loop on the Western Interconnect. One isometric map from the region down to a site. Crew trucks build the chargers. Traffic drives in and pays. Voltspan, Gridhawk, and Arcway contest the plots.
+An Age of Empires loop on the Western Interconnect. One isometric map from the parchment region down to a desert site. Crew trucks build the chargers. Traffic drives in, plugs in, and pays. Voltspan, Gridhawk, and Arcway contest the plots.
 
 This is **not** the FPV night-shift game.
 
@@ -16,12 +16,12 @@ Palette: `#E63225` identity · `#1E1E24` charcoal · `#E89A2E` amber (informatio
 
 ## How to play
 
-1. Open the public link. You start on the Phoenix plot in the Pilot Age.
-2. Drag a box or click a crew truck. Right-click the ground to move, a resource node to gather, or a scaffold to build.
-3. The command card at the bottom left raises buildings. `W` arms a DC row, then click a free pad on your plot. Semis arrive only after an MCS bay (`E`, Fleet Age).
-4. The top bar is Capital, Grid MW, Permits, Copper, and Steel. The minimap is the bottom right.
-5. Advance the age from the top plaque. Pilot is L2 and DC. Fleet unlocks MCS and BESS. Megawatt unlocks the depot and the substation tie-in.
-6. Arrow keys pan. The wheel zooms from the region down to a site. A scout van clears the fog.
+1. Open the public link. You start on the Phoenix plot in the Pilot Age with three crew trucks.
+2. Drag a box or click a crew truck. Right-click the ground to move, a scrapyard or city hall to gather, or a scaffold to build. `.` jumps to the next idle crew.
+3. The command grid is the bottom right. `W` arms a DC charger, then click a free pad on your plot. `Tab` opens training and the permit office. Semis arrive only at an MCS bay, and only in the Megawatt Age (`Z`).
+4. The top bar is Capital, Grid MW, Permits, Copper/Steel, and crews. The minimap is the bottom left. The portrait sits bottom center.
+5. Research the next age from the emblem under the wordmark. Fleet needs four DC chargers and a Warehouse. The pad is paved when Fleet finishes. Megawatt needs a Substation, a Lounge, and a second city.
+6. Arrow keys pan. The wheel zooms from the region down to a site. Pause, 1, 2, and 4 set the clock.
 
 ## Local
 
