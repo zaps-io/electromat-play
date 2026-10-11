@@ -1,191 +1,24 @@
-# Empire playtest — rts-yard-28
+# Empire playtest — AoE rebuild
 
-Replay stills at 1600×900: armed DC footprint on an open pad at two cursor spots (`yard-arm-a-28.png`, `yard-arm-b-28.png`) · contested yard with the income float above the kit roof (`yard-floats-28.png`) · map with the terrain covering the panel and cities on the painted coast (`yard-map-28.png`, zoomed `yard-map-zoom-28.png`).
+One isometric Western Interconnect. The camera pans and zooms from the region to a site. Crews are the villagers. Traffic is the payoff.
 
-## rts-yard-28
+Stills at 1600×900:
 
-Live play of rts-yard-27.
+- `aoe-region.png` — region view, territory borders, units, fog, minimap
+- `aoe-compound.png` — Phoenix zoomed in with a built compound
+- `aoe-build.png` — DC row under construction, crew on the scaffold
+- `aoe-select.png` — box selection and the command card
+- `aoe-age.png` — Fleet Age banner
+- `aoe-vehicles.png` — labeled vehicle roster
+- `aoe-contest.png` — Voltspan contesting a Zaps plot
 
-- **Arm, then place.** Tray click or C/M/B/L/K only arms the footprint. The pad click commits to the hovered or nearest free slot. Shift-click stays armed for another. ESC or right-click cancels. `__EMPIRE_SMOKE__.deploy(kind, slot)` still queues directly for tests.
-- **Floats.** Income floats sit above the kit roof and inside the frame.
-- **Toasts.** Grade and idle notes stack at the top center of the map and dismiss themselves.
-- **Map.** CLAIM brackets stay out of the St. George / Las Vegas gap. Phoenix crew chips stay off the Tucson bracket. The crew count no longer carries a trailing dot. The terrain covers the map panel and the pan cannot open a gap. City pins use one lat/lon plane anchored on Los Angeles, Denver, and El Paso, so Los Angeles and San Diego sit on the coast and Las Vegas, Phoenix, and Tucson sit inland. The Western Interconnect title is a strip above the map. The deploy-bar hotkeys are two lines at 11px.
+## Loop
 
-## rts-yard-27
+- Select crews with a click or a box. Right-click moves them, sends them to gather, or puts them on a building.
+- Resources sit on the top bar: Capital, Grid MW, Permits, Copper, Steel. Nodes on the map are worked by crews.
+- The bottom-left card builds Site HQ, DC row, L2, Lounge, MCS, BESS, Market, tie-in, and Depot. Hotkeys Q W F T C / E R A S D / V. Footprints snap to the plot. A scaffold fills in, then the building.
+- Ages: Pilot (L2 and DC), Fleet (MCS and BESS), Megawatt (depot and tie-in). Advancing spends resources and time and raises a banner.
+- Voltspan, Gridhawk, and Arcway expand, build, and contest plots. Ownership is a player-color border.
+- Cars, vans, trucks, and semis drive in, charge, and pay with floating +$ text. Semis use MCS bays only.
 
-Replay stills at 1600×900: `?shot=contested-built` (sedans at the DC stalls, a truck at MCS, a queue past the stalls, the whole pad inside the frame) · `?shot=states` (faint planned footprint, red scaffold with a progress bar, finished kit) · exit a contested yard (territory fields, CLAIM tags clear of labels, selected bracket).
-
-Checked-in frames: `yard-traffic-27.png` · `yard-states-27.png` · `yard-map-27.png` · `yard-hover-left-26.png` · `yard-hover-right-26.png` · `yard-map-26.png` · `yard-pop-26.png`.
-
-## rts-yard-27
-
-Live play of rts-yard-26.
-
-- **Pad scale.** The whole pad, including kit height and the vehicle queue, fits inside the yard with about 16px of margin. Filling 65% of the viewport yields when that would clip a kit. Grid snap and the screen-matrix pointer pick stay on the same cells.
-- **Traffic.** Grey sedans sit on DC stalls and grey semis on MCS. Arrival count is demand times share. Cars past the stalls are the unmet queue.
-- **Kit states.** A planned slot is a faint footprint. A raising kit wears a faction-red scaffold and a progress bar on the building. A finished kit is solid and drops the scaffold.
-- **Strain.** With chargers and no BESS, cable glow flickers amber and idle stalls dim.
-- **Ownership.** City coordinates are the rts-yard-25 set. Each held city has a small soft field sized by demand and faded by share, light enough that the terrain still reads. A contested city splits both colors with a seam. Objective cities pulse with a CLAIM · N MO tag set off to the side away from neighbors. The HQ sprite stays off every label. The selected city gets a bracket, and the other markers stay the same size. The objective banner pans to the target. The terrain is darker so the labels read.
-
-## rts-yard-26
-
-Replay stills: game start (Phoenix HQ clear of Flagstaff) · `?shot=empty` then a real pointer on the far-left cell and the far-right cell · `?shot=pop` (build-complete bounce, cyan ring, income floater).
-
-Checked-in frames: `yard-hover-left-26.png` · `yard-hover-right-26.png` · `yard-map-26.png` · `yard-pop-26.png` · `yard-map-25.png` · `yard-hover-a-25.png` · `yard-hover-b-25.png` · `yard-contested-25.png`.
-
-## rts-yard-26
-
-Live play of rts-yard-25.
-
-- **Ghost slot.** Hover sets the ghost to the nearest free slot for that kit on every pointer move. A sweep from the far-left cell to the far-right cell reports two different slots on `__EMPIRE_SMOKE__.ghostSlot`.
-- **Names.** The Phoenix HQ sprite sits lower and smaller so Flagstaff, and the other city names, stay clear.
-- **Complete.** A finished kit bounces, flashes a cyan ring, and floats its monthly output. Idle crews show a pip on the plate and the ops strip. Hovering a built kit shows that output.
-
-## rts-yard-25
-
-Replay stills: game start (rings beside the dot, subtitle clear) · `?shot=empty` then a real pointer across the pad (two DC slots) · `?shot=contested-built` (yard below the undercut row).
-
-Checked-in frames: `yard-map-25.png` · `yard-hover-a-25.png` · `yard-hover-b-25.png` · `yard-contested-25.png` · `yard-map-24.png` · `yard-hover-a-24.png` · `yard-hover-b-24.png` · `yard-contested-24.png`.
-
-## rts-yard-25
-
-Live play of rts-yard-24.
-
-- **Pointer.** A real pointermove uses the SVG screen matrix (yard translate, viewBox scale, device pixel ratio) and the isometric inverse. Every point on the pad art picks a cell, and the footprint moves to the nearest free slot. Left and right halves of the pad are different slots.
-- **Contested yard.** The share and undercut header is in the column above the pad, with about 12 px of margin. The back row stays visible at 1600×900 and 1280×720.
-- **Names.** Rings and flags sit on the dot, so Los Angeles, Albuquerque, and St. George stay clear, and the Salt Lake City ring no longer covers the map subtitle.
-
-## rts-yard-24
-
-Replay stills: game start (legend under the interconnect label, clear of the build-order strip) · `?shot=footprint` (DC hover, two cursor cells) · `?shot=contested-built` (contested yard).
-
-Checked-in frames: `yard-map-24.png` · `yard-hover-a-24.png` · `yard-hover-b-24.png` · `yard-contested-24.png` · `yard-map-23.png` · `yard-hover-23.png` · `yard-panel-23.png` · `yard-contested-23.png` · `yard-map.png` · `yard-footprint.png` · `yard-midbuild.png` · `yard-five.png`.
-
-## rts-yard-24
-
-Live play of rts-yard-23.
-
-- **Pad picking.** A point anywhere on the pad diamond resolves to a cell. The footprint moves to the nearest free slot for that kit, and a click commits that slot.
-- **Legend.** It sits at the top-left, under the Western Interconnect label, clear of the build-order strip.
-- **Names.** Faction rings and flags sit above-right of the city dot. Labels carry a dark halo so Flagstaff, LA, San Diego, SLC, Denver, El Paso, and Dallas stay readable.
-- **Contested yard.** The white completion glow is dimmed, and the pad sits a few pixels below the undercut row.
-
-## rts-yard-23
-
-Replay stills (paused board, no title): `?shot=map` (faction cloth, radii, legend) · `?shot=footprint` (DC hover, dim hatch, footprint on the nearest open slot) · `?shot=raising` (mid-build, side panel in view) · `?shot=contested-built` (full Vegas yard, share header, crews off the kits).
-
-Checked-in frames: `yard-map-23.png` · `yard-hover-23.png` · `yard-panel-23.png` · `yard-contested-23.png` · `yard-map.png` · `yard-footprint.png` · `yard-midbuild.png` · `yard-five.png` · `yard-empty.png` · `yard-pad.png` · `yard-ghosts.png` · `yard-event.png` · `yard-raising.png` · `yard-full.png` · `yard-rival.png` · `yard-contested.png` · `yard-hover.png` · `yard-threat.png` · `yard-fork.png` · `yard-pop.png` · `yard-objective.png` · `yard-crew.png` · `yard-scout.png` · `yard-scout-map.png` · `yard-skirmish.png` · `yard-fog.png` · `yard-pin-fight.png` · `yard-waypoint.png`.
-
-## rts-yard-23
-
-Live play of rts-yard-22. Five reads that were stepping on each other.
-
-- **Side panel.** Build rows are one line (name, months, bar). The price slider sits in its own footer under the scrolling stats, so BESS and Lounge stay clear of it at 1600×900 and 1280×720.
-- **Raising chip.** The amber months chip is its own row between the pad and the ghost note.
-- **DC hover.** Cells that are not this kit are a light hatch. Strong red is only a real block, and it carries a reason. The footprint snaps to the nearest open grid slot.
-- **Contested yard.** The share header floats on the pad, so the yard scale stays the same as an empty dirt pad. Once a kit is complete, idle RAISE chips move to the margin instead of sitting on the building.
-- **Factions.** Zaps is red `#E63225`. Voltspan cyan, Gridhawk amber, Arcway violet, Rednode rose, Ampfield green. Flags and ownership radii use those colors. A legend sits on the map. Empty dirt is a neutral stake. Fog still marks an unrevealed rival.
-
-## rts-yard-22
-
-Replay stills (paused board, no title): `?shot=map` (flags, share bars, fog, objective rings) · `?shot=footprint` (empty Flagstaff, DC footprint snapped to the grid) · `?shot=raising` (mid-build scaffold and months ring) · `?shot=full` (five-kit yard) · `?shot=plate` · `?shot=edict` · `?shot=grade` · `?shot=contested` · `?shot=empty` · `?shot=ghosts` · `?shot=rival` · `?shot=event` · `?shot=hover` · `?shot=fork` · `?shot=pop` · `?shot=objective` · `?shot=crew` · `?shot=scout` · `?shot=scout-map` · `?shot=skirmish` · `?shot=fog` · `?shot=pin-fight` · `?shot=waypoint` · `?showcase=1`.
-
-Checked-in frames: `yard-map.png` · `yard-footprint.png` · `yard-midbuild.png` · `yard-five.png` · `yard-empty.png` · `yard-pad.png` · `yard-ghosts.png` · `yard-event.png` · `yard-raising.png` · `yard-full.png` · `yard-rival.png` · `yard-contested.png` · `yard-hover.png` · `yard-threat.png` · `yard-fork.png` · `yard-pop.png` · `yard-objective.png` · `yard-crew.png` · `yard-scout.png` · `yard-scout-map.png` · `yard-skirmish.png` · `yard-fog.png` · `yard-pin-fight.png` · `yard-waypoint.png`.
-
-## rts-yard-22
-
-Playtest-21 scored the plate. This pass is the yard you can read at a glance, the way an Age of Empires build grid reads.
-
-- **Ghost to complete.** Choosing a kit lights valid cells cyan and blocked cells red with a short reason. A translucent footprint snaps to the grid under the cursor. Commit leaves a scaffold on those cells. The solid fills as the months pass, and the months-left ring sits on the ghost. Crew chips sit on the tiles, not under the diamond.
-- **Silhouettes.** DC is a row of tall slim white posts. MCS is a broad truck gantry with amber trim. BESS is a low dark cabinet bank with cyan lights. Lounge is a low glass box with a warm glow. Market is a red striped awning. The same shapes sit in the deploy tray. The pad is the ochre gravel tile.
-- **One ledger.** The top-bar `$/MO` is the same monthly net as the city income line. Crews on the plate and in the Phoenix blurb are free crews over three. The build-order card is a collapsible strip along the bottom of the map, so it no longer covers the yard.
-- **Map.** Held cities wear a faction-colored flag and a thin tinted ownership radius. A share bar sits under every city name. Unrevealed rivals are a fog mark instead of a grey UNKNOWN box. Flagstaff and Tucson, the opening targets, pulse with a dashed ring and a months-left tag.
-
-## rts-yard-21
-
-Replay stills (paused board, no title): `?shot=plate` (big-number HUD) · `?shot=edict` (strategy cards) · `?shot=grade` (streak ×3 and grade) · `?shot=contested` (share vs rival, price, income) · `?shot=empty` (Flagstaff dirt chessboard) · `?shot=ghosts` (MCS violet ring and edge) · `?shot=raising` · `?shot=full` · `?shot=rival` (LA blocked tray) · `?shot=event` (field-call only — threat chip suppressed) · `?shot=hover` (canopy consequence) · `?shot=fork` · `?shot=pop` (one complete toast) · `?shot=objective` (hold-share arc) · `?shot=crew` (crew tokens on the Phoenix yard) · `?shot=scout` (Vegas detector on the yard) · `?shot=scout-map` (Vegas + LA pulses on the map) · `?shot=skirmish` (price-war tug lane) · `?shot=fog` (Vegas DET plus 1-hop INTEL, distant rivals muted) · `?shot=pin-fight` (Vegas map-pin tug) · `?shot=waypoint` (crew pips on Flagstaff and Tucson) · `?showcase=1`.
-
-Checked-in frames: `yard-empty.png` · `yard-pad.png` · `yard-ghosts.png` · `yard-event.png` · `yard-raising.png` · `yard-full.png` · `yard-rival.png` · `yard-contested.png` · `yard-hover.png` · `yard-threat.png` · `yard-fork.png` · `yard-pop.png` · `yard-objective.png` · `yard-crew.png` · `yard-scout.png` · `yard-scout-map.png` · `yard-skirmish.png` · `yard-fog.png` · `yard-pin-fight.png` · `yard-waypoint.png`.
-
-## rts-yard-21
-
-Playtest-20 scored the interconnect. This pass is the scoreboard: big numbers, a scored win track, and forks that are not a second build menu.
-
-- **Primary plate.** Cash is the largest glyph. Continental share, month (`Y1 M01`), free crews, streak multiplier, and the live grade sit on the same charcoal plate in IBM Plex Mono, amber labels, cream figures. Majority / states / MCS stay a smaller track under it, with one next-unlock line.
-- **Scored campaign.** Crossing a majority, state, or MCS gate pays a cash bonus and a milestone toast. Share crossing 25 / 50 / 75 in a city you hold does the same.
-- **Strategy edicts.** Every two months (not on the month-6 or year-end grade) the board pauses on three exclusive cards: corridor subsidy (MCS −20% this month), amenity push (lounge share +5% while it holds), reserve crews (idle cost waived, raises +1 month). Rivals cut price or queue a lounge on a pad they already hold. They do not take yours.
-- **Streak.** Objective clears chain (`CLAIM → HOLD → LOUNGE`). The multiplier on the plate scales the payout, up to ×3, and breaks if an arc is missed. The ops strip keeps one large `NEXT ·` line.
-- **Grade.** The letter is always on the plate. Month 6 and each year-end pause for an A–D ceremony from share, cities, MCS, and streak.
-
-## rts-yard-20
-
-Playtest-19 scored 9/10. Three interconnect reads, still no combat units and no pad seizure.
-
-- **Interconnect fog.** A detector still rings the scouted city for 4 months (`DET n`, free refresh). For that same pulse it radiates one hop along the corridor: neighbors wear a soft INTEL glow, and the corridor segment lights cyan. Rival pins you have not detected, and that are not adjacent to a live detector, stay muted and read UNKNOWN. A city you already hold, or a scout still in the air, is not fog. Echo cities do not get the price line or the free refresh.
-- **Map-pin fight.** PRICE WAR and AMENITY RACE keep the yard tug lane and the ops meters. The contested city's map pin also shows a small Zaps/rival tug and a PUSH chip, and the pin flashes. Click the chip or the pin (or press `P`) to push. Double-click the pin to open the yard. Nobody takes the pad. No units, no flanking.
-- **Crew select → waypoint.** Click a crew token, or press `1` `2` `3` on a yard, to select it. Click it again to cycle RAISE → RESPOND → SCOUT. SCOUT and `S` arm the selected crew and wait for a city click — they do not launch at the open yard. Clicking a city then sets that crew's SCOUT or RESPOND target. Map pips sit on every Zaps city (and on a rival pin only while a scout is assigned there), not only Phoenix. Yard tokens stay on Zaps yards. Rival yards still have none.
-
-## Tried and dropped
-
-- Fogging the whole painted continent. Only unknown rival pins mute. Dirt and Zaps yards stay readable.
-- A second detector badge on the hop. Neighbors get INTEL, not `DET n`, and not the free refresh.
-- Replacing the yard tug with the map pin. Both stay. The pin is the interconnect read.
-- Marching tokens as combat units, or paying a skirmish with the rival pad.
-
-## Holds from rts-yard-20
-
-- Detector fog, map-pin PUSH, and crew waypoints.
-- Ops objectives, corridor pressure, the build-order fork, and field calls.
-- Rival pads stay sealed. LA, Dallas, and Denver still read RIVAL SITE.
-- Empty claimable yards stay a dirt chessboard.
-- MCS ring and roof edge stay violet (`#d8c4ff`).
-- Goldilocks frame stays 76% / cap 800.
-- Official 1.8KB wordmarks (`?v=canon-1823`) are unchanged.
-
-## Holds from rts-yard-19
-
-- Scout pulse, yard tug lane, and the three crew tokens.
-- Ops objectives, corridor pressure, and the build-order fork.
-- Rival pads stay sealed. LA, Dallas, and Denver still read RIVAL SITE.
-- Empty claimable yards stay a dirt chessboard. No survey-flag hero.
-- Field calls dock on the map column. Inspector price and `[` `]` stay visible.
-- MCS ring and roof edge stay violet (`#d8c4ff`). DC rings stay cyan.
-- An open UNDERCUT field call hides the contested UNDERCUT chip.
-- A kit completion emits one toast node. The yard flash and in-place pop stay.
-- Goldilocks frame stays 76% / cap 800.
-- Official 1.8KB wordmarks (`?v=canon-1823`) are unchanged.
-- On the continent map, `1` `2` `4` are still speed.
-
-## Playtest notes
-
-1. Open `?shot=plate` — cash is the largest figure. Share, month, free crews, streak, and grade sit on the same plate. The track under it names the next unlock. The ops line reads `NEXT ·`.
-2. Open `?shot=edict` — three exclusive cards. Picking one starts the edict and a rival answer. The other two are gone.
-3. Open `?shot=grade` — streak reads ×3 with `CLAIM → HOLD → LOUNGE`, and the grade letter is on the plate.
-4. Open `?shot=contested` — Vegas shows your share, VOLTSPAN, $/kWh, and income / mo large on the yard.
-5. Open `?shot=fog` — Vegas wears `DET 4`. Phoenix, Los Angeles, St. George, and Reno wear INTEL, and the corridors from Vegas glow. Dallas, Denver, Salt Lake City, El Paso, and San Diego stay muted UNKNOWN.
-2. Open `?shot=pin-fight` — the Vegas pin flashes and shows a red/cyan tug labeled PUSH. Clicking it moves Zaps the same way `P` does. The yard lane is still there if you open the site.
-3. Open `?shot=waypoint` — crew 1 is selected on Flagstaff (RESPOND), crew 2 is on Tucson (SCOUT), crew 3 stays on Phoenix. The hint reads CLICK A CITY.
-4. Select a crew, press `S` or cycle to SCOUT, then click a different city. The scout does not auto-launch at the yard you had open.
-5. Open `?shot=empty` and `?shot=rival` — dirt chessboard, LA still RIVAL SITE, no crew tokens on the rival pad.
-6. Open `?shot=scout-map` — Vegas `DET 4` and LA `DET 2` still pulse. Their neighbors pick up the hop glow.
-
-## Verdict
-
-| Bar | Grade | Evidence |
-|---|---|---|
-| Big-number plate | **RAISE** | Cash largest; share, month, crews, streak, grade on the plate |
-| Edicts | **RAISE** | Three exclusive cards; rivals answer; pads stay sealed |
-| Streak and grade | **RAISE** | ×3 chain on the HUD; A–D from share, cities, MCS, streak |
-| Next objective | **RAISE** | One large `NEXT ·` line |
-| Interconnect fog | **HOLD** | DET on the scouted city, INTEL one hop, UNKNOWN rivals muted |
-| Map-pin fight | **RAISE** | Pin tug + PUSH, click or `P`, yard lane kept |
-| Crew waypoint | **RAISE** | Select then city, pips on Flagstaff and Tucson |
-| Rival pad seizure | **HOLD** | LA/Dallas/Denver tray = RIVAL SITE |
-| Empty claim | **HOLD** | Flagstaff dirt chessboard |
-| Field-call dock | **HOLD** | price visible |
-| MCS violet / one toast | **HOLD** | `#d8c4ff`, single COMPLETE node |
-| Yard framing | **HOLD** | ~76% of yard, cap 800 |
-| Brand | **HOLD** | Official cream/red wordmarks |
-| Scout pulse / yard tug / tokens | **HOLD** | rts-yard-19 reads stay |
-
-Night Shift untouched. Cache `rts-yard-21`.
+Official cream and red wordmarks stay 1823 bytes. Palette is red `#E63225`, charcoal `#1E1E24`, amber `#E89A2E`, cyan `#00D4F5`, cream `#F5F0E8`.

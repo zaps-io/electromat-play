@@ -4,7 +4,7 @@
 
 The station is not built yet. The continent already is.
 
-Static Civ / Command & Conquer charging-empire. Phoenix HQ. Sixteen cities across AZ NV CA NM CO UT TX. Deploy DC chargers, MCS, BESS, lounges, and markets. Cut deals, fight price wars, and hold the corridor against VOLTSPAN, GRIDHAWK, and ARCWAY (later REDNODE and AMPFIELD).
+An Age of Empires loop on the Western Interconnect. One isometric map from the region down to a site. Crew trucks build the chargers. Traffic drives in and pays. Voltspan, Gridhawk, and Arcway contest the plots.
 
 This is **not** the FPV night-shift game.
 
@@ -16,17 +16,12 @@ Palette: `#E63225` identity · `#1E1E24` charcoal · `#E89A2E` amber (informatio
 
 ## How to play
 
-1. Open the public link and click **OPEN THE BOARD**.
-2. Read the Phoenix briefing, then enter the continent.
-3. Click a city to zoom the yard to town scale. Compounds are miniature Electromat stations: Slim Zeus rows under a coffered cream canopy, MCS truck island, BESS farm, lounge pavilion, market kiosk. The yard grows as kit lands.
-4. Empty dirt can be claimed. Rival compounds (VOLTSPAN, GRIDHAWK, ARCWAY) stay theirs — compete on price and share, do not build on their pad.
-5. The calendar **starts paused**. Speed it with PAUSE / 1× / 2× / 4× (or keys `Space`, `1`, `2`, `4`). 1× is a slow read-the-UI month. `C` `M` `B` `L` `K` deploy kit; `[` `]` nudge price.
-6. SAVE / LOAD writes this browser’s `localStorage`.
-7. Field calls (undercut / grid strain / amenity / poach) ask MATCH, HOLD, or QUEUE LOUNGE. Rare deals still use the **DEALS** badge — never a modal stack.
-8. Every two months an **EDICT** offers three exclusive strategy cards (corridor subsidy, amenity push, or reserve crews). Pick one. Rivals answer. The others expire.
-9. Clear objectives in a chain to raise the streak multiplier on the plate. Majority, states, and MCS milestones pay a cash bonus. Month 6 and each year-end post a grade from A to D.
-
-Win by majority share in 12 cities, by holding all seven states with MCS in four cities, or by filling the treasury. The plate shows cash, continental share, the month, free crews, and the streak. The track under it shows the next unlock.
+1. Open the public link. You start on the Phoenix plot in the Pilot Age.
+2. Drag a box or click a crew truck. Right-click the ground to move, a resource node to gather, or a scaffold to build.
+3. The command card at the bottom left raises buildings. `W` arms a DC row, then click a free pad on your plot. Semis arrive only after an MCS bay (`E`, Fleet Age).
+4. The top bar is Capital, Grid MW, Permits, Copper, and Steel. The minimap is the bottom right.
+5. Advance the age from the top plaque. Pilot is L2 and DC. Fleet unlocks MCS and BESS. Megawatt unlocks the depot and the substation tie-in.
+6. Arrow keys pan. The wheel zooms from the region down to a site. A scout van clears the fog.
 
 ## Local
 

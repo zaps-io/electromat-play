@@ -1,487 +1,91 @@
-#!/usr/bin/env node
-/* rts-yard-28: arm a footprint, then place it on the pad. */
 import { existsSync, readFileSync, statSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 
-const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const game = readFileSync(join(root, "game.js"), "utf8");
+const root = new URL("..", import.meta.url).pathname;
+let failed = 0;
+const ok = (msg) => console.log("OK  ", msg);
+const fail = (msg) => {
+  failed = 1;
+  console.error("FAIL", msg);
+};
+
 const html = readFileSync(join(root, "index.html"), "utf8");
 const css = readFileSync(join(root, "styles.css"), "utf8");
+const game = readFileSync(join(root, "game.js"), "utf8");
 const review = readFileSync(join(root, "docs/shots/REVIEW.md"), "utf8");
 
-const fail = (msg) => {
-  console.error(`FAIL ${msg}`);
-  process.exitCode = 1;
-};
-const ok = (msg) => console.log(`OK   ${msg}`);
+if (/WattEV|wattev/i.test(html + css + game)) fail("WattEV branding leaked");
+else ok("no WattEV branding");
 
-if (!html.includes('content="rts-yard-28"') || !html.includes("styles.css?v=rts-yard-28") || !html.includes("game.js?v=rts-yard-28")) {
-  fail("index.html cache is not rts-yard-28");
-} else ok("index.html cache rts-yard-28");
-
-if (!game.includes("rts-yard-28") || !css.includes("rts-yard-28") || !review.includes("rts-yard-28")) {
-  fail("game/styles/REVIEW cache is not rts-yard-28");
-} else ok("game/styles/REVIEW cache rts-yard-28");
-
-if (!game.includes("function armKit") || !game.includes("deploy:")) {
-  fail("arm-then-place deploy API missing");
-} else ok("arm then place, deploy(kind, slot) kept");
-
-if (!game.includes("function placementRead") || !game.includes("COMPLETES CANOPY") || !html.includes("site-consequence")) {
-  fail("hover consequence line missing");
-} else ok("hover consequence line");
-
-if (!game.includes("function threatCall") || !game.includes("AMENITY GAP") || !css.includes(".threat-chip")) {
-  fail("contested threat chip missing");
-} else ok("contested threat chip");
-
-if (!game.includes("function offerBuildFork") || !game.includes("LOUNGE + MARKET") || !game.includes('path === "amenity"')) {
-  fail("build-order fork missing");
-} else ok("build-order fork");
-
-if (!css.includes("yard-flash") || !game.includes("COMPLETE ·")) {
-  fail("kit-complete pop / yard flash missing");
-} else ok("kit-complete pop + yard flash");
-
-if (!game.includes("const CITY_HIT_R = 70")) fail("CITY_HIT_R must stay 70");
-else ok("CITY_HIT_R = 70");
-
-if (!game.includes("Math.min(boxW * 0.76, 800)")) fail("Goldilocks frame drifted");
-else ok("Goldilocks 76% / cap 800");
-
-const grid = game.match(/const GRID = \{[\s\S]*?cols:\s*(\d+),\s*rows:\s*(\d+)/);
-if (!grid || grid[1] !== "5" || grid[2] !== "4") fail("chessboard GRID cols/rows changed");
-else ok("chessboard 5×4 unchanged");
-
-const slots = [
-  ["dc", "c: 1, r: 1"],
-  ["mcs", "c: 0, r: 1"],
-  ["bess", "c: 0, r: 0"],
-  ["lounge", "c: 0, r: 3"],
-  ["market", "c: 2, r: 3"],
-];
-for (const [kind, token] of slots) {
-  if (!game.includes(token)) fail(`SLOTS.${kind} snap drifted (${token})`);
+for (const hex of ["#E63225", "#1E1E24", "#E89A2E", "#00D4F5", "#F5F0E8"]) {
+  if (!css.toLowerCase().includes(hex.toLowerCase()) && !game.toLowerCase().includes(hex.toLowerCase())) {
+    fail(`palette ${hex} missing`);
+  }
 }
-if (!process.exitCode) ok("SLOTS snap unchanged");
+if (!failed) ok("Zaps palette");
 
-const cream = readFileSync(join(root, "assets/brand/zaps-wordmark-only-cream.svg"));
-const red = readFileSync(join(root, "assets/brand/zaps-wordmark-only-red.svg"));
-if (cream.byteLength !== 1823 || red.byteLength !== 1823) {
-  fail(`wordmarks must stay 1823 bytes (cream ${cream.byteLength}, red ${red.byteLength})`);
-} else ok("official 1.8KB cream/red wordmarks");
+const cream = statSync(join(root, "assets/brand/zaps-wordmark-only-cream.svg")).size;
+const red = statSync(join(root, "assets/brand/zaps-wordmark-only-red.svg")).size;
+if (cream !== 1823 || red !== 1823) fail(`wordmarks must stay 1823 bytes (cream ${cream}, red ${red})`);
+else ok("official 1823-byte wordmarks");
 
-if (!/speed:\s*0/.test(game)) fail("freshState must start paused (speed: 0)");
-else ok("freshState starts PAUSED");
+if (!html.includes("zaps-wordmark-only-cream.svg?v=canon-1823")) fail("cream wordmark not on the board");
+else ok("wordmark on the resource bar");
 
-if (!html.includes('data-speed="0" class="active"')) fail("PAUSE is not the default HUD control");
-else ok("HUD PAUSE is default active");
-
-const citiesMatch = game.match(/const CITIES = (\[[\s\S]*?\n  \]);/);
-if (!citiesMatch) {
-  fail("could not extract CITIES");
-} else {
-  const cities = Function(`"use strict"; return ${citiesMatch[1]}`)();
-  const nearest = (x, y, r = 70) => {
-    let best = null;
-    let bestD = Infinity;
-    for (const c of cities) {
-      const d = Math.hypot(c.x - x, c.y - y);
-      if (d < bestD) {
-        bestD = d;
-        best = c;
-      }
-    }
-    return best && bestD <= r ? best : null;
-  };
-  const flag = cities.find((c) => c.id === "flagstaff");
-  const tuc = cities.find((c) => c.id === "tucson");
-  const phx = cities.find((c) => c.id === "phoenix");
-  if (!flag || !tuc || !phx) fail("missing Flagstaff/Tucson/Phoenix");
-  const hitFlag = nearest(flag.x, flag.y);
-  const hitTuc = nearest(tuc.x, tuc.y);
-  const hitPhx = nearest(phx.x, phx.y);
-  if (hitFlag?.id !== "flagstaff") fail(`Flagstaff pin resolved ${hitFlag?.id}`);
-  else ok("Flagstaff click stays Flagstaff");
-  if (hitTuc?.id !== "tucson") fail(`Tucson pin resolved ${hitTuc?.id}`);
-  else ok("Tucson click stays Tucson");
-  if (hitPhx?.id !== "phoenix") fail(`Phoenix pin resolved ${hitPhx?.id}`);
-  else ok("Phoenix click stays Phoenix");
-  if (nearest(flag.x, flag.y)?.id === "phoenix") fail("Phoenix stole Flagstaff");
-  if (nearest(tuc.x, tuc.y)?.id === "phoenix") fail("Phoenix stole Tucson");
-  const towardPhxFromFlag = nearest(flag.x + 6, flag.y + 18);
-  if (towardPhxFromFlag?.id !== "flagstaff") fail(`near-Flagstaff click resolved ${towardPhxFromFlag?.id}`);
-  else ok("near-Flagstaff still Flagstaff");
-  const towardPhxFromTuc = nearest(tuc.x - 10, tuc.y - 20);
-  if (towardPhxFromTuc?.id !== "tucson") fail(`near-Tucson click resolved ${towardPhxFromTuc?.id}`);
-  else ok("near-Tucson still Tucson");
+for (const name of ["PILOT AGE", "FLEET AGE", "MEGAWATT AGE"]) {
+  if (!game.includes(name)) fail(`missing age ${name}`);
 }
+if (!failed) ok("three ages");
 
-if (!game.includes("ghostBadge") || !css.includes("kit-pop")) {
-  fail("construction badge / complete pop missing");
-} else ok("raising badges + complete pop present");
+for (const kind of ["hq", "dc", "mcs", "bess", "lounge", "market", "substation", "depot"]) {
+  if (!game.includes(`${kind}:`)) fail(`missing building ${kind}`);
+}
+if (!failed) ok("command-card buildings");
 
-if (!css.includes(".deploy.selected") || !css.includes(".deploy .why")) {
-  fail("tray selected/disabled styles missing");
-} else ok("tray selected + disabled reason styles");
+for (const name of [
+  "Compact EV hatch",
+  "Sedan",
+  "SUV",
+  "Pickup",
+  "Delivery van",
+  "Box truck",
+  "Class 8 semi",
+  "Electric school bus",
+]) {
+  if (!game.includes(name)) fail(`missing vehicle ${name}`);
+}
+if (!game.includes('kind === "mcs"') && !game.includes("building.kind !== \"mcs\"")) {
+  /* semi gate is the explicit return below */
+}
+if (!game.includes('kind === "semi" && building.kind !== "mcs"')) fail("semis must be refused off MCS");
+else ok("eight vehicle types, semis on MCS only");
 
-if (!game.includes('if (rivalSite(city)) return "RIVAL SITE"')) {
-  fail("blockedReason must refuse rival compounds");
-} else ok("blockedReason returns RIVAL SITE on rival pads");
-
-if (!game.includes("function rivalSite") || !game.includes("function contestedCity") || !game.includes("function playerClaiming")) {
-  fail("ownership helpers missing");
-} else ok("ownership helpers present");
-
-if (!game.includes("shareDuelHtml") || !css.includes(".share-duel") || !html.includes("site-overlay-intel")) {
-  fail("contested share meters missing");
-} else ok("contested share meters + site intel");
-
-if (!game.includes('type: "undercut"') || !game.includes("GRID STRAIN") || !game.includes("MATCH PRICE")) {
-  fail("field-call decision events missing");
-} else ok("field-call undercut + grid strain");
-
-if (!game.includes("applyPlayerPrice") || !game.includes("flashShare")) {
-  fail("price share feedback missing");
-} else ok("price share toast / flash");
-
-if (!game.includes('c: "dc"') || !game.includes('k: "market"')) {
-  fail("kit hotkeys missing");
-} else ok("kit hotkeys C M B L K");
-
-if (!game.includes('name === "rival"') || !game.includes('name === "contested"')) {
-  fail("rival / contested shot modes missing");
-} else ok("shot=rival and shot=contested");
-
-if (!html.includes("Rival compounds stay theirs")) {
-  fail("briefing should state rival pads are sealed");
-} else ok("briefing ownership line");
-
-if (!game.includes("function cofferGrid") || !css.includes(".site-coffer") || !game.includes("cylPost")) {
-  fail("terminal canopy coffers / columns missing");
-} else ok("cream canopy coffers + cylindrical posts");
-
-if (!game.includes("holsterL") || !game.includes("holsterR") || !game.includes("site-dc-cable")) {
-  fail("Slim Zeus DC row missing twin holsters");
-} else ok("Slim Zeus DC row with twin holsters");
-
-if (!css.includes(".site-lounge-edge") || !css.includes("#c8c2b6")) {
-  fail("lounge must stay cream/amber, not cyan structure");
-} else ok("lounge pavilion without forced cyan");
-
-if (!game.includes("function winProgress") || !html.includes("hud-campaign") || !css.includes(".track-meter")) {
-  fail("campaign win track missing");
-} else ok("HUD campaign track / winProgress");
-
-if (!game.includes('type: "amenity"') || !game.includes('type: "poach"') || !game.includes("QUEUE LOUNGE")) {
-  fail("amenity / poach field calls missing");
-} else ok("amenity + poach field calls");
-
-if (!game.includes("if (state.pendingEvent || state.pendingEdict) openDealSheet()")) {
-  fail("field calls must auto-open the sheet");
-} else ok("field calls auto-open");
-
-if (!html.includes("insp-triad") || !game.includes("CHARGE") || !css.includes(".insp-triad")) {
-  fail("CHARGE / RELAX / DEPART triad missing");
-} else ok("inspector CHARGE / RELAX / DEPART");
-
-if (!game.includes("corridorPull") || !game.includes("contested ? 1.85")) {
-  fail("contested price elasticity / corridor pull missing");
-} else ok("contested markets pull harder on price");
-
-if (!css.includes("toast-pop") || !css.includes("stat-tick") || !css.includes("transition: width 0.45s ease")) {
-  fail("audio-less juice animations missing");
-} else ok("toast / stat / meter juice");
-
-if (!game.includes("rivalSite(city)) return overlayBaseKind") || !game.includes("empty-board") || !game.includes("any ? plazaGeom(occ) : boardEtch()")) {
-  fail("claimable empties must show dirt chessboard, not a survey-flag hero");
-} else ok("claimable empty yards use dirt 5×4 chessboard");
-
-const mcsGhost = game.match(/if \(kind === "mcs"\) \{[\s\S]*?return \{[^}]+\}/);
-if (!mcsGhost) fail("ghostTone(mcs) missing");
-else if (/230\s*,\s*50\s*,\s*37|#e63225/i.test(mcsGhost[0])) fail("MCS ghost still uses error red");
-else ok("MCS ghost tone is non-error");
-
-if (/site-tile-reserve\.kind-mcs[\s\S]{0,80}#e63225/.test(css) || /site-tile-progress\.kind-mcs[\s\S]{0,80}230,\s*50,\s*37/.test(css)) {
-  fail("MCS reserve/progress still error red");
-} else ok("MCS reserve tiles are non-error");
-
-const sheetAt = html.indexOf('id="deal-sheet"');
-const inspAt = html.indexOf('id="inspector"');
-if (sheetAt < 0 || inspAt < 0 || sheetAt > inspAt) {
-  fail("field-call sheet must live in the map column, not over the inspector");
-} else ok("field-call sheet is in the map column");
-
-if (!game.includes("function undercutCallOpen") || !game.includes("t.id === \"UNDERCUT\" && undercutCallOpen")) {
-  fail("undercut field-call must suppress the threat chip");
-} else ok("single undercut chrome");
-
-if (!game.includes("identical kit-complete toast already on screen")) {
-  fail("kit-complete toast is not deduped");
-} else ok("single kit-complete toast");
-
-if (!/#d8c4ff/.test(css) || /site-mcs-ring[\s\S]{0,80}#00d4f5/i.test(css) || /site-mcs-edge[\s\S]{0,80}#00d4f5/i.test(css)) {
-  fail("MCS ring/edge must use the violet ghost family, not cyan");
-} else ok("MCS ring/edge violet");
-
-if (!game.includes("function tickObjective") || !game.includes("HOLD 45%") || !html.includes("ops-strip")) {
-  fail("mid-game objective strip missing");
-} else ok("objective strip");
-
-if (!game.includes("crewPosture") || !game.includes('data-posture="respond"') || !css.includes(".crew-fork")) {
-  fail("crew raise/respond fork missing");
-} else ok("crew fork");
-
-if (!game.includes("function launchScout") || !game.includes("function intelHtml") || !css.includes(".intel-line")) {
-  fail("scout / intel missing");
-} else ok("scout intel");
-
-if (!game.includes("function tickSkirmish") || !game.includes("PRICE WAR") || !css.includes(".skirmish-track")) {
-  fail("contested skirmish meter missing");
-} else ok("skirmish meter");
-
-if (!game.includes("function pulseMonths") || !game.includes("scout-detector") || !game.includes("REFRESH")) {
-  fail("scout pulse missing");
-} else ok("scout detector pulse");
-
-if (!game.includes("function skirmishLaneSvg") || !game.includes('data-push="1"') || !css.includes(".skirmish-lane")) {
-  fail("spatial skirmish lane missing");
-} else ok("yard skirmish lane");
-
-if (!game.includes("function cycleCrew") || !game.includes("data-crew") || !css.includes(".crew-token")) {
-  fail("crew tokens missing");
-} else ok("selectable crew tokens");
-
-if (!game.includes("function echoMonths") || !game.includes("intel-near") || !css.includes(".intel-glow") || !css.includes(".city-node.fogged")) {
-  fail("detector hop / rival fog missing");
-} else ok("detector 1-hop glow + muted unknown rivals");
-
-if (!game.includes("pin-tug") || !css.includes(".pin-tug") || !game.includes("pin-fight")) {
-  fail("map-pin skirmish tug missing");
-} else ok("contested map-pin tug");
-
-if (!game.includes("function assignWaypoint") || !game.includes("function crewHome") || !game.includes("CLICK A CITY")) {
-  fail("crew select → waypoint missing");
-} else ok("crew select then city waypoint");
-
-if (!game.includes('name === "fog"') || !game.includes('name === "pin-fight"') || !game.includes('name === "waypoint"')) {
-  fail("yard-20 shot modes missing");
-} else ok("shot=fog, shot=pin-fight, shot=waypoint");
-
-if (!game.includes('type: "pressure"') || !game.includes("function pressureRivalClaim")) {
-  fail("corridor pressure must race empty dirt, not seize a held pad");
-} else ok("corridor pressure race");
-
-if (!css.includes("map-stage:has(.site-overlay:not(.hidden)) .deal-sheet") || !/\.deal-sheet \{[\s\S]*?position:\s*absolute/.test(css)) {
-  fail("field-call sheet must dock on the map stage");
-} else ok("field-call sheet docks on the map");
-
-if (!css.includes(".price-row") || !/price-row \{[\s\S]*?position:\s*sticky/.test(css) || !html.includes("[ ] price")) {
-  fail("inspector price / [ ] hotkeys must stay pinned visible");
-} else ok("inspector price row stays sticky with [ ] hotkeys");
+if (!game.includes("window.__EMPIRE_SMOKE__")) fail("smoke handle missing");
+else ok("__EMPIRE_SMOKE__ successor");
+for (const fn of ["crewScreen", "padScreen", "fast", "paid", "age"]) {
+  if (!game.includes(`${fn}:`)) fail(`smoke.${fn} missing`);
+}
+if (!failed) ok("smoke can select, build, pay, and age");
 
 const stills = [
-  ["docs/shots/yard-empty.png", 500000],
-  ["docs/shots/yard-pad.png", 500000],
-  ["docs/shots/yard-ghosts.png", 500000],
-  ["docs/shots/yard-event.png", 500000],
-  ["docs/shots/yard-objective.png", 350000],
-  ["docs/shots/yard-crew.png", 350000],
-  ["docs/shots/yard-scout.png", 350000],
-  ["docs/shots/yard-scout-map.png", 350000],
-  ["docs/shots/yard-skirmish.png", 350000],
-  ["docs/shots/yard-fog.png", 120000],
-  ["docs/shots/yard-pin-fight.png", 120000],
-  ["docs/shots/yard-waypoint.png", 120000],
+  "docs/shots/aoe-region.png",
+  "docs/shots/aoe-compound.png",
+  "docs/shots/aoe-build.png",
+  "docs/shots/aoe-select.png",
+  "docs/shots/aoe-age.png",
+  "docs/shots/aoe-vehicles.png",
+  "docs/shots/aoe-contest.png",
 ];
-for (const [rel, min] of stills) {
+for (const rel of stills) {
   const p = join(root, rel);
   if (!existsSync(p)) fail(`${rel} missing`);
-  else if (statSync(p).size < min) fail(`${rel} looks like a stale flag-era still (${statSync(p).size} bytes)`);
+  else if (statSync(p).size < 80000) fail(`${rel} too small`);
+  else if (!review.includes(rel.split("/").pop())) fail(`REVIEW missing ${rel}`);
 }
-if (!process.exitCode) ok("fresh empty/ghosts/event stills are checked in");
-if (!review.includes("yard-ghosts.png") || !review.includes("yard-event.png") || !review.includes("yard-pad.png")) {
-  fail("REVIEW must list yard-ghosts / yard-event / yard-pad stills");
-} else ok("REVIEW lists refreshed stills");
-if (!review.includes("yard-objective.png") || !review.includes("yard-crew.png") || !review.includes("yard-scout.png") || !review.includes("yard-skirmish.png") || !review.includes("yard-scout-map.png")) {
-  fail("REVIEW must list objective / crew / scout / skirmish stills");
-} else ok("REVIEW lists ops stills");
-if (!review.includes("yard-fog.png") || !review.includes("yard-pin-fight.png") || !review.includes("yard-waypoint.png")) {
-  fail("REVIEW must list fog / pin-fight / waypoint stills");
-} else ok("REVIEW lists interconnect stills");
+if (!failed) ok("seven AoE stills listed");
 
-if (!game.includes("function monthlyNet") || !game.includes("function crewTruth") || !game.includes("function cellPlaceState")) {
-  fail("HUD truth / grid placement helpers missing");
-} else ok("monthly net, crew truth, cell placement");
-
-if (!game.includes("site-cell-valid") || !game.includes("site-footprint") || !game.includes("site-month-ring") || !game.includes("function scaffoldFrame")) {
-  fail("grid highlight, footprint, or months ring missing");
-} else ok("cyan/red grid, footprint, months ring, scaffold");
-
-if (!game.includes("function flagSvg") || !game.includes("function fogIconSvg") || !game.includes("own-radius") || !game.includes("city-share") || !game.includes("obj-ring")) {
-  fail("map flags, fog icon, share bar, or objective ring missing");
-} else ok("faction flags, fog icon, share bars, objective rings");
-
-if (!game.includes("dock-strip") || !game.includes("fork-collapse")) {
-  fail("build order must dock as a collapsible strip");
-} else ok("build order dock strip");
-
-if (!css.includes(".site-cell-valid") || !css.includes(".site-month-ring") || !css.includes(".own-radius") || !css.includes(".obj-ring")) {
-  fail("yard-22 styles missing");
-} else ok("yard-22 highlight, ring, radius, objective styles");
-
-for (const rel of ["assets/kits/dc.svg", "assets/kits/mcs.svg", "assets/kits/bess.svg", "assets/kits/lounge.svg", "assets/kits/market.svg", "assets/sprites/yard-gravel.png"]) {
-  if (!existsSync(join(root, rel))) fail(`${rel} missing`);
-}
-if (!process.exitCode) ok("kit silhouettes + ochre gravel tile");
-
-const yard22 = [
-  ["docs/shots/yard-map.png", 80000],
-  ["docs/shots/yard-footprint.png", 80000],
-  ["docs/shots/yard-midbuild.png", 80000],
-  ["docs/shots/yard-five.png", 80000],
-];
-for (const [rel, min] of yard22) {
-  const p = join(root, rel);
-  if (!existsSync(p)) fail(`${rel} missing`);
-  else if (statSync(p).size < min) fail(`${rel} too small (${statSync(p).size} bytes)`);
-}
-if (!process.exitCode) ok("map, footprint, mid-build, and five-kit stills");
-if (!review.includes("yard-map.png") || !review.includes("yard-footprint.png") || !review.includes("yard-midbuild.png") || !review.includes("yard-five.png")) {
-  fail("REVIEW must list the yard-22 stills");
-} else ok("REVIEW lists yard-22 stills");
-
-if (!game.includes("site-cell-dim") || !game.includes("function nearestOkSlot") || !css.includes(".site-cell-dim")) {
-  fail("dim hatch or nearest-slot snap missing");
-} else ok("dim hatch and nearest valid slot");
-
-if (!html.includes('id="site-raising"') || !css.includes(".site-raising-row") || !html.includes('id="insp-foot"') || !html.includes('id="faction-legend"')) {
-  fail("raising row, price foot, or faction legend missing");
-} else ok("raising row, inspector foot, faction legend");
-
-if (!game.includes("function renderFactionLegend") || !game.includes("function neutralStakeSvg")) {
-  fail("faction legend renderer missing");
-} else ok("faction legend renderer");
-
-const yard23 = [
-  ["docs/shots/yard-map-23.png", 80000],
-  ["docs/shots/yard-hover-23.png", 80000],
-  ["docs/shots/yard-panel-23.png", 80000],
-  ["docs/shots/yard-contested-23.png", 80000],
-];
-for (const [rel, min] of yard23) {
-  const p = join(root, rel);
-  if (!existsSync(p)) fail(`${rel} missing`);
-  else if (statSync(p).size < min) fail(`${rel} too small (${statSync(p).size} bytes)`);
-}
-if (!process.exitCode) ok("yard-23 map, hover, panel, and contested stills");
-if (!review.includes("yard-map-23.png") || !review.includes("yard-hover-23.png") || !review.includes("yard-panel-23.png") || !review.includes("yard-contested-23.png")) {
-  fail("REVIEW must list the yard-23 stills");
-} else ok("REVIEW lists yard-23 stills");
-
-if (!game.includes("sweepPad") || !game.includes("site-pad-hit") || !game.includes("function cellFromView")) {
-  fail("pad raycast sweep missing");
-} else ok("pad raycast sweep");
-
-const yard24 = [
-  ["docs/shots/yard-map-24.png", 80000],
-  ["docs/shots/yard-hover-a-24.png", 80000],
-  ["docs/shots/yard-hover-b-24.png", 80000],
-  ["docs/shots/yard-contested-24.png", 80000],
-];
-for (const [rel, min] of yard24) {
-  const p = join(root, rel);
-  if (!existsSync(p)) fail(`${rel} missing`);
-  else if (statSync(p).size < min) fail(`${rel} too small (${statSync(p).size} bytes)`);
-}
-if (!process.exitCode) ok("yard-24 map, two hovers, and contested stills");
-if (!review.includes("yard-map-24.png") || !review.includes("yard-hover-a-24.png") || !review.includes("yard-hover-b-24.png") || !review.includes("yard-contested-24.png")) {
-  fail("REVIEW must list the yard-24 stills");
-} else ok("REVIEW lists yard-24 stills");
-
-if (!game.includes("getScreenCTM") || !game.includes("previewKit") || !game.includes("ghostSlot")) {
-  fail("screen-space pad pick missing");
-} else ok("screen-space pad pick");
-
-const yard25 = [
-  ["docs/shots/yard-map-25.png", 80000],
-  ["docs/shots/yard-hover-a-25.png", 80000],
-  ["docs/shots/yard-hover-b-25.png", 80000],
-  ["docs/shots/yard-contested-25.png", 80000],
-];
-for (const [rel, min] of yard25) {
-  const p = join(root, rel);
-  if (!existsSync(p)) fail(`${rel} missing`);
-  else if (statSync(p).size < min) fail(`${rel} too small (${statSync(p).size} bytes)`);
-}
-if (!process.exitCode) ok("yard-25 map, two real-pointer hovers, and contested stills");
-if (!review.includes("yard-map-25.png") || !review.includes("yard-hover-a-25.png") || !review.includes("yard-hover-b-25.png") || !review.includes("yard-contested-25.png")) {
-  fail("REVIEW must list the yard-25 stills");
-} else ok("REVIEW lists yard-25 stills");
-
-const yard26 = [
-  ["docs/shots/yard-hover-left-26.png", 80000],
-  ["docs/shots/yard-hover-right-26.png", 80000],
-  ["docs/shots/yard-map-26.png", 80000],
-  ["docs/shots/yard-pop-26.png", 80000],
-];
-for (const [rel, min] of yard26) {
-  const p = join(root, rel);
-  if (!existsSync(p)) fail(`${rel} missing`);
-  else if (statSync(p).size < min) fail(`${rel} too small (${statSync(p).size} bytes)`);
-}
-if (!process.exitCode) ok("yard-26 hover, map, and pop stills");
-if (!review.includes("yard-hover-left-26.png") || !review.includes("yard-hover-right-26.png") || !review.includes("yard-map-26.png") || !review.includes("yard-pop-26.png")) {
-  fail("REVIEW must list the yard-26 stills");
-} else ok("REVIEW lists yard-26 stills");
-
-if (!game.includes("function labelOverlaps") || !game.includes("settleMapChrome")) {
-  fail("label overlap settle missing");
-} else ok("label overlap settle");
-if (!game.includes("function trafficPlan") || !game.includes("assets/sprites/vehicles/sedan-") || !game.includes("CLAIM ·")) {
-  fail("traffic or objective claim tag missing");
-} else ok("traffic sprites and CLAIM tag");
-for (const name of ["sedan-0", "sedan-1", "sedan-2", "sedan-3", "truck-0", "truck-1", "truck-2", "truck-3"]) {
-  const p = join(root, `assets/sprites/vehicles/${name}.png`);
-  if (!existsSync(p) || statSync(p).size < 1000) fail(`${name}.png missing`);
-}
-if (!process.exitCode) ok("eight grey vehicle sprites");
-
-const yard27 = [
-  ["docs/shots/yard-traffic-27.png", 80000],
-  ["docs/shots/yard-states-27.png", 80000],
-  ["docs/shots/yard-map-27.png", 80000],
-];
-for (const [rel, min] of yard27) {
-  const p = join(root, rel);
-  if (!existsSync(p)) fail(`${rel} missing`);
-  else if (statSync(p).size < min) fail(`${rel} too small (${statSync(p).size} bytes)`);
-}
-if (!process.exitCode) ok("yard-27 traffic, kit states, and ownership map");
-if (!review.includes("yard-traffic-27.png") || !review.includes("yard-states-27.png") || !review.includes("yard-map-27.png")) {
-  fail("REVIEW must list the yard-27 stills");
-} else ok("REVIEW lists yard-27 stills");
-
-const yard28 = [
-  ["docs/shots/yard-arm-a-28.png", 80000],
-  ["docs/shots/yard-arm-b-28.png", 80000],
-  ["docs/shots/yard-floats-28.png", 80000],
-  ["docs/shots/yard-map-28.png", 80000],
-  ["docs/shots/yard-map-zoom-28.png", 80000],
-];
-for (const [rel, min] of yard28) {
-  const p = join(root, rel);
-  if (!existsSync(p)) fail(`${rel} missing`);
-  else if (statSync(p).size < min) fail(`${rel} too small (${statSync(p).size} bytes)`);
-}
-if (!process.exitCode) ok("yard-28 arm, float, and map stills");
-if (!review.includes("yard-arm-a-28.png") || !review.includes("yard-arm-b-28.png") || !review.includes("yard-floats-28.png") || !review.includes("yard-map-28.png") || !review.includes("yard-map-zoom-28.png")) {
-  fail("REVIEW must list the yard-28 stills");
-} else ok("REVIEW lists yard-28 stills");
-
-if (process.exitCode) {
+if (failed) {
   console.error("smoke-empire failed");
-  process.exit(process.exitCode);
+  process.exit(1);
 }
 console.log("smoke-empire passed");
