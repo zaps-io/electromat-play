@@ -4,228 +4,51 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ZAPS EMPIRE</title>
-    <meta
-      name="description"
-      content="The station is not built yet. The continent already is."
-    />
     <link rel="icon" href="assets/brand/zaps-wordmark-only-red.svg?v=canon-1823" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600;700&family=Share+Tech+Mono&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Barlow+Condensed:wght@500;600;700&family=Share+Tech+Mono&display=swap"
       rel="stylesheet"
     />
-    <meta name="empire-build" content="rts-yard-28" />
-    <link rel="stylesheet" href="styles.css?v=rts-yard-28" />
+    <link rel="stylesheet" href="styles.css?v=empire-aoe" />
   </head>
   <body>
-    <section id="title-screen" class="screen" data-screen="title">
-      <div class="title-inner">
-        <p class="kicker">CONTINENTAL OPERATIONS // TERMINAL 001</p>
-        <div class="brand-lockup stacked" data-lockup="cream">
-          <img class="bolt official" src="assets/brand/bolt-red.svg" alt="" />
-          <img
-            class="wordmark official"
-            src="assets/brand/zaps-wordmark-only-cream.svg?v=canon-1823"
-            alt="Zaps"
-          />
-          <span class="empire-word">EMPIRE</span>
-        </div>
-        <div class="title-rule" aria-hidden="true"></div>
-        <p class="tagline">The station is not built yet. The continent already is.</p>
-        <div class="title-actions">
-          <button id="btn-open-board" class="btn-primary" type="button">
-            OPEN THE BOARD
-          </button>
-          <button id="btn-continue" class="btn-ghost hidden" type="button">
-            CONTINUE CAMPAIGN
-          </button>
-        </div>
-        <p class="title-meta">16 CITIES · 7 STATES · AZ NV CA NM CO UT TX</p>
-      </div>
-    </section>
+    <canvas id="world"></canvas>
 
-    <section id="briefing-screen" class="screen hidden" data-screen="briefing">
-      <div class="briefing-card">
-        <p class="kicker">BRIEFING // PHOENIX HQ</p>
-        <h1>Claim the corridor before the others do.</h1>
-        <p>
-          You command Zaps continental build-out. Phoenix is live. Tucson and
-          Flagstaff are still dirt. Rivals already hold the coasts and the
-          Front Range.
-        </p>
-        <ul>
-          <li>Deploy DC chargers, MCS, BESS, lounges, and markets.</li>
-          <li>Each city grows a visible Electromat — Slim Zeus row, canopy, lounge pavilion.</li>
-          <li>Win share with price, field calls, and amenities — not slogans.</li>
-          <li>Rival compounds stay theirs. You cannot deploy on their pad.</li>
-        </ul>
-        <p class="briefing-rivals">
-          On the board now: <strong>VOLTSPAN</strong>, <strong>GRIDHAWK</strong>,
-          <strong>ARCWAY</strong>. Later: REDNODE, AMPFIELD.
-        </p>
-        <button id="btn-enter" class="btn-primary" type="button">
-          ENTER THE CONTINENT
-        </button>
-      </div>
-    </section>
+    <header class="res-bar panel" aria-label="Resources">
+      <img class="wordmark" src="assets/brand/zaps-wordmark-only-cream.svg?v=canon-1823" alt="Zaps" />
+      <div class="res" title="Capital"><i class="ico ico-cap">$</i><b id="res-capital">0</b></div>
+      <div class="res" title="Grid capacity"><i class="ico ico-grid"></i><b id="res-grid">0</b><span>MW</span></div>
+      <div class="res" title="Permits"><i class="ico ico-permit"></i><b id="res-permits">0</b></div>
+      <div class="res" title="Copper"><i class="ico ico-copper"></i><b id="res-copper">0</b></div>
+      <div class="res" title="Steel"><i class="ico ico-steel"></i><b id="res-steel">0</b></div>
+    </header>
 
-    <section id="board-screen" class="screen hidden" data-screen="board">
-      <header class="hud">
-        <div class="brand-lockup compact" data-lockup="cream">
-          <img class="bolt official" src="assets/brand/bolt-red.svg" alt="" />
-          <img
-            class="wordmark official"
-            src="assets/brand/zaps-wordmark-only-cream.svg?v=canon-1823"
-            alt="Zaps"
-          />
-          <span class="empire-word">EMPIRE</span>
-        </div>
-        <div class="hud-center">
-          <div class="plate" id="hud-plate" aria-label="Campaign plate">
-            <div class="plate-main">
-              <div class="plate-stat plate-cash">
-                <span class="plate-label">CASH</span>
-                <span id="stat-cash" class="plate-value">$0</span>
-                <span id="stat-net" class="plate-sub">$0/MO</span>
-              </div>
-              <div class="plate-stat plate-share">
-                <span class="plate-label">SHARE</span>
-                <span id="stat-share" class="plate-value">0%</span>
-              </div>
-              <div class="plate-stat plate-month">
-                <span class="plate-label">MONTH</span>
-                <span id="stat-date" class="plate-value">Y1 M01</span>
-              </div>
-              <div class="plate-stat plate-crews">
-                <span class="plate-label">CREWS</span>
-                <span id="stat-crews" class="plate-value">0/3</span>
-                <span class="plate-sub">FREE</span>
-              </div>
-            </div>
-            <div class="plate-score">
-              <div class="plate-stat plate-streak">
-                <span class="plate-label">STREAK</span>
-                <span id="stat-streak" class="plate-value">×1</span>
-                <span id="stat-chain" class="plate-sub">READY</span>
-              </div>
-              <div class="plate-stat plate-grade">
-                <span class="plate-label">GRADE</span>
-                <span id="stat-grade" class="plate-value">D</span>
-              </div>
-              <div class="hud-campaign" id="hud-campaign" aria-label="Campaign progress"></div>
-            </div>
-          </div>
-        </div>
-        <div class="hud-controls">
-          <button id="btn-deals" class="deals-badge hidden" type="button">DEALS</button>
-          <div class="speed" role="group" aria-label="Game speed">
-            <button data-speed="0" class="active" type="button" aria-pressed="true" title="Pause (Space)">PAUSE</button>
-            <button data-speed="1" type="button" aria-pressed="false" title="1× speed (1) — about 6 seconds per month">1×</button>
-            <button data-speed="2" type="button" aria-pressed="false" title="2× speed (2)">2×</button>
-            <button data-speed="4" type="button" aria-pressed="false" title="4× speed (4)">4×</button>
-            <span id="speed-readout" class="speed-readout" data-speed="0">PAUSED</span>
-          </div>
-          <button id="btn-save" class="btn-tiny" type="button">SAVE</button>
-          <button id="btn-load" class="btn-tiny" type="button">LOAD</button>
-          <button id="btn-new" class="btn-tiny" type="button">NEW</button>
-        </div>
-      </header>
-
-      <div id="ops-strip" class="ops-strip" aria-label="Operations"></div>
-
-      <div class="board-body">
-        <div class="map-wrap">
-          <header class="map-banner">
-            <img class="bolt" src="assets/brand/bolt-red.svg" alt="" />
-            <div>
-              <p class="map-banner-title">WESTERN INTERCONNECT</p>
-              <p class="map-banner-sub">THE STATION IS NOT BUILT YET. THE CONTINENT ALREADY IS.</p>
-            </div>
-          </header>
-          <div class="map-stage" id="map-stage">
-            <div class="map-cam" id="map-cam">
-              <div class="map-frame" id="map-frame">
-                <img class="map-art map-paint" src="assets/map.svg?v=rts-yard-28" alt="Southwest charging continent" />
-                <svg class="corridor-layer" id="corridor-layer" viewBox="0 0 1200 800" overflow="visible" aria-hidden="true"></svg>
-                <div id="city-layer" class="city-layer"></div>
-              </div>
-            </div>
-            <div class="faction-legend" id="faction-legend" aria-label="Factions"></div>
-            <div class="map-tools" id="map-tools">
-              <button type="button" id="btn-zoom-in" title="Zoom in">+</button>
-              <button type="button" id="btn-zoom-out" title="Zoom out">−</button>
-              <button type="button" id="btn-exit-site" class="hidden">EXIT</button>
-            </div>
-            <div id="site-overlay" class="site-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="site-overlay-kicker">
-              <div class="site-overlay-hd">
-                <div class="site-overlay-brand">
-                  <img
-                    class="wordmark official"
-                    src="assets/brand/zaps-wordmark-only-red.svg?v=canon-1823"
-                    alt="Zaps"
-                  />
-                  <div>
-                    <p class="kicker" id="site-overlay-kicker">SITE</p>
-                    <p class="site-type" id="site-overlay-type">DIRT PAD</p>
-                  </div>
-                </div>
-                <button type="button" id="btn-exit-site-overlay" title="Return to the Western Interconnect (Esc)">
-                  EXIT<span class="exit-key">ESC</span>
-                </button>
-              </div>
-              <div class="site-yard" id="site-yard">
-                <div id="site-plate" class="context-plate hidden" aria-label="Site numbers"></div>
-                <div id="site-overlay-intel" class="site-intel hidden"></div>
-                <p id="site-consequence" class="site-consequence hidden"></p>
-                <div class="site-stack" id="site-stack"></div>
-              </div>
-              <div id="site-raising" class="site-raising-row"></div>
-              <p class="site-overlay-note">
-                Kit ghosts show a countdown and fill as crews work. Click a
-                raising job to inspect. Complete pops in place. ESC or EXIT
-                returns to the Western Interconnect.
-              </p>
-            </div>
-            <aside id="deal-sheet" class="deal-sheet hidden" aria-live="polite"></aside>
-            <div id="toasts" class="toasts" aria-live="polite"></div>
-          </div>
-          <aside class="ticker" id="ticker" aria-live="polite"></aside>
-        </div>
-
-        <aside class="inspector" id="inspector">
-          <p class="kicker" id="insp-kicker">SELECT A CITY</p>
-          <h2 id="insp-name">Continent</h2>
-          <p id="insp-phase" class="insp-phase">PHASE HQ</p>
-          <div id="insp-plate" class="context-plate hidden" aria-label="City numbers"></div>
-          <div id="insp-triad" class="insp-triad" aria-hidden="true"></div>
-          <p id="insp-blurb" class="insp-blurb">
-            Click a city. The compound is dirt until you drop a pad. Each deploy
-            raises a building you can read from the map.
-          </p>
-          <div id="insp-compound" class="insp-compound" aria-hidden="true"></div>
-          <div id="insp-scroll" class="insp-scroll">
-            <div id="insp-queue" class="insp-queue"></div>
-            <div id="insp-body" class="insp-body"></div>
-          </div>
-          <div id="insp-foot" class="insp-foot"></div>
-        </aside>
-      </div>
-
-      <footer class="tray">
-        <div class="tray-label" id="tray-label">DEPLOY</div>
-        <div class="tray-grid" id="tray-grid"></div>
-        <div class="tray-note">
-          <span>C DC · M MCS · B BESS · L lounge · K market — arm, then click the pad. Shift-click queues another.</span>
-          <span>ESC or right-click cancels. [ ] price · R crew · 1 2 3 select · S scout · P pushes.</span>
-        </div>
-      </footer>
-    </section>
-
-    <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
-      <div class="modal-card" id="modal-card"></div>
+    <div class="age-plate panel" id="age-plate">
+      <p id="age-name">PILOT AGE</p>
+      <p id="pop">0/0</p>
+      <button type="button" id="btn-age">Advance</button>
     </div>
 
-    <script src="game.js?v=rts-yard-28"></script>
+    <p id="objective" class="objective panel">Select a crew. Raise a DC row.</p>
+
+    <div class="cmd panel" id="cmd" aria-label="Command card"></div>
+
+    <section class="select-panel panel" id="select-panel" aria-label="Selection">
+      <div id="select-swatch"></div>
+      <div>
+        <b id="select-name">No selection</b>
+        <p id="select-meta">Left-drag a box. Right-click to move or work.</p>
+        <div class="bar"><i id="select-bar"></i></div>
+      </div>
+    </section>
+
+    <canvas id="minimap" class="panel" aria-label="Minimap"></canvas>
+
+    <div id="age-banner" class="age-banner" hidden>FLEET AGE</div>
+    <p id="help" class="help">Drag select · Right-click move · Arrows pan · Wheel zoom</p>
+
+    <script src="game.js?v=empire-aoe"></script>
   </body>
 </html>
