@@ -75,6 +75,8 @@
           const read = smoke.placementRead("flagstaff", "dc");
           const validCells = d.querySelectorAll(".site-cell-valid").length;
           const blockedCells = d.querySelectorAll(".site-cell-blocked").length;
+          const dimCells = d.querySelectorAll(".site-cell-dim").length;
+          const aimed = smoke.aimCell(2, 2);
           const footprint = d.querySelector(".site-footprint");
           const monthRing = d.querySelector(".site-month-ring");
           const scaffold = d.querySelector(".site-scaffold");
@@ -180,8 +182,8 @@
             flagStillOpen &&
             smoke.rivalSite("la") === true &&
             smoke.rivalSite("flagstaff") === false &&
-            smoke.build === "rts-yard-22" &&
-            buildName === "rts-yard-22" &&
+            smoke.build === "rts-yard-23" &&
+            buildName === "rts-yard-23" &&
             cashPx > sharePx &&
             cashPx >= 28 &&
             /NEXT ·/.test(nextLine) &&
@@ -244,6 +246,10 @@
             Boolean(earlyFog) &&
             validCells > 0 &&
             blockedCells > 0 &&
+            dimCells > 0 &&
+            aimed &&
+            aimed.slot === 1 &&
+            aimed.footprint === "2,1" &&
             Boolean(footprint) &&
             Boolean(monthRing) &&
             Boolean(scaffold);
@@ -287,7 +293,7 @@
             waypoint: { assigned, crewAfter, flagPip: Boolean(flagPip), tucsonPip: Boolean(tucsonPip), phxPips },
             buildName,
             truth: { crewText, crew0, netText, net0, phxNet, objRings, shareBars, phxRadius: Boolean(phxRadius), earlyFog: Boolean(earlyFog) },
-            grid: { validCells, blockedCells, footprint: Boolean(footprint), monthRing: Boolean(monthRing), scaffold: Boolean(scaffold) },
+            grid: { validCells, blockedCells, dimCells, aimed, footprint: Boolean(footprint), monthRing: Boolean(monthRing), scaffold: Boolean(scaffold) },
             plate: { cashPx, sharePx, nextLine },
             edict: { edictOk, mcsBefore, mcsAfter },
             streak: { streakNow, multNow, grade: gradeNow },

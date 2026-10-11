@@ -15,8 +15,8 @@
       href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600;700&family=Share+Tech+Mono&display=swap"
       rel="stylesheet"
     />
-    <meta name="empire-build" content="rts-yard-22" />
-    <link rel="stylesheet" href="styles.css?v=rts-yard-22" />
+    <meta name="empire-build" content="rts-yard-23" />
+    <link rel="stylesheet" href="styles.css?v=rts-yard-23" />
   </head>
   <body>
     <section id="title-screen" class="screen" data-screen="title">
@@ -144,6 +144,7 @@
                 <div id="city-layer" class="city-layer"></div>
               </div>
             </div>
+            <div class="faction-legend" id="faction-legend" aria-label="Factions"></div>
             <div class="map-tools" id="map-tools">
               <button type="button" id="btn-zoom-in" title="Zoom in">+</button>
               <button type="button" id="btn-zoom-out" title="Zoom out">−</button>
@@ -166,12 +167,13 @@
                   EXIT<span class="exit-key">ESC</span>
                 </button>
               </div>
-              <div id="site-plate" class="context-plate hidden" aria-label="Site numbers"></div>
-              <div id="site-overlay-intel" class="site-intel hidden"></div>
               <div class="site-yard" id="site-yard">
+                <div id="site-plate" class="context-plate hidden" aria-label="Site numbers"></div>
+                <div id="site-overlay-intel" class="site-intel hidden"></div>
                 <p id="site-consequence" class="site-consequence hidden"></p>
                 <div class="site-stack" id="site-stack"></div>
               </div>
+              <div id="site-raising" class="site-raising-row"></div>
               <p class="site-overlay-note">
                 Kit ghosts show a countdown and fill as crews work. Click a
                 raising job to inspect. Complete pops in place. ESC or EXIT
@@ -198,6 +200,7 @@
             <div id="insp-queue" class="insp-queue"></div>
             <div id="insp-body" class="insp-body"></div>
           </div>
+          <div id="insp-foot" class="insp-foot"></div>
         </aside>
       </div>
 
@@ -217,6 +220,6 @@
       <div class="modal-card" id="modal-card"></div>
     </div>
 
-    <script src="game.js?v=rts-yard-22"></script>
+    <script src="game.js?v=rts-yard-23"></script>
   </body>
 </html>
