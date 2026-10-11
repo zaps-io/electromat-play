@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-yard-25 */
+/* empire-build: rts-yard-27 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -22,7 +22,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-yard-25";
+  const SPRITE_V = "rts-yard-27";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -43,7 +43,7 @@
     voltspan: "240 / 204",
     rival: "240 / 167",
   };
-  const KIT_V = "rts-yard-25";
+  const KIT_V = "rts-yard-27";
   const KIT_SPRITES = {
     dc: `assets/kits/dc.svg?v=${KIT_V}`,
     mcs: `assets/kits/mcs.svg?v=${KIT_V}`,
@@ -284,6 +284,7 @@
   let previewKit = null;
   let cursorCell = null;
   let slotOverride = null;
+  let ghostSlot = null;
   let inspectJob = null;
   let pops = [];
   let yardFlash = null;
@@ -832,18 +833,32 @@
     return best;
   }
 
+  function slotFree(src, city, type, used) {
+    return Boolean(
+      src &&
+        src.city === city.id &&
+        src.type === type &&
+        Number.isInteger(src.slot) &&
+        !used.has(src.slot)
+    );
+  }
+
   function chosenSlot(city, type, used) {
-    if (
-      slotOverride &&
-      slotOverride.city === city.id &&
-      slotOverride.type === type &&
-      Number.isInteger(slotOverride.slot) &&
-      !used.has(slotOverride.slot)
-    ) {
-      return slotOverride.slot;
-    }
+    if (slotFree(ghostSlot, city, type, used)) return ghostSlot.slot;
+    if (slotFree(slotOverride, city, type, used)) return slotOverride.slot;
     if (type === "dc") return smartDcSlot(used, city);
     return 0;
+  }
+
+  function rememberGhost(city, type, snap) {
+    if (!city || !type || !snap || !Number.isInteger(snap.slot)) {
+      ghostSlot = null;
+      if (type === "dc") slotOverride = null;
+      return null;
+    }
+    ghostSlot = { city: city.id, type, slot: snap.slot, c: snap.c, r: snap.r };
+    if (type === "dc") slotOverride = { city: city.id, type: "dc", slot: snap.slot };
+    return ghostSlot;
   }
 
   function dcPlacement(city, previewType) {
@@ -879,6 +894,65 @@
   function signedMoney(n) {
     if (n < 0) return money(n);
     return `+${money(n)}`;
+  }
+
+  function kitOutput(city, type) {
+    if (!city || !BUILD[type]) return 0;
+    const site = city.sites[YOU];
+    const before = cityNet(city, YOU);
+    const snap = {
+      dc: site.dc,
+      mcs: site.mcs,
+      bess: site.bess,
+      lounge: site.lounge,
+      market: site.market,
+      share: city.share,
+      dcSlots: site.dcSlots ? site.dcSlots.slice() : null,
+    };
+    try {
+      if (site[type] > 0) site[type] -= 1;
+      if (type === "dc" && Array.isArray(site.dcSlots) && site.dcSlots.length > site.dc) {
+        site.dcSlots = site.dcSlots.slice(0, site.dc);
+      }
+      recomputeShare(city);
+      return Math.round(before - cityNet(city, YOU));
+    } finally {
+      site.dc = snap.dc;
+      site.mcs = snap.mcs;
+      site.bess = snap.bess;
+      site.lounge = snap.lounge;
+      site.market = snap.market;
+      if (snap.dcSlots) site.dcSlots = snap.dcSlots;
+      else delete site.dcSlots;
+      city.share = snap.share;
+      recomputeShare(city);
+    }
+  }
+
+  function kitTipEl() {
+    let tip = $("kit-tip");
+    if (!tip) {
+      tip = document.createElement("div");
+      tip.id = "kit-tip";
+      tip.className = "kit-tip hidden";
+      document.body.append(tip);
+    }
+    return tip;
+  }
+
+  function showKitTip(kind, clientX, clientY) {
+    if (!siteView || !state || !BUILD[kind]) return;
+    const city = state.cities[siteView];
+    const tip = kitTipEl();
+    tip.textContent = `${BUILD[kind].name} · ${signedMoney(kitOutput(city, kind))}/mo`;
+    tip.classList.remove("hidden");
+    tip.style.left = `${Math.round(clientX + 14)}px`;
+    tip.style.top = `${Math.round(clientY + 18)}px`;
+  }
+
+  function hideKitTip() {
+    const tip = $("kit-tip");
+    if (tip) tip.classList.add("hidden");
   }
 
   function placementRead(city, type) {
@@ -962,6 +1036,7 @@
       const plan = dcPlacement(city, null);
       slot = chosenSlot(city, "dc", plan.used);
       slotOverride = null;
+      ghostSlot = null;
     }
     state.queue.push({
       faction,
@@ -989,6 +1064,7 @@
       return;
     }
     const site = city.sites[job.faction];
+    const beforeNet = job.faction === YOU ? cityNet(city, YOU) : 0;
     let placedSlot = null;
     if (job.type === "dc" && job.faction === YOU) {
       const live = liveDcIndexList(site);
@@ -1006,6 +1082,7 @@
         type: job.type,
         slot: placedSlot != null ? placedSlot : Math.max(0, site[job.type] - 1),
         until: Date.now() + 2200,
+        delta: Math.round(cityNet(city, YOU) - beforeNet),
       });
       yardFlash = { city: job.city, until: Date.now() + 780 };
       toast(`${BUILD[job.type].name} COMPLETE · ${CITY_BY_ID[job.city].name}`, "good");
@@ -2557,7 +2634,7 @@
       <div class="crew-fork">
         <button type="button" data-posture="raise" class="${posture === "raise" ? "on" : ""}">RAISE</button>
         <button type="button" data-posture="respond" class="${posture === "respond" ? "on" : ""}">RESPOND</button>
-        <span class="crew-read">${crewReadText()}</span>
+        <span class="crew-read${idleCrewCount() > 0 ? " idle" : ""}">${crewReadText()}</span>
         <button type="button" id="btn-scout"${scoutDisabled ? " disabled" : ""}>${scoutText}</button>
       </div>`;
   }
@@ -2568,6 +2645,12 @@
     strip.dataset.bound = "1";
     strip.addEventListener("click", (e) => {
       if (!state) return;
+      if (e.target.closest(".ops-objective")) {
+        const target = objectiveTargets()[0];
+        if (siteView) exitSite();
+        if (target) panToCity(target);
+        return;
+      }
       const posture = e.target.closest("[data-posture]");
       if (posture) {
         const next = posture.getAttribute("data-posture") === "respond" ? "respond" : "raise";
@@ -2704,6 +2787,7 @@
     previewKit = null;
     cursorCell = null;
     slotOverride = null;
+    ghostSlot = null;
     inspectJob = null;
     pops = [];
     yardFlash = null;
@@ -2784,6 +2868,56 @@
       .join("");
   }
 
+  function territoryHtml() {
+    let html = "";
+    for (const meta of CITIES) {
+      const city = state.cities[meta.id];
+      if (!city) continue;
+      const you = playerClaiming(city);
+      const rival = strongestRival(city);
+      if (!you && !rival) continue;
+      const hidden = rivalSite(city) && !cityRevealed(meta.id);
+      const veil = hidden ? 0.45 : 1;
+      const radius = 10 + meta.demand * 0.1;
+      const youShare = city.share[YOU] || 0;
+      const rivShare = rival ? city.share[rival.id] || 0 : 0;
+      if (you && rival) {
+        const fade = Math.max(0.05, Math.min(0.14, (0.04 + Math.max(youShare, rivShare) * 0.1) * veil));
+        const x = meta.x;
+        const y = meta.y;
+        const r = radius;
+        html +=
+          `<g class="territory contested">` +
+          `<path d="M ${x} ${y - r} A ${r} ${r} 0 0 0 ${x} ${y + r} Z" fill="${PAL.red}" opacity="${fade.toFixed(2)}"/>` +
+          `<path d="M ${x} ${y - r} A ${r} ${r} 0 0 1 ${x} ${y + r} Z" fill="${rival.color}" opacity="${fade.toFixed(2)}"/>` +
+          `<line class="territory-seam" x1="${x}" y1="${(y - r).toFixed(1)}" x2="${x}" y2="${(y + r).toFixed(1)}"/>` +
+          `</g>`;
+      } else {
+        const color = you ? PAL.red : rival.color;
+        const share = you ? youShare : rivShare;
+        const fade = Math.max(0.045, Math.min(0.12, (0.035 + share * 0.08) * veil));
+        html += `<circle class="territory" cx="${meta.x}" cy="${meta.y}" r="${radius.toFixed(1)}" fill="${color}" opacity="${fade.toFixed(2)}"/>`;
+      }
+    }
+    return html;
+  }
+
+  function panToCity(id) {
+    const meta = CITY_BY_ID[id];
+    const stage = $("map-stage");
+    if (!meta || !stage) return;
+    const sw = stage.clientWidth;
+    const sh = stage.clientHeight;
+    if (sw < 40 || sh < 40) return;
+    mapCam.scale = 1.85;
+    const cx = (meta.x / 1200) * sw;
+    const cy = (meta.y / 800) * sh;
+    mapCam.x = sw * 0.46 - cx * mapCam.scale;
+    mapCam.y = sh * 0.42 - cy * mapCam.scale;
+    clampCam();
+    applyMapCam();
+  }
+
   function renderCorridors() {
     const svg = $("corridor-layer");
     if (!svg) return;
@@ -2792,7 +2926,7 @@
       return;
     }
     const seen = new Set();
-    let html = "";
+    let html = territoryHtml();
     for (const meta of CITIES) {
       const alpha = pulseAlpha(meta.id);
       if (alpha <= 0) continue;
@@ -3247,7 +3381,7 @@
     const kind = mapSpriteKind(city, resolved);
     if (playerYard(city) || kind === "dirt" || kind === "flag") {
       const baseKind = yardBaseKind(city, resolved);
-      return `<div class="insp-yard" data-kind="${baseKind}">${yardArtHtml(city, resolved, { banner: false })}</div>`;
+      return `<div class="insp-yard" data-kind="${baseKind}">${yardArtHtml(city, resolved, { banner: false, traffic: false })}</div>`;
     }
     const src = MAP_SPRITES[kind] || MAP_SPRITES.flag;
     return `<img class="insp-sprite" src="${src}" alt="" data-kind="${kind}" draggable="false">`;
@@ -3338,6 +3472,199 @@
     return [];
   }
 
+  function boxOf(el) {
+    if (!el) return null;
+    const b = el.getBoundingClientRect();
+    if (b.width < 1 || b.height < 1) return null;
+    return b;
+  }
+
+  function boxesHit(a, b) {
+    if (!a || !b) return false;
+    const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+    const oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+    return ox > 0.5 && oy > 0.5;
+  }
+
+  function labelOverlaps() {
+    const items = [];
+    document.querySelectorAll(".city-node").forEach((node) => {
+      const id = node.dataset.city || "";
+      const label = boxOf(node.querySelector(".city-label"));
+      const sprite = boxOf(node.querySelector(".map-icon"));
+      const tag = boxOf(node.querySelector(".obj-mo"));
+      if (label) items.push({ id, kind: "label", box: label });
+      if (sprite) items.push({ id, kind: "sprite", box: sprite });
+      if (tag) items.push({ id, kind: "tag", box: tag });
+    });
+    const hits = [];
+    for (let i = 0; i < items.length; i += 1) {
+      for (let j = i + 1; j < items.length; j += 1) {
+        const a = items[i];
+        const b = items[j];
+        const labelInvolved = a.kind === "label" || b.kind === "label";
+        if (!labelInvolved) continue;
+        if (!boxesHit(a.box, b.box)) continue;
+        hits.push({ a: `${a.id}:${a.kind}`, b: `${b.id}:${b.kind}` });
+      }
+    }
+    return hits;
+  }
+
+  function nearestCity(meta) {
+    let best = null;
+    let bestD = Infinity;
+    for (const other of CITIES) {
+      if (other.id === meta.id) continue;
+      const d = (other.x - meta.x) ** 2 + (other.y - meta.y) ** 2;
+      if (d < bestD) {
+        bestD = d;
+        best = other;
+      }
+    }
+    return best;
+  }
+
+  function applyTagSpot(tag, spot) {
+    tag.style.left = spot.left;
+    tag.style.right = spot.right;
+    tag.style.top = spot.top;
+    tag.style.bottom = spot.bottom;
+    tag.style.transform = spot.transform;
+  }
+
+  function tagSpots(meta) {
+    const near = nearestCity(meta);
+    const goRight = !near || near.x < meta.x;
+    const right = { left: "calc(100% + 8px)", right: "auto", top: "4px", bottom: "auto", transform: "none" };
+    const left = { left: "auto", right: "calc(100% + 8px)", top: "4px", bottom: "auto", transform: "none" };
+    const above = { left: "50%", right: "auto", top: "auto", bottom: "calc(100% + 2px)", transform: "translateX(-50%)" };
+    const below = { left: "50%", right: "auto", top: "calc(100% + 22px)", bottom: "auto", transform: "translateX(-50%)" };
+    return goRight ? [right, left, above, below] : [left, right, above, below];
+  }
+
+  function foreignHits(el, ownId) {
+    let n = 0;
+    document.querySelectorAll(".city-label, .obj-mo, .map-icon").forEach((other) => {
+      if (other === el) return;
+      const node = other.closest(".city-node");
+      const id = node ? node.dataset.city : "";
+      if (id === ownId && other.classList.contains("map-icon")) return;
+      if (id === ownId && other.classList.contains("city-label") && el.classList.contains("city-label")) return;
+      if (boxesHit(el.getBoundingClientRect(), other.getBoundingClientRect())) n += 1;
+    });
+    return n;
+  }
+
+  function settleMapChrome() {
+    const stage = $("map-stage");
+    const h = stage ? stage.clientHeight : 500;
+    const pin = Math.max(0.55, Math.min(1, h / 560));
+    document.documentElement.style.setProperty("--pin-scale", pin.toFixed(3));
+    document.querySelectorAll(".city-label").forEach((label) => {
+      label.dataset.nudgeX = "0";
+      label.style.transform = "translateX(-50%)";
+    });
+    document.querySelectorAll(".map-icon").forEach((icon) => {
+      icon.dataset.nudgeX = "0";
+      icon.dataset.nudgeY = "0";
+      icon.style.translate = "0 0";
+    });
+    document.querySelectorAll(".city-node.obj-target").forEach((node) => {
+      const tag = node.querySelector(".obj-mo");
+      const meta = CITY_BY_ID[node.dataset.city];
+      if (!tag || !meta) return;
+      let chosen = tagSpots(meta)[0];
+      let best = Infinity;
+      for (const spot of tagSpots(meta)) {
+        applyTagSpot(tag, spot);
+        const score = foreignHits(tag, node.dataset.city);
+        if (score < best) {
+          best = score;
+          chosen = spot;
+        }
+        if (score === 0) break;
+      }
+      applyTagSpot(tag, chosen);
+    });
+    const labels = [...document.querySelectorAll(".city-label")];
+    for (let pass = 0; pass < 12; pass += 1) {
+      let moved = false;
+      for (let i = 0; i < labels.length; i += 1) {
+        for (let j = i + 1; j < labels.length; j += 1) {
+          const a = labels[i].getBoundingClientRect();
+          const b = labels[j].getBoundingClientRect();
+          if (!boxesHit(a, b)) continue;
+          const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+          const shift = a.left <= b.left ? labels[j] : labels[i];
+          const dir = a.left <= b.left ? 1 : -1;
+          const cur = Number(shift.dataset.nudgeX || 0);
+          const next = cur + dir * (ox + 4);
+          shift.dataset.nudgeX = String(next);
+          shift.style.transform = `translateX(calc(-50% + ${next}px))`;
+          moved = true;
+        }
+      }
+      if (!moved) break;
+    }
+    document.querySelectorAll(".map-icon").forEach((icon) => {
+      const node = icon.closest(".city-node");
+      const own = node ? node.dataset.city : "";
+      for (let step = 0; step < 14; step += 1) {
+        const a = icon.getBoundingClientRect();
+        let hit = null;
+        document.querySelectorAll(".city-label, .obj-mo").forEach((other) => {
+          if (hit) return;
+          const host = other.closest(".city-node");
+          if (host && host.dataset.city === own && other.classList.contains("city-label") === false && other.classList.contains("obj-mo") === false) return;
+          const b = other.getBoundingClientRect();
+          if (!boxesHit(a, b)) return;
+          hit = b;
+        });
+        if (!hit) break;
+        const acx = (a.left + a.right) / 2;
+        const acy = (a.top + a.bottom) / 2;
+        const bcx = (hit.left + hit.right) / 2;
+        const bcy = (hit.top + hit.bottom) / 2;
+        let nx = Number(icon.dataset.nudgeX || 0);
+        let ny = Number(icon.dataset.nudgeY || 0);
+        nx += Math.sign(acx - bcx || (own === "phoenix" ? 0 : 1)) * 6;
+        ny += Math.sign(acy - bcy || -1) * 6;
+      icon.dataset.nudgeX = String(nx);
+      icon.dataset.nudgeY = String(ny);
+      icon.style.translate = `${nx}px ${ny}px`;
+    }
+    });
+    for (let pass = 0; pass < 16; pass += 1) {
+      let moved = false;
+      document.querySelectorAll(".city-label, .obj-mo").forEach((label) => {
+        const own = label.closest(".city-node");
+        const ownId = own ? own.dataset.city : "";
+        const a = label.getBoundingClientRect();
+        document.querySelectorAll(".map-icon, .city-label, .obj-mo").forEach((other) => {
+          if (other === label) return;
+          const host = other.closest(".city-node");
+          if (host && host.dataset.city === ownId && other.classList.contains("map-icon") && label.classList.contains("obj-mo")) return;
+          if (!boxesHit(a, other.getBoundingClientRect())) return;
+          const b = other.getBoundingClientRect();
+          const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+          const cur = Number(label.dataset.nudgeX || 0);
+          const dir = (a.left + a.right) / 2 >= (b.left + b.right) / 2 ? 1 : -1;
+          const next = cur + dir * (ox + 4);
+          label.dataset.nudgeX = String(next);
+          if (label.classList.contains("city-label")) {
+            label.style.transform = `translateX(calc(-50% + ${next}px))`;
+          } else {
+            const base = label.style.transform && label.style.transform !== "none" ? label.style.transform : "none";
+            label.style.translate = `${next}px 0`;
+          }
+          moved = true;
+        });
+      });
+      if (!moved) break;
+    }
+  }
+
   function renderCities() {
     const layer = $("city-layer");
     layer.innerHTML = "";
@@ -3357,6 +3684,7 @@
       btn.className = `city-node ${occ} ${selected === meta.id ? "selected" : ""} ${raising ? "raising" : ""} ${siteView === meta.id ? "site-focus" : ""} ${sharp && !fogged ? "sharp-rival" : ""} ${fogged ? "fogged" : ""} ${fightHere ? "pin-fight" : ""} tier-${tier}`;
       if (nodeRival && (sharp || contestedCity(city))) btn.style.setProperty("--rival", nodeRival.color);
       btn.dataset.city = meta.id;
+      btn.dataset.sprite = mapSpriteKind(city, meta);
       btn.style.left = `${(meta.x / 1200) * 100}%`;
       btn.style.top = `${(meta.y / 800) * 100}%`;
       btn.title = fogged ? `${meta.name}, ${meta.state} — unknown rival` : `${meta.name}, ${meta.state}`;
@@ -3432,7 +3760,7 @@
         ring.className = "obj-ring";
         const tag = document.createElement("em");
         tag.className = "obj-mo";
-        tag.textContent = `${Math.max(0, state.objective.left)} MO`;
+        tag.textContent = `CLAIM · ${Math.max(0, state.objective.left)} MO`;
         btn.append(ring, tag);
       }
       const pulse = pulseMonths(meta.id);
@@ -3483,6 +3811,10 @@
         holder.className = "crew-tokens map";
         holder.innerHTML = crewTokenMarkup(meta.id);
         if (holder.innerHTML) btn.append(holder);
+      }
+      const sprite = btn.querySelector(".map-sprite");
+      if (sprite && !sprite.complete) {
+        sprite.addEventListener("load", () => settleMapChrome(), { once: true });
       }
       layer.appendChild(btn);
     }
@@ -3736,8 +4068,10 @@
     if (preview) bits.push("preview");
     if (pop) bits.push("pop");
     const kind = (cls || "").replace(/^kit-/, "").replace(/-unit$/, "");
+    const tipOk = !ghost && /^(kit-dc-unit|kit-mcs-unit|kit-bess|kit-lounge|kit-market)$/.test(cls);
     const inspect = ghost && !preview ? ` data-inspect="${kind}"` : "";
-    return `<g class="${bits.join(" ")}"${inspect}>${inner}</g>`;
+    const tip = tipOk && BUILD[kind] ? ` data-kit-tip="${kind}"` : "";
+    return `<g class="${bits.join(" ")}"${inspect}${tip}>${inner}</g>`;
   }
 
   function occupiedTiles(occ) {
@@ -3774,11 +4108,12 @@
     return a.r - a.c - (b.r - b.c) || a.r - b.r || b.c - a.c;
   }
 
-  function stallPaint(c, r) {
+  function stallPaint(c, r, idle) {
     const stall = insetQuad(gridQuad(c + 0.16, r + 0.38, 0.68, 0.48), 0);
     const mid = insetQuad(gridQuad(c + 0.47, r + 0.42, 0.06, 0.38), 0);
+    const cls = idle ? "site-stall idle" : "site-stall";
     return (
-      `<polygon class="site-stall" points="${svgPts(stall)}" />` +
+      `<polygon class="${cls}" points="${svgPts(stall)}" />` +
       `<polygon class="site-stall-hash" points="${svgPts(mid)}" />`
     );
   }
@@ -4011,9 +4346,19 @@
     }
     let marks = footprint.filter((cell) => cell.ok);
     if (type === "dc") {
-      const origin = cursorCell ? cellCenter(cursorCell.c, cursorCell.r) : null;
-      const near = nearestOkSlot(city, "dc", origin);
-      marks = near ? [{ c: near.c, r: near.r, ok: true }] : [];
+      const held =
+        ghostSlot &&
+        ghostSlot.city === city.id &&
+        ghostSlot.type === "dc" &&
+        SLOTS.dc[ghostSlot.slot];
+      if (held) {
+        const slot = SLOTS.dc[ghostSlot.slot];
+        marks = [{ c: slot.c, r: slot.r, ok: true }];
+      } else {
+        const origin = cursorCell ? cellCenter(cursorCell.c, cursorCell.r) : null;
+        const near = nearestOkSlot(city, "dc", origin);
+        marks = near ? [{ c: near.c, r: near.r, ok: true }] : [];
+      }
     }
     marks.forEach((cell) => {
       const quad = insetQuad(gridQuad(cell.c, cell.r, 1, 1), 0.1);
@@ -4065,6 +4410,27 @@
       return { kind: "market", label: c === SLOTS.market[0].c ? "MARKET" : "", ...slotJob(occ, "market", 0) };
     }
     return null;
+  }
+
+  function kitProgress(foot, pct) {
+    const top = Math.min(...foot.map((p) => p[1]));
+    const cx = foot.reduce((s, p) => s + p[0], 0) / 4;
+    const w = 7.4;
+    const h = 1.2;
+    const x = cx - w / 2;
+    const y = top - 2.6;
+    const fill = Math.max(0.6, w * Math.max(0.08, Math.min(1, pct || 0.15)));
+    return (
+      `<g class="kit-progress">` +
+      `<rect class="kit-progress-track" x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${w}" height="${h}"/>` +
+      `<rect class="kit-progress-fill" x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${fill.toFixed(2)}" height="${h}"/>` +
+      `</g>`
+    );
+  }
+
+  function raisingDress(foot, fullH, job) {
+    if (!job || job.preview) return "";
+    return scaffoldFrame(foot, fullH) + kitProgress(foot, job.pct);
   }
 
   function scaffoldFrame(foot, fullH) {
@@ -4133,6 +4499,22 @@
       .join("");
   }
 
+  function popFx(occ) {
+    prunePops();
+    let g = "";
+    for (const p of pops) {
+      if (p.city !== occ.cityId || !BUILD[p.type]) continue;
+      const slots = SLOTS[p.type] || [];
+      const slot = p.type === "dc" ? slots[p.slot] : slots[0];
+      if (!slot) continue;
+      const mid = cellCenter(slot.c, slot.r);
+      const label = `${signedMoney(Number.isFinite(p.delta) ? p.delta : 0)}/mo`;
+      g += `<circle class="site-pop-ring" cx="${mid.x.toFixed(2)}" cy="${mid.y.toFixed(2)}" r="5.4"/>`;
+      g += `<g class="site-pop-floater"><text x="${mid.x.toFixed(2)}" y="${(mid.y - 8.4).toFixed(2)}">${label}</text></g>`;
+    }
+    return g;
+  }
+
   function ghostCaptions(occ) {
     let g = "";
     if (occ.dcPlan) {
@@ -4176,7 +4558,11 @@
         const pct = mark.pct || 0.12;
         reserve += `<polygon class="site-tile-progress kind-${mark.kind}" points="${svgPts(insetQuad(quad, 0.18 + (1 - pct) * 0.28))}" />`;
       }
-      if (kind === "dc") paint += stallPaint(c, r);
+      if (kind === "dc") {
+        const slot = SLOTS.dc.findIndex((s) => s.c === c && s.r === r);
+        const live = occ.dcPlan ? occ.dcPlan.live.includes(slot) : slot >= 0 && slot < occ.live.dc;
+        paint += stallPaint(c, r, !live);
+      }
       if (kind === "mcs") {
         paint += `<polygon class="site-stall mcs" points="${svgPts(insetQuad(quad, 0.2))}" />`;
       }
@@ -4220,7 +4606,7 @@
       g += faceRect(box, 0.14, 0.48, 0.72, 0.08, ghost ? "#243038" : "#141418");
       if (!ghost && i === 1) g += faceRect(box, 0.72, 0.1, 0.14, 0.1, PAL.red);
     });
-    if (ghost) g += scaffoldFrame(insetQuad(gridQuad(0.08, 0.22, 3.84, 0.7), 0), fullH + 0.8);
+    if (ghost && !job?.preview) g += raisingDress(insetQuad(gridQuad(0.08, 0.22, 3.84, 0.7), 0), fullH + 0.8, job);
     return wrapBldg("kit-bess", ghost, g, slotPop(occ, "bess", 0), job?.preview);
   }
 
@@ -4266,7 +4652,7 @@
     g += `<polygon class="site-mcs-edge" points="${svgPts(insetQuad(roof.top, 0.08))}" />`;
     g += `<polygon class="site-mcs-amber" points="${svgPts(insetQuad(roof.top, 0.2))}" />`;
     g += `<polygon class="site-roof-under" points="${svgPts(insetQuad(roof.top, 0.18))}" />`;
-    if (bayGhost || raising) g += scaffoldFrame(bay, lift + 1.2);
+    if (raising && occ.preview !== "mcs") g += raisingDress(bay, lift + 1.2, slotJob(occ, "mcs", 0));
     return wrapBldg("kit-mcs", bayGhost, g, slotPop(occ, "mcs", 0) && live >= 1, occ.preview === "mcs" && live < 1);
   }
 
@@ -4288,7 +4674,7 @@
     const holsterL = isoPrism(liftPts(leftHook, h * 0.48), 1.2, ghost ? ghostTone("dc") : SURF.charcoal);
     const holsterR = isoPrism(liftPts(rightHook, h * 0.48), 1.2, ghost ? ghostTone("dc") : SURF.charcoal);
     unit += holsterL.g + holsterR.g;
-    if (ghost) unit += scaffoldFrame(foot, fullH);
+    if (ghost) unit += raisingDress(foot, fullH, job);
     if (!ghost) {
       const a = holsterL.sw;
       const b = holsterR.se;
@@ -4381,7 +4767,7 @@
     if (!ghost) {
       g += `<polygon class="site-portal-glow" points="${svgPts(subQuad(front, 0.1, 0.22, 0.39, 0.48))}" />`;
       g += `<polygon class="site-portal-glow" points="${svgPts(subQuad(front, 0.53, 0.22, 0.82, 0.48))}" />`;
-    } else g += scaffoldFrame(foot, fullH + 1.4);
+    } else g += raisingDress(foot, fullH + 1.4, job);
     return wrapBldg("kit-lounge", ghost, g, slotPop(occ, "lounge", 0), job?.preview);
   }
 
@@ -4406,7 +4792,7 @@
       const stripe = subQuad(awning.top, i / 4 + 0.02, 0.08, (i + 0.42) / 4, 0.92);
       g += `<polygon class="site-market-stripe" points="${svgPts(stripe)}" />`;
     }
-    if (ghost) g += scaffoldFrame(foot, fullH + 1.2);
+    if (ghost) g += raisingDress(foot, fullH + 1.2, job);
     return wrapBldg("kit-market", ghost, g, slotPop(occ, "market", 0), job?.preview);
   }
 
@@ -4423,6 +4809,7 @@
       drawDcCanopy(occ) +
       drawDcRow(occ) +
       ghostCaptions(occ) +
+      popFx(occ) +
       slotPickHits(occ) +
       skirmishLaneSvg(city);
     return overlaySvg(any ? "site-compound" : "site-compound empty-board", inner);
@@ -4610,12 +4997,74 @@
     );
   }
 
-  function yardArtHtml(city, meta, { banner = true } = {}) {
+  function gridStrained(city) {
+    const site = city && city.sites[YOU];
+    if (!site) return false;
+    return site.dc + site.mcs > 0 && site.bess < 1;
+  }
+
+  function trafficPlan(city) {
+    const meta = CITY_BY_ID[city.id];
+    const site = city.sites[YOU];
+    const empty = { parked: 0, queue: 0, trucks: 0, arrivals: 0 };
+    if (!meta || !site || rivalSite(city)) return empty;
+    const share = city.share[YOU] || 0;
+    if (share <= 0 && !hasCap(site)) return empty;
+    const weight = Math.max(share, hasCap(site) ? 0.35 : 0);
+    const arrivals = Math.max(0, Math.round((meta.demand * weight) / 10));
+    const parked = site.dc > 0 ? Math.min(site.dc, Math.max(site.dc, arrivals)) : 0;
+    const queue = Math.min(5, Math.max(0, arrivals - site.dc));
+    const trucks = site.mcs > 0 ? Math.min(2, site.mcs) : 0;
+    return { parked: site.dc > 0 ? site.dc : 0, queue, trucks, arrivals };
+  }
+
+  function vehicleHtml(city) {
+    const plan = trafficPlan(city);
+    if (!plan.parked && !plan.queue && !plan.trucks) return "";
+    const bits = [];
+    const live = city.sites[YOU].dcSlots && city.sites[YOU].dcSlots.length === city.sites[YOU].dc
+      ? city.sites[YOU].dcSlots
+      : Array.from({ length: Math.min(4, plan.parked) }, (_, i) => i);
+    live.slice(0, plan.parked).forEach((idx, n) => {
+      const slot = SLOTS.dc[idx];
+      if (!slot) return;
+      const mid = cellCenter(slot.c, slot.r);
+      const dir = n % 4;
+      bits.push(
+        `<img class="yard-vehicle sedan" data-vehicle="sedan" src="assets/sprites/vehicles/sedan-${dir}.png?v=${SPRITE_V}" alt="" draggable="false" style="left:${mid.x.toFixed(2)}%;top:${(mid.y + 3.2).toFixed(2)}%">`
+      );
+    });
+    for (let i = 0; i < plan.trucks; i += 1) {
+      const slot = SLOTS.mcs[i] || SLOTS.mcs[0];
+      const mid = cellCenter(slot.c, slot.r);
+      bits.push(
+        `<img class="yard-vehicle truck" data-vehicle="truck" src="assets/sprites/vehicles/truck-${i % 4}.png?v=${SPRITE_V}" alt="" draggable="false" style="left:${(mid.x + 1.4).toFixed(2)}%;top:${(mid.y + 2.4).toFixed(2)}%">`
+      );
+    }
+    for (let i = 0; i < plan.queue; i += 1) {
+      const mid = cellCenter(4.15, 2.15);
+      const x = mid.x + 6.2 + i * 4.6;
+      const y = mid.y + 1.2 + i * 2.4;
+      bits.push(
+        `<img class="yard-vehicle sedan queue" data-vehicle="queue" src="assets/sprites/vehicles/sedan-${(i + 1) % 4}.png?v=${SPRITE_V}" alt="" draggable="false" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%">`
+      );
+    }
+    if (plan.queue) {
+      const mid = cellCenter(4.15, 2.15);
+      bits.push(
+        `<span class="yard-queue-tag" style="left:${(mid.x + 8).toFixed(2)}%;top:${(mid.y - 6).toFixed(2)}%">QUEUE · ${plan.queue}</span>`
+      );
+    }
+    return bits.join("");
+  }
+
+  function yardArtHtml(city, meta, { banner = true, traffic = true } = {}) {
     const baseKind = yardBaseKind(city, meta);
     const base = MAP_SPRITES[baseKind] || MAP_SPRITES.dirt;
     let html = `<img class="site-base" src="${base}" alt="" draggable="false" data-kind="${baseKind}">`;
     if (baseKind === "dirt" || baseKind === "flag") html += kitLayersHtml(city);
     if (rivalSite(city)) html += rivalCutHtml(city);
+    if (traffic && (baseKind === "dirt" || baseKind === "flag")) html += vehicleHtml(city);
     if (banner) html += siteRaisingBanner(meta.id);
     return html;
   }
@@ -4638,9 +5087,9 @@
     const boxH = yard.clientHeight;
     if (boxW < 40 || boxH < 40) return;
     const ratio = aw / ah;
-    const maxW = Math.min(boxW * 0.76, 800);
-    const yardEl = $("site-yard");
-    const intelOpen = yardEl && yardEl.classList.contains("has-intel");
+    const floorW = Math.min(boxW * 0.76, 800);
+    const viewW = window.innerWidth || boxW;
+    const intelOpen = yard.classList.contains("has-intel");
     let head = 0;
     if (intelOpen) {
       ["site-plate", "site-overlay-intel"].forEach((id) => {
@@ -4648,31 +5097,51 @@
         if (el && !el.classList.contains("hidden")) head += el.offsetHeight;
       });
     }
-    const gutter = intelOpen ? 12 : 0;
-    const availH = intelOpen ? Math.max(96, boxH - head - gutter - 8) : Math.min(boxH * 0.92, 520);
-    const maxH = Math.min(availH, 520);
-    let w = maxW;
-    let h = w / ratio;
-    if (h > maxH) {
-      h = maxH;
-      w = h * ratio;
-    }
+    const margin = 16;
+    const safeW = Math.max(80, boxW - margin * 2);
+    const safeH = Math.max(80, boxH - head - margin * 2);
+    let w = Math.min(safeW, Math.max(floorW, safeH * ratio));
+    if (w > safeW) w = safeW;
+    stack.style.aspectRatio = css;
     stack.style.width = `${Math.round(w)}px`;
-    stack.style.maxWidth = `${Math.round(w)}px`;
-    if (intelOpen) {
-      const extra = Math.max(0, boxH - head - gutter - h);
-      stack.style.position = "relative";
-      stack.style.left = "auto";
-      stack.style.top = "auto";
-      stack.style.transform = "none";
-      stack.style.margin = `${gutter + Math.round(extra / 2)}px auto 0`;
-    } else {
-      stack.style.position = "";
-      stack.style.left = "";
-      stack.style.top = "50%";
-      stack.style.transform = "";
-      stack.style.margin = "";
-    }
+    stack.style.maxWidth = "none";
+    stack.style.position = "absolute";
+    stack.style.left = "0px";
+    stack.style.top = "0px";
+    stack.style.margin = "0";
+    stack.style.transformOrigin = "0 0";
+    stack.style.transform = "none";
+    const yardRect = yard.getBoundingClientRect();
+    const bounds = padContentBounds(stack) || stack.getBoundingClientRect();
+    const localX = bounds.left - yardRect.left;
+    const localY = bounds.top - yardRect.top;
+    const z = Math.min(safeW / Math.max(1, bounds.width), safeH / Math.max(1, bounds.height));
+    const tx = margin + (safeW - bounds.width * z) / 2 - localX * z;
+    const ty = head + margin + (safeH - bounds.height * z) / 2 - localY * z;
+    stack.style.transform = `translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px) scale(${z.toFixed(4)})`;
+    stack.dataset.padFrac = viewW ? ((bounds.width * z) / viewW).toFixed(2) : "";
+  }
+
+  function padContentBounds(stack) {
+    const nodes = stack.querySelectorAll(
+      ".site-bldg, .yard-vehicle, .yard-queue-tag, .site-gravel, .kit-progress, .site-scaffold, .site-footprint"
+    );
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    let n = 0;
+    nodes.forEach((el) => {
+      const r = el.getBoundingClientRect();
+      if (r.width < 0.5 && r.height < 0.5) return;
+      n += 1;
+      minX = Math.min(minX, r.left);
+      minY = Math.min(minY, r.top);
+      maxX = Math.max(maxX, r.right);
+      maxY = Math.max(maxY, r.bottom);
+    });
+    if (!n) return null;
+    return { left: minX, top: minY, width: maxX - minX, height: maxY - minY };
   }
 
   function inspectRaising(type) {
@@ -4717,7 +5186,7 @@
           const city = state.cities[siteView];
           const origin = cell ? cellCenter(cell.c, cell.r) : null;
           const snap = nearestOkSlot(city, type, origin);
-          if (type === "dc" && snap) slotOverride = { city: siteView, type: "dc", slot: snap.slot };
+          if (snap) rememberGhost(city, type, snap);
           if (snap && canDeploy(type, siteView)) enqueue(type, siteView);
           else {
             const why = blockedReason(type, siteView) || (cell && cellPlaceState(city, type, cell.c, cell.r).reason) || "";
@@ -4735,28 +5204,39 @@
     yard.addEventListener("pointermove", (e) => {
       if (!siteView || !state) return;
       if (!hoverKit && previewKit) hoverKit = previewKit;
-      if (!hoverKit) return;
+      const tipHit = e.target && e.target.closest ? e.target.closest("[data-kit-tip]") : null;
+      if (!hoverKit) {
+        if (tipHit) showKitTip(tipHit.getAttribute("data-kit-tip"), e.clientX, e.clientY);
+        else hideKitTip();
+        return;
+      }
       const pt = yardViewPoint(e.clientX, e.clientY);
       if (!pt) return;
       const next = cellFromView(pt.x, pt.y);
       if (!next) return;
-      const prevKey = cursorCell ? `${cursorCell.c},${cursorCell.r}` : "";
-      const nextKey = `${next.c},${next.r}`;
       const city = state.cities[siteView];
       const snap = nearestOkSlot(city, hoverKit, cellCenter(next.c, next.r));
-      const prevSlot = slotOverride && slotOverride.city === siteView && slotOverride.type === hoverKit ? slotOverride.slot : -1;
-      if (prevKey === nextKey && (!snap || snap.slot === prevSlot)) return;
+      const prevKey = cursorCell ? `${cursorCell.c},${cursorCell.r}` : "";
+      const prevSlot = ghostSlot && ghostSlot.city === siteView && ghostSlot.type === hoverKit ? ghostSlot.slot : -1;
       cursorCell = next;
-      if (snap && hoverKit === "dc") slotOverride = { city: siteView, type: "dc", slot: snap.slot };
+      rememberGhost(city, hoverKit, snap);
+      if (tipHit) showKitTip(tipHit.getAttribute("data-kit-tip"), e.clientX, e.clientY);
+      else hideKitTip();
+      const nextKey = `${next.c},${next.r}`;
+      const nextSlot = ghostSlot ? ghostSlot.slot : -1;
+      if (prevKey === nextKey && prevSlot === nextSlot) return;
       renderSiteYard();
     });
     yard.addEventListener("mouseleave", (e) => {
       const next = e.relatedTarget;
       if (next && next.closest && next.closest(".tray, #site-yard, #site-overlay")) return;
-      if (hoverKit || cursorCell || previewKit) {
+      hideKitTip();
+      if (hoverKit || cursorCell || previewKit || ghostSlot) {
         hoverKit = null;
         previewKit = null;
         cursorCell = null;
+        ghostSlot = null;
+        slotOverride = null;
         renderSiteYard();
       }
     });
@@ -4766,10 +5246,13 @@
       overlay.addEventListener("mouseleave", (e) => {
         const next = e.relatedTarget;
         if (next && next.closest && next.closest(".tray, #site-overlay")) return;
-        if (hoverKit || previewKit || cursorCell) {
+        hideKitTip();
+        if (hoverKit || previewKit || cursorCell || ghostSlot) {
           hoverKit = null;
           previewKit = null;
           cursorCell = null;
+          ghostSlot = null;
+          slotOverride = null;
           renderSiteYard();
         }
       });
@@ -4866,6 +5349,8 @@
     stack.dataset.sealed = sealed ? "1" : "0";
     if (rival && (sealed || contested)) stack.dataset.rival = rival.id;
     else delete stack.dataset.rival;
+    const strained = gridStrained(city);
+    stack.classList.toggle("strained", strained);
     const flashing = yardFlash && yardFlash.city === city.id && (yardFlash.hold || yardFlash.until > Date.now());
     const popping = pops.some((p) => p.city === city.id && p.until > Date.now());
     stack.classList.toggle("yard-flash", Boolean(flashing));
@@ -4918,6 +5403,7 @@
     previewKit = null;
     cursorCell = null;
     slotOverride = null;
+    ghostSlot = null;
     inspectJob = null;
     mapCam = { ...interconnectCam };
     clampCam();
@@ -5202,7 +5688,10 @@
           : `<small class="ready">${money(cost)} · ${spec.months} MO</small>`;
       btn.innerHTML = `<img src="${spec.icon}" alt="" draggable="false"><span class="deploy-copy"><b>${short}</b>${status}</span>`;
       btn.addEventListener("mouseenter", () => {
-        if (hoverKit !== spec.id) slotOverride = null;
+        if (hoverKit !== spec.id) {
+          slotOverride = null;
+          ghostSlot = null;
+        }
         previewKit = spec.id;
         hoverKit = spec.id;
         renderSiteYard();
@@ -5256,6 +5745,11 @@
       crew.text,
       crew.free > 0 && (state.idleMonths || 0) >= 2
     );
+    const crewEl = $("stat-crews");
+    if (crewEl) {
+      crewEl.classList.toggle("idle", crew.free > 0);
+      crewEl.title = crew.free > 0 ? `${crew.free} CREW IDLE` : "";
+    }
     const net = $("stat-net");
     if (net) {
       const run = monthlyNet();
@@ -5331,6 +5825,7 @@
     renderOps();
     renderWaypointHint();
     $("map-stage")?.classList.toggle("await-waypoint", Boolean(waypointCrew()) && !siteView);
+    settleMapChrome();
   }
 
   function hasSave() {
@@ -5537,6 +6032,13 @@
       state.buildPath = null;
       selected = "phoenix";
       return null;
+    }
+    if (name === "states" || name === "midbuild") {
+      z("flagstaff").dc = 1;
+      z("flagstaff").dcSlots = [0];
+      state.queue.push({ faction: YOU, city: "flagstaff", type: "dc", left: 1, cost: 0, slot: 2 });
+      selected = "flagstaff";
+      return "flagstaff";
     }
     if (name === "pop" || name === "complete") {
       z("flagstaff").dc = 2;
@@ -5770,6 +6272,12 @@
     document.querySelectorAll(".speed button").forEach((b) => {
       b.addEventListener("click", () => setSpeed(Number(b.dataset.speed)));
     });
+    window.addEventListener("resize", () => {
+      settleMapChrome();
+      const stack = $("site-stack");
+      if (stack && siteView) frameSiteStack(stack, stack.style.aspectRatio || "220 / 131");
+    });
+
     document.addEventListener("keydown", (e) => {
       const onBoard = state && !$("board-screen").classList.contains("hidden");
       const typing = e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA");
@@ -5861,6 +6369,14 @@
       const site = params.get("site") || shotCity;
       if (site && CITY_BY_ID[site]) enterSite(site);
       if (state.pendingEvent || state.pendingDeal || state.pendingFork || state.pendingEdict) openDealSheet();
+      if (shot === "states" || shot === "midbuild") {
+        hoverKit = "dc";
+        previewKit = "dc";
+        cursorCell = { c: 4, r: 1 };
+        const snap = nearestOkSlot(state.cities.flagstaff, "dc", cellCenter(4, 1));
+        rememberGhost(state.cities.flagstaff, "dc", snap);
+        renderSiteYard();
+      }
       if (shot === "hover" || shot === "consequence" || shot === "footprint") {
         hoverKit = "dc";
         if (shot === "footprint") {
@@ -5870,7 +6386,14 @@
         renderSiteYard();
       }
       if (shot === "pop" || shot === "complete") {
-        pops.push({ city: "flagstaff", type: "dc", slot: 1, until: Date.now() + 86400000 });
+        const popCity = state.cities.flagstaff;
+        pops.push({
+          city: "flagstaff",
+          type: "dc",
+          slot: 1,
+          until: Date.now() + 86400000,
+          delta: kitOutput(popCity, "dc"),
+        });
         yardFlash = { city: "flagstaff", until: Date.now() + 86400000, hold: true };
         toast("DC CHARGER COMPLETE · Flagstaff", "good");
         renderSiteYard();
@@ -5879,7 +6402,7 @@
   }
 
   window.__EMPIRE_SMOKE__ = {
-    build: "rts-yard-25",
+    build: "rts-yard-27",
     monthlyNet,
     cityNet: (id) => cityNet(state.cities[id], YOU),
     crewTruth,
@@ -5906,6 +6429,10 @@
     enqueue,
     applyPlayerPrice: (id, price) => applyPlayerPrice(state.cities[id], price),
     placementRead: (id, type) => placementRead(state.cities[id], type),
+    traffic: (id) => trafficPlan(state.cities[id]),
+    labelOverlaps: () => labelOverlaps(),
+    strained: (id) => gridStrained(state.cities[id]),
+    panToCity: (id) => panToCity(id),
     smartSlot: (id) => {
       const plan = dcPlacement(state.cities[id], null);
       return smartDcSlot(plan.used, state.cities[id]);
@@ -5946,26 +6473,38 @@
     answerThreat: (id) => answerThreat(state.cities[id]),
     setHover: (type) => {
       hoverKit = type;
-      if (type === "dc" && siteView) {
-        cursorCell = { c: SLOTS.dc[0].c, r: SLOTS.dc[0].r };
-        slotOverride = { city: siteView, type: "dc", slot: 0 };
+      previewKit = type;
+      if (type && siteView && state) {
+        const city = state.cities[siteView];
+        const home = (SLOTS[type] || [])[0];
+        const snap = home ? nearestOkSlot(city, type, { c: home.c, r: home.r }) : null;
+        if (snap) {
+          cursorCell = { c: snap.c, r: snap.r };
+          rememberGhost(city, type, snap);
+        } else {
+          ghostSlot = null;
+          cursorCell = home ? { c: home.c, r: home.r } : null;
+          if (type === "dc") slotOverride = null;
+        }
       }
       if (siteView) renderSiteYard();
     },
     cursorCell: () => cursorCell,
+    ghostSlot: () => (ghostSlot ? { city: ghostSlot.city, type: ghostSlot.type, slot: ghostSlot.slot, c: ghostSlot.c, r: ghostSlot.r } : null),
     cellPlaceState: (id, type, c, r) => cellPlaceState(state.cities[id], type, c, r),
     nearestOkSlot: (id, type, c, r) => nearestOkSlot(state.cities[id], type, { c, r }),
     aimCell: (c, r) => {
       cursorCell = { c, r };
-      if (hoverKit === "dc" && siteView) {
-        const snap = nearestOkSlot(state.cities[siteView], "dc", cellCenter(c, r));
-        if (snap) slotOverride = { city: siteView, type: "dc", slot: snap.slot };
+      if (hoverKit && siteView) {
+        const city = state.cities[siteView];
+        const snap = nearestOkSlot(city, hoverKit, cellCenter(c, r));
+        rememberGhost(city, hoverKit, snap);
       }
       if (siteView) renderSiteYard();
       const fp = document.querySelector("#site-yard .site-footprint");
       return {
         cursor: cursorCell,
-        slot: slotOverride && slotOverride.slot,
+        slot: ghostSlot && ghostSlot.slot,
         footprint: fp ? fp.getAttribute("data-cell") : "",
       };
     },

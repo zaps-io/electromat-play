@@ -165,6 +165,7 @@
           const multNow = smoke.streakMult();
           const gradeNow = smoke.campaignGrade();
 
+          const labelHits = smoke.labelOverlaps();
           const ok =
             before.site === "flagstaff" &&
             after.site === "flagstaff" &&
@@ -183,8 +184,8 @@
             flagStillOpen &&
             smoke.rivalSite("la") === true &&
             smoke.rivalSite("flagstaff") === false &&
-            smoke.build === "rts-yard-25" &&
-            buildName === "rts-yard-25" &&
+            smoke.build === "rts-yard-27" &&
+            buildName === "rts-yard-27" &&
             cashPx > sharePx &&
             cashPx >= 28 &&
             /NEXT ·/.test(nextLine) &&
@@ -194,6 +195,7 @@
             multNow === 2 &&
             Boolean(gradeNow.letter) &&
             smoke.goldilocks === 0.76 &&
+            labelHits.length === 0 &&
             smartAfterOne === 1 &&
             /est\./.test(read) &&
             /est\./.test(consequenceText) &&

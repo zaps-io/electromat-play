@@ -1,4 +1,4 @@
-/* empire-build: rts-yard-25 */
+/* empire-build: rts-yard-27 */
 :root {
   --red: #e63225;
   --charcoal: #1e1e24;
@@ -316,6 +316,18 @@ button {
   color: var(--amber);
 }
 
+.plate-crews .plate-value.idle::after {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-left: 0.32rem;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 0 1px #1e1e24;
+  vertical-align: 0.08em;
+}
+
 .plate-score {
   display: grid;
   grid-template-columns: auto auto minmax(0, 1fr);
@@ -525,7 +537,16 @@ button {
 }
 
 .map-wrap:has(.site-overlay:not(.hidden)) {
-  grid-template-rows: 1fr 76px;
+  grid-template-rows: 1fr;
+}
+
+#board-screen:has(.site-overlay:not(.hidden)) {
+  grid-template-rows: auto 1fr auto;
+}
+
+#board-screen:has(.site-overlay:not(.hidden)) #ops-strip,
+.map-wrap:has(.site-overlay:not(.hidden)) .ticker {
+  display: none;
 }
 
 .map-stage {
@@ -566,6 +587,7 @@ button {
 
 .map-art {
   object-fit: fill;
+  filter: brightness(0.74) saturate(0.78);
 }
 
 .map-paint {
@@ -604,7 +626,8 @@ button {
   bottom: 14px;
   transform: translateX(-50%);
   display: block;
-  width: 36px;
+  width: calc(32px * var(--pin-scale, 1));
+  max-height: calc(36px * var(--pin-scale, 1));
   height: auto;
   margin: 0;
   background: none;
@@ -613,20 +636,20 @@ button {
 }
 
 .city-node.dirt .map-icon {
-  width: 38px;
+  width: calc(30px * var(--pin-scale, 1));
 }
 
 .city-node.zaps .map-icon {
-  width: 42px;
+  width: calc(34px * var(--pin-scale, 1));
 }
 
 .city-node.rival .map-icon,
 .city-node.hostile .map-icon {
-  width: 46px;
+  width: calc(36px * var(--pin-scale, 1));
 }
 
 .city-node.sharp-rival .map-icon {
-  width: 52px;
+  width: calc(40px * var(--pin-scale, 1));
   filter: contrast(1.42) saturate(1.24)
     drop-shadow(1.25px 0 0 var(--rival, #00d4f5))
     drop-shadow(-1.25px 0 0 var(--rival, #00d4f5))
@@ -654,8 +677,25 @@ button {
 
 .city-node.selected .map-icon,
 .city-node.site-focus .map-icon {
-  width: 46px;
-  filter: drop-shadow(0 0 8px rgba(0, 212, 245, 0.55));
+  filter: drop-shadow(0 0 6px rgba(0, 212, 245, 0.4));
+}
+
+.city-node[data-sprite="hq"] .map-icon,
+.city-node[data-sprite="hq"].selected .map-icon,
+.city-node[data-sprite="hq"].site-focus .map-icon {
+  width: calc(20px * var(--pin-scale, 1));
+  max-height: calc(22px * var(--pin-scale, 1));
+  bottom: 1px;
+}
+
+.city-node[data-sprite="hq"] .map-sprite {
+  max-height: calc(22px * var(--pin-scale, 1));
+}
+
+.city-node[data-sprite="vegas"] .map-sprite,
+.city-node[data-sprite="tucson"] .map-sprite,
+.city-node[data-sprite="plaza"] .map-sprite {
+  max-height: calc(28px * var(--pin-scale, 1));
 }
 
 .city-node.raising.selected .map-icon,
@@ -666,21 +706,26 @@ button {
 .city-node.selected::after {
   content: "";
   position: absolute;
-  left: 50%;
-  bottom: 10px;
-  width: 28px;
-  height: 10px;
-  transform: translateX(-50%);
+  left: -7px;
+  right: -7px;
+  top: 10px;
+  bottom: 16px;
   border: 1.5px solid var(--cyan);
-  border-radius: 50%;
+  background:
+    linear-gradient(var(--cyan), var(--cyan)) left top / 9px 1.5px no-repeat,
+    linear-gradient(var(--cyan), var(--cyan)) right top / 9px 1.5px no-repeat,
+    linear-gradient(var(--cyan), var(--cyan)) left bottom / 9px 1.5px no-repeat,
+    linear-gradient(var(--cyan), var(--cyan)) right bottom / 9px 1.5px no-repeat;
   pointer-events: none;
-  box-shadow: 0 0 8px rgba(0, 212, 245, 0.45);
 }
 
 .map-sprite {
   display: block;
   width: 100%;
   height: auto;
+  max-height: calc(36px * var(--pin-scale, 1));
+  object-fit: contain;
+  object-position: center bottom;
   image-rendering: auto;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
 }
@@ -815,6 +860,7 @@ button {
   container-type: size;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .site-yard > #site-plate,
@@ -933,9 +979,14 @@ button {
 }
 
 .site-ghost-badge,
-.site-bldg.raising[data-inspect] {
+.site-bldg.raising[data-inspect],
+.site-bldg[data-kit-tip] {
   pointer-events: auto;
   cursor: pointer;
+}
+
+.site-bldg[data-kit-tip] {
+  cursor: help;
 }
 
 .insp-compound svg.site-overlay-svg,
@@ -966,30 +1017,122 @@ button {
 }
 
 .site-bldg.preview {
-  opacity: 0.5;
+  opacity: 0.32;
   animation: none;
 }
 
 .site-bldg.pop {
-  animation: kit-pop 0.9s cubic-bezier(0.16, 1.45, 0.3, 1);
+  animation: kit-pop 0.72s cubic-bezier(0.2, 1.55, 0.32, 1);
   transform-box: fill-box;
   transform-origin: center bottom;
-  filter: brightness(1.6) drop-shadow(0 0 7px rgba(245, 240, 232, 0.95));
 }
 
 @keyframes kit-pop {
   0% {
-    transform: scale(0.28);
-    filter: brightness(3.4) drop-shadow(0 0 10px #fff);
+    transform: scale(0.72);
+    filter: brightness(1.7) drop-shadow(0 0 5px #00d4f5);
   }
-  42% {
-    transform: scale(1.38);
-    filter: brightness(1.85) drop-shadow(0 0 8px rgba(232, 154, 46, 0.95));
+  38% {
+    transform: scale(1.22);
+    filter: brightness(1.3) drop-shadow(0 0 8px #00d4f5);
+  }
+  68% {
+    transform: scale(0.94);
+    filter: drop-shadow(0 0 4px #00d4f5);
   }
   100% {
     transform: scale(1);
-    filter: brightness(1.6) drop-shadow(0 0 7px rgba(245, 240, 232, 0.95));
+    filter: none;
   }
+}
+
+.site-stack.hold .site-bldg.pop {
+  animation: none;
+  transform: scale(1.14);
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  filter: brightness(1.2) drop-shadow(0 0 7px #00d4f5);
+}
+
+.site-pop-ring {
+  fill: none;
+  stroke: #00d4f5;
+  stroke-width: 0.55;
+  pointer-events: none;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pop-ring 0.7s ease-out forwards;
+}
+
+.site-stack.hold .site-pop-ring {
+  animation: none;
+  opacity: 1;
+  transform: none;
+}
+
+@keyframes pop-ring {
+  0% {
+    opacity: 0.2;
+    transform: scale(0.4);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.85);
+  }
+}
+
+.site-pop-floater {
+  pointer-events: none;
+  animation: pop-float 1.15s ease-out forwards;
+}
+
+.site-stack.hold .site-pop-floater {
+  animation: none;
+  opacity: 1;
+}
+
+.site-pop-floater text {
+  fill: #00d4f5;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 3.5px;
+  font-weight: 700;
+  text-anchor: middle;
+  stroke: #121217;
+  stroke-width: 0.4px;
+  paint-order: stroke fill;
+}
+
+@keyframes pop-float {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  18% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-22px);
+  }
+}
+
+.kit-tip {
+  position: fixed;
+  z-index: 80;
+  pointer-events: none;
+  background: rgba(18, 18, 23, 0.94);
+  color: #f5f0e8;
+  border: 1px solid #00d4f5;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  padding: 0.28rem 0.48rem;
+  white-space: nowrap;
 }
 
 .site-stack.yard-flash {
@@ -1109,6 +1252,7 @@ button {
 .ops-objective {
   grid-area: next;
   min-width: 0;
+  cursor: pointer;
 }
 
 .ops-skirmish {
@@ -1213,6 +1357,18 @@ button {
   text-align: center;
 }
 
+.crew-read.idle::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 0.28rem;
+  border-radius: 50%;
+  background: #e89a2e;
+  box-shadow: 0 0 0 1px #1e1e24;
+  vertical-align: 0.05em;
+}
+
 .skirmish {
   min-width: 0;
 }
@@ -1310,6 +1466,13 @@ button {
   font-weight: 700;
   pointer-events: none;
   white-space: nowrap;
+}
+
+.territory-seam {
+  stroke: #f5f0e8;
+  stroke-width: 1.4;
+  opacity: 0.55;
+  pointer-events: none;
 }
 
 .corridor-hop {
@@ -1899,6 +2062,61 @@ button {
   fill: none;
   stroke: #1a1a1e;
   stroke-width: 0.7;
+}
+
+.site-stack.strained .site-dc-cable,
+.site-stack.strained .site-dc-ring {
+  stroke: #e89a2e;
+  animation: cable-flicker 0.55s steps(2, end) infinite;
+}
+
+.site-stack.strained .site-stall.idle {
+  opacity: 0.22;
+}
+
+@keyframes cable-flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+.yard-vehicle {
+  position: absolute;
+  width: 7.2%;
+  height: auto;
+  transform: translate(-50%, -72%);
+  pointer-events: none;
+  z-index: 7;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5));
+}
+
+.yard-vehicle.truck {
+  width: 11%;
+  transform: translate(-46%, -78%);
+}
+
+.yard-vehicle.queue {
+  width: 6.4%;
+  opacity: 0.92;
+}
+
+.yard-queue-tag {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  z-index: 8;
+  pointer-events: none;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: #f5f0e8;
+  background: rgba(18, 18, 23, 0.88);
+  border: 1px solid #e89a2e;
+  padding: 0.08rem 0.32rem;
+  white-space: nowrap;
 }
 
 .site-stall-hash {
@@ -3119,7 +3337,7 @@ button {
   }
 
   .map-wrap:has(.site-overlay:not(.hidden)) {
-    grid-template-rows: 1fr 72px;
+    grid-template-rows: 1fr;
   }
 }
 
@@ -3139,9 +3357,9 @@ button {
 }
 
 .site-cell-valid {
-  fill: rgba(0, 212, 245, 0.28);
-  stroke: #00d4f5;
-  stroke-width: 0.35;
+  fill: rgba(0, 212, 245, 0.1);
+  stroke: rgba(0, 212, 245, 0.55);
+  stroke-width: 0.28;
 }
 
 .site-cell-dim {
@@ -3158,10 +3376,10 @@ button {
 }
 
 .site-footprint {
-  fill: rgba(0, 212, 245, 0.38);
-  stroke: #f5f0e8;
-  stroke-width: 0.45;
-  stroke-dasharray: 1.1 0.7;
+  fill: rgba(0, 212, 245, 0.14);
+  stroke: rgba(0, 212, 245, 0.85);
+  stroke-width: 0.4;
+  stroke-dasharray: 1.2 0.8;
 }
 
 .site-footprint.bad {
@@ -3179,10 +3397,21 @@ button {
 }
 
 .site-scaffold line {
-  stroke: #e89a2e;
-  stroke-width: 0.46;
+  stroke: #e63225;
+  stroke-width: 0.5;
   stroke-dasharray: 0.85 0.4;
   fill: none;
+}
+
+.kit-progress-track {
+  fill: rgba(18, 18, 23, 0.82);
+  stroke: #f5f0e8;
+  stroke-width: 0.18;
+}
+
+.kit-progress-fill {
+  fill: #00d4f5;
+  stroke: none;
 }
 
 .site-month-ring .ring-track {
@@ -3298,13 +3527,13 @@ button {
 
 .city-node .map-icon.is-stake {
   width: 16px;
-  height: 24px;
-  bottom: 16px;
+  height: 16px;
+  bottom: -2px;
 }
 
 .stake-svg {
   width: 16px;
-  height: 24px;
+  height: 16px;
   display: block;
 }
 
@@ -3317,14 +3546,14 @@ button {
 .city-node.fogged .map-icon.is-fog {
   filter: none !important;
   opacity: 1;
-  width: 26px;
-  height: 20px;
-  bottom: 16px;
+  width: 18px;
+  height: 14px;
+  bottom: -2px;
 }
 
 .fog-icon {
-  width: 26px;
-  height: 20px;
+  width: 18px;
+  height: 14px;
   display: block;
 }
 
@@ -3365,15 +3594,28 @@ button {
   );
 }
 
+.city-node.obj-target::before {
+  content: "";
+  position: absolute;
+  left: -10px;
+  right: -10px;
+  top: 4px;
+  bottom: 8px;
+  border: 2px solid #e89a2e;
+  box-shadow: 0 0 0 1px #121217, 0 0 10px rgba(232, 154, 46, 0.45);
+  pointer-events: none;
+  animation: obj-pulse 1.6s ease-in-out infinite;
+}
+
 .city-node.obj-target .obj-ring {
   position: absolute;
   left: auto;
   right: -34px;
   bottom: 8px;
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   transform: none;
-  border: 1.5px dashed #e89a2e;
+  border: 2px solid #e89a2e;
   border-radius: 50%;
   pointer-events: none;
   animation: obj-pulse 1.35s ease-in-out infinite;

@@ -1,4 +1,34 @@
-# Empire playtest — rts-yard-25
+# Empire playtest — rts-yard-27
+
+Replay stills at 1600×900: `?shot=contested-built` (sedans at the DC stalls, a truck at MCS, a queue past the stalls, the whole pad inside the frame) · `?shot=states` (faint planned footprint, red scaffold with a progress bar, finished kit) · exit a contested yard (territory fields, CLAIM tags clear of labels, selected bracket).
+
+Checked-in frames: `yard-traffic-27.png` · `yard-states-27.png` · `yard-map-27.png` · `yard-hover-left-26.png` · `yard-hover-right-26.png` · `yard-map-26.png` · `yard-pop-26.png`.
+
+## rts-yard-27
+
+Live play of rts-yard-26.
+
+- **Pad scale.** The whole pad, including kit height and the vehicle queue, fits inside the yard with about 16px of margin. Filling 65% of the viewport yields when that would clip a kit. Grid snap and the screen-matrix pointer pick stay on the same cells.
+- **Traffic.** Grey sedans sit on DC stalls and grey semis on MCS. Arrival count is demand times share. Cars past the stalls are the unmet queue.
+- **Kit states.** A planned slot is a faint footprint. A raising kit wears a faction-red scaffold and a progress bar on the building. A finished kit is solid and drops the scaffold.
+- **Strain.** With chargers and no BESS, cable glow flickers amber and idle stalls dim.
+- **Ownership.** City coordinates are the rts-yard-25 set. Each held city has a small soft field sized by demand and faded by share, light enough that the terrain still reads. A contested city splits both colors with a seam. Objective cities pulse with a CLAIM · N MO tag set off to the side away from neighbors. The HQ sprite stays off every label. The selected city gets a bracket, and the other markers stay the same size. The objective banner pans to the target. The terrain is darker so the labels read.
+
+## rts-yard-26
+
+Replay stills: game start (Phoenix HQ clear of Flagstaff) · `?shot=empty` then a real pointer on the far-left cell and the far-right cell · `?shot=pop` (build-complete bounce, cyan ring, income floater).
+
+Checked-in frames: `yard-hover-left-26.png` · `yard-hover-right-26.png` · `yard-map-26.png` · `yard-pop-26.png` · `yard-map-25.png` · `yard-hover-a-25.png` · `yard-hover-b-25.png` · `yard-contested-25.png`.
+
+## rts-yard-26
+
+Live play of rts-yard-25.
+
+- **Ghost slot.** Hover sets the ghost to the nearest free slot for that kit on every pointer move. A sweep from the far-left cell to the far-right cell reports two different slots on `__EMPIRE_SMOKE__.ghostSlot`.
+- **Names.** The Phoenix HQ sprite sits lower and smaller so Flagstaff, and the other city names, stay clear.
+- **Complete.** A finished kit bounces, flashes a cyan ring, and floats its monthly output. Idle crews show a pip on the plate and the ops strip. Hovering a built kit shows that output.
+
+## rts-yard-25
 
 Replay stills: game start (rings beside the dot, subtitle clear) · `?shot=empty` then a real pointer across the pad (two DC slots) · `?shot=contested-built` (yard below the undercut row).
 
