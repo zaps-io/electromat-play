@@ -1,5 +1,5 @@
 /* ZAPS EMPIRE — Civ / C&C charging-continent board. Not the night-shift walk. */
-/* empire-build: rts-yard-24 */
+/* empire-build: rts-yard-25 */
 (() => {
   const SAVE_KEY = "zaps-empire-v2";
   const SAVE_LEGACY = "zaps-empire-v1";
@@ -22,7 +22,7 @@
     lot: "#F5F0E8",
   };
   const BOLT = "assets/brand/bolt-red.svg";
-  const SPRITE_V = "rts-yard-24";
+  const SPRITE_V = "rts-yard-25";
   const MAP_SPRITES = {
     flag: `assets/sprites/survey-flag.png?v=${SPRITE_V}`,
     dirt: `assets/sprites/dirt-pad.png?v=${SPRITE_V}`,
@@ -43,7 +43,7 @@
     voltspan: "240 / 204",
     rival: "240 / 167",
   };
-  const KIT_V = "rts-yard-24";
+  const KIT_V = "rts-yard-25";
   const KIT_SPRITES = {
     dc: `assets/kits/dc.svg?v=${KIT_V}`,
     mcs: `assets/kits/mcs.svg?v=${KIT_V}`,
@@ -281,6 +281,7 @@
   let lastPan = false;
   let armedKit = null;
   let hoverKit = null;
+  let previewKit = null;
   let cursorCell = null;
   let slotOverride = null;
   let inspectJob = null;
@@ -2700,6 +2701,7 @@
     lastNet = 0;
     armedKit = null;
     hoverKit = null;
+    previewKit = null;
     cursorCell = null;
     slotOverride = null;
     inspectJob = null;
@@ -3834,17 +3836,20 @@
     return best;
   }
 
-  // Raycast the whole pad diamond, including grout and the fringe, onto a cell.
+  // Inverse of gridXY, then the nearest cell. The stack is a rectangle and the
+  // pad is a diamond inside it, so corners of the art still need a cell.
   function cellFromView(x, y) {
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
     const g = viewToGrid(x, y);
-    if (!g) return null;
-    const margin = 0.62;
+    const margin = 1.2;
     const onPad =
+      g &&
       g.col >= -margin &&
       g.row >= -margin &&
       g.col <= GRID.cols + margin &&
       g.row <= GRID.rows + margin;
-    if (!onPad) return null;
+    const inArt = x >= -6 && y >= -6 && x <= 106 && y <= 106;
+    if (!onPad && !inArt) return null;
     const near = nearestGridCell(x, y);
     return near ? { c: near.c, r: near.r } : null;
   }
@@ -3944,6 +3949,30 @@
     if (!svg) return null;
     const rect = svg.getBoundingClientRect();
     if (rect.width < 8 || rect.height < 8) return null;
+    // getScreenCTM includes the yard's translate, the viewBox stretch, and
+    // devicePixelRatio. Fall back to the CSS box when the matrix is not in
+    // the same space as clientX/clientY.
+    const ctm = svg.getScreenCTM && svg.getScreenCTM();
+    if (ctm && svg.createSVGPoint) {
+      const origin = svg.createSVGPoint();
+      origin.x = rect.left;
+      origin.y = rect.top;
+      const far = svg.createSVGPoint();
+      far.x = rect.right;
+      far.y = rect.bottom;
+      const inv = ctm.inverse();
+      const o = origin.matrixTransform(inv);
+      const f = far.matrixTransform(inv);
+      const sx = (f.x - o.x) / 100;
+      const sy = (f.y - o.y) / 100;
+      if (Number.isFinite(sx) && Number.isFinite(sy) && Math.abs(sx - 1) < 0.25 && Math.abs(sy - 1) < 0.25) {
+        const pt = svg.createSVGPoint();
+        pt.x = clientX;
+        pt.y = clientY;
+        const local = pt.matrixTransform(inv);
+        if (Number.isFinite(local.x) && Number.isFinite(local.y)) return { x: local.x, y: local.y };
+      }
+    }
     return {
       x: ((clientX - rect.left) / rect.width) * 100,
       y: ((clientY - rect.top) / rect.height) * 100,
@@ -4610,7 +4639,18 @@
     if (boxW < 40 || boxH < 40) return;
     const ratio = aw / ah;
     const maxW = Math.min(boxW * 0.76, 800);
-    const maxH = Math.min(boxH * 0.92, 520);
+    const yardEl = $("site-yard");
+    const intelOpen = yardEl && yardEl.classList.contains("has-intel");
+    let head = 0;
+    if (intelOpen) {
+      ["site-plate", "site-overlay-intel"].forEach((id) => {
+        const el = $(id);
+        if (el && !el.classList.contains("hidden")) head += el.offsetHeight;
+      });
+    }
+    const gutter = intelOpen ? 12 : 0;
+    const availH = intelOpen ? Math.max(96, boxH - head - gutter - 8) : Math.min(boxH * 0.92, 520);
+    const maxH = Math.min(availH, 520);
     let w = maxW;
     let h = w / ratio;
     if (h > maxH) {
@@ -4619,8 +4659,20 @@
     }
     stack.style.width = `${Math.round(w)}px`;
     stack.style.maxWidth = `${Math.round(w)}px`;
-    const yardEl = $("site-yard");
-    stack.style.top = yardEl && yardEl.classList.contains("has-intel") ? "calc(54% + 14px)" : "50%";
+    if (intelOpen) {
+      const extra = Math.max(0, boxH - head - gutter - h);
+      stack.style.position = "relative";
+      stack.style.left = "auto";
+      stack.style.top = "auto";
+      stack.style.transform = "none";
+      stack.style.margin = `${gutter + Math.round(extra / 2)}px auto 0`;
+    } else {
+      stack.style.position = "";
+      stack.style.left = "";
+      stack.style.top = "50%";
+      stack.style.transform = "";
+      stack.style.margin = "";
+    }
   }
 
   function inspectRaising(type) {
@@ -4681,16 +4733,17 @@
       if (type) inspectRaising(type);
     });
     yard.addEventListener("pointermove", (e) => {
-      if (!siteView || !state || !hoverKit) return;
-      if (e.target.closest && e.target.closest(".crew-token")) return;
+      if (!siteView || !state) return;
+      if (!hoverKit && previewKit) hoverKit = previewKit;
+      if (!hoverKit) return;
       const pt = yardViewPoint(e.clientX, e.clientY);
       if (!pt) return;
       const next = cellFromView(pt.x, pt.y);
+      if (!next) return;
       const prevKey = cursorCell ? `${cursorCell.c},${cursorCell.r}` : "";
-      const nextKey = next ? `${next.c},${next.r}` : "";
+      const nextKey = `${next.c},${next.r}`;
       const city = state.cities[siteView];
-      const origin = next ? cellCenter(next.c, next.r) : null;
-      const snap = origin ? nearestOkSlot(city, hoverKit, origin) : null;
+      const snap = nearestOkSlot(city, hoverKit, cellCenter(next.c, next.r));
       const prevSlot = slotOverride && slotOverride.city === siteView && slotOverride.type === hoverKit ? slotOverride.slot : -1;
       if (prevKey === nextKey && (!snap || snap.slot === prevSlot)) return;
       cursorCell = next;
@@ -4700,12 +4753,27 @@
     yard.addEventListener("mouseleave", (e) => {
       const next = e.relatedTarget;
       if (next && next.closest && next.closest(".tray, #site-yard, #site-overlay")) return;
-      if (hoverKit || cursorCell) {
+      if (hoverKit || cursorCell || previewKit) {
         hoverKit = null;
+        previewKit = null;
         cursorCell = null;
         renderSiteYard();
       }
     });
+    const overlay = $("site-overlay");
+    if (overlay && !overlay.dataset.previewBound) {
+      overlay.dataset.previewBound = "1";
+      overlay.addEventListener("mouseleave", (e) => {
+        const next = e.relatedTarget;
+        if (next && next.closest && next.closest(".tray, #site-overlay")) return;
+        if (hoverKit || previewKit || cursorCell) {
+          hoverKit = null;
+          previewKit = null;
+          cursorCell = null;
+          renderSiteYard();
+        }
+      });
+    }
   }
 
   function bindYardFrame() {
@@ -4847,6 +4915,7 @@
   function exitSite() {
     siteView = null;
     hoverKit = null;
+    previewKit = null;
     cursorCell = null;
     slotOverride = null;
     inspectJob = null;
@@ -5134,13 +5203,8 @@
       btn.innerHTML = `<img src="${spec.icon}" alt="" draggable="false"><span class="deploy-copy"><b>${short}</b>${status}</span>`;
       btn.addEventListener("mouseenter", () => {
         if (hoverKit !== spec.id) slotOverride = null;
+        previewKit = spec.id;
         hoverKit = spec.id;
-        renderSiteYard();
-      });
-      btn.addEventListener("mouseleave", (e) => {
-        const next = e.relatedTarget;
-        if (next && next.closest && next.closest("#site-yard, #site-overlay")) return;
-        if (hoverKit === spec.id) hoverKit = null;
         renderSiteYard();
       });
       btn.addEventListener("click", () => {
@@ -5740,6 +5804,7 @@
       if (kitKey && selected) {
         e.preventDefault();
         armedKit = kitKey;
+        previewKit = kitKey;
         hoverKit = kitKey;
         if (canDeploy(kitKey, selected)) enqueue(kitKey, selected);
         else {
@@ -5814,7 +5879,7 @@
   }
 
   window.__EMPIRE_SMOKE__ = {
-    build: "rts-yard-24",
+    build: "rts-yard-25",
     monthlyNet,
     cityNet: (id) => cityNet(state.cities[id], YOU),
     crewTruth,
