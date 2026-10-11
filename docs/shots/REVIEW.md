@@ -1,10 +1,10 @@
 # Empire playtest — design spec pass
 
-One isometric Western Interconnect, drawn to `docs/design/empire-aoe-design.md`. The camera pans from the parchment region down to a site. Crew trucks are the villagers. Traffic is the payoff.
+One isometric Western Interconnect, drawn to `docs/design/empire-aoe-design.md`. The camera pans from the terrain map down to a site. Crew trucks are the villagers. Traffic is the payoff.
 
 Stills at 1600×900:
 
-- `aoe-region.png` — parchment strategic map, territory fill, shroud, sprite pins
+- `aoe-region.png` — terrain strategic map, 15% territory fill, shroud, city pins
 - `aoe-compound.png` — Phoenix in the desert with the building-sheet silhouettes
 - `aoe-build.png` — crew truck beside a scaffold, progress bar half full
 - `aoe-select.png` — box selection and the 3×3 command grid

@@ -65,18 +65,18 @@
   };
 
   const ICONS = {
-    hq: `<svg viewBox="0 0 32 32" width="22" height="22"><path fill="#E63225" d="M4 26V12l12-8 12 8v14H4z"/><path fill="#F5F0E8" d="M15 4h2v10h-2z"/></svg>`,
-    dc: `<svg viewBox="0 0 32 32" width="22" height="22"><path fill="#E63225" d="M4 12h24v4H4z"/><path fill="#F5F0E8" d="M8 16h3v10H8zm13 0h3v10h-3z"/></svg>`,
-    warehouse: `<svg viewBox="0 0 32 32" width="22" height="22"><path fill="#C4A574" d="M4 12h24v14H4z"/><path fill="#6B5340" d="M12 18h8v8h-8z"/></svg>`,
-    market: `<svg viewBox="0 0 32 32" width="22" height="22"><path fill="#E63225" d="M3 12h4l2 8H5zm6 0h4l2 8h-4zm6 0h4l2 8h-4zm6 0h4l2 8h-4z"/><path fill="#F5F0E8" d="M6 20h20v6H6z"/></svg>`,
-    bess: `<svg viewBox="0 0 32 32" width="22" height="22"><path fill="#F5F0E8" d="M3 12h26v10H3z"/><path fill="#00D4F5" d="M7 15h4v4H7zm7 0h4v4h-4zm7 0h4v4h-4z"/></svg>`,
-    lounge: `<svg viewBox="0 0 32 32" width="22" height="22"><path fill="#E89A2E" d="M2 14h28v4H2z"/><path fill="#F5F0E8" d="M6 18h20v8H6z"/><path fill="#E89A2E" d="M8 20h6v4H8zm10 0h6v4h-6z"/></svg>`,
-    mcs: `<svg viewBox="0 0 32 32" width="22" height="22"><path fill="#1A1C20" d="M4 8h4v16H4zm20 0h4v16h-4zM4 8h24v4H4z"/><path fill="#F5C518" d="M15 12h2v10h-2z"/></svg>`,
-    sales: `<svg viewBox="0 0 32 32" width="22" height="22"><path fill="#C8C2B8" d="M4 12h24v14H4z"/><path fill="#E63225" d="M4 18h24v3H4z"/><path fill="#F5F0E8" d="M18 20h8v6h-8z"/></svg>`,
-    substation: `<svg viewBox="0 0 32 32" width="22" height="22"><path fill="#8d9298" d="M16 4l8 20H8z"/><path fill="#F5F0E8" d="M8 16h5v3H8zm11 0h5v3h-5z"/></svg>`,
-    permit: `<svg viewBox="0 0 32 32" width="22" height="22"><path fill="#F3EDE2" d="M8 10h16v16H8z"/><path fill="#1E1E24" d="M15 6h2v8h-2z"/><path fill="#E63225" d="M17 6h8v4h-8z"/></svg>`,
-    crew: `<svg viewBox="0 0 32 32" width="22" height="22"><path fill="#E63225" d="M4 16h16v8H4z"/><path fill="#F5C518" d="M18 12h6v4h-6z"/></svg>`,
-    scout: `<svg viewBox="0 0 32 32" width="22" height="22"><path fill="#F5F0E8" d="M6 16h16v8H6z"/><circle cx="22" cy="12" r="4" fill="none" stroke="#00D4F5" stroke-width="2"/></svg>`,
+    hq: `<svg viewBox="0 0 32 32" width="48" height="48"><path fill="#E63225" d="M4 26V12l12-8 12 8v14H4z"/><path fill="#F5F0E8" d="M15 4h2v10h-2z"/></svg>`,
+    dc: `<svg viewBox="0 0 32 32" width="48" height="48"><path fill="#E63225" d="M4 12h24v4H4z"/><path fill="#F5F0E8" d="M8 16h3v10H8zm13 0h3v10h-3z"/></svg>`,
+    warehouse: `<svg viewBox="0 0 32 32" width="48" height="48"><path fill="#C4A574" d="M4 12h24v14H4z"/><path fill="#6B5340" d="M12 18h8v8h-8z"/></svg>`,
+    market: `<svg viewBox="0 0 32 32" width="48" height="48"><path fill="#E63225" d="M3 12h4l2 8H5zm6 0h4l2 8h-4zm6 0h4l2 8h-4zm6 0h4l2 8h-4z"/><path fill="#F5F0E8" d="M6 20h20v6H6z"/></svg>`,
+    bess: `<svg viewBox="0 0 32 32" width="48" height="48"><path fill="#F5F0E8" d="M3 12h26v10H3z"/><path fill="#00D4F5" d="M7 15h4v4H7zm7 0h4v4h-4zm7 0h4v4h-4z"/></svg>`,
+    lounge: `<svg viewBox="0 0 32 32" width="48" height="48"><path fill="#E89A2E" d="M2 14h28v4H2z"/><path fill="#F5F0E8" d="M6 18h20v8H6z"/><path fill="#E89A2E" d="M8 20h6v4H8zm10 0h6v4h-6z"/></svg>`,
+    mcs: `<svg viewBox="0 0 32 32" width="48" height="48"><path fill="#1A1C20" d="M4 8h4v16H4zm20 0h4v16h-4zM4 8h24v4H4z"/><path fill="#F5C518" d="M15 12h2v10h-2z"/></svg>`,
+    sales: `<svg viewBox="0 0 32 32" width="48" height="48"><path fill="#C8C2B8" d="M4 12h24v14H4z"/><path fill="#E63225" d="M4 18h24v3H4z"/><path fill="#F5F0E8" d="M18 20h8v6h-8z"/></svg>`,
+    substation: `<svg viewBox="0 0 32 32" width="48" height="48"><path fill="#8d9298" d="M16 4l8 20H8z"/><path fill="#F5F0E8" d="M8 16h5v3H8zm11 0h5v3h-5z"/></svg>`,
+    permit: `<svg viewBox="0 0 32 32" width="48" height="48"><path fill="#F3EDE2" d="M8 10h16v16H8z"/><path fill="#1E1E24" d="M15 6h2v8h-2z"/><path fill="#E63225" d="M17 6h8v4h-8z"/></svg>`,
+    crew: `<svg viewBox="0 0 32 32" width="48" height="48"><path fill="#E63225" d="M4 16h16v8H4z"/><path fill="#F5C518" d="M18 12h6v4h-6z"/></svg>`,
+    scout: `<svg viewBox="0 0 32 32" width="48" height="48"><path fill="#F5F0E8" d="M6 16h16v8H6z"/><circle cx="22" cy="12" r="4" fill="none" stroke="#00D4F5" stroke-width="2"/></svg>`,
   };
 
   const $ = (id) => document.getElementById(id);
@@ -1067,9 +1067,185 @@
     clampCamera();
   }
 
-  function tileColor(c, r) {
+  const SPRITE_KIND = {
+    hq: "buildings/site_hq",
+    dc: "buildings/dc_canopy",
+    mcs: "buildings/mcs_gantry",
+    bess: "buildings/bess",
+    substation: "buildings/substation",
+    lounge: "buildings/lounge",
+    market: "buildings/solar_carport",
+    warehouse: "buildings/crew_depot",
+    sales: "buildings/crew_depot",
+    permit: "buildings/site_hq",
+    crew: "units/crew_truck",
+    scaffold: "units/scaffold",
+    hatch: "vehicles/ev_hatch",
+    sedan: "vehicles/sedan",
+    suv: "vehicles/suv",
+    pickup: "vehicles/pickup",
+    van: "vehicles/delivery_van",
+    box: "vehicles/box_truck",
+    semi: "vehicles/semi_trailer",
+    bus: "vehicles/school_bus",
+  };
+  const VEHICLE_LEN = {
+    hatch: 0.42, sedan: 0.5, suv: 0.55, pickup: 0.65,
+    van: 0.72, box: 1.05, semi: 1.5, bus: 1.2, crew: 0.72,
+  };
+  const art = { byId: {}, ready: false, tries: 0 };
+
+  function spriteKey(kind) { return SPRITE_KIND[kind] || kind; }
+
+  function normAnchor(entry, img) {
+    let ax = entry.anchorX ?? entry.ax ?? (Array.isArray(entry.anchor) ? entry.anchor[0] : entry.anchor?.x) ?? 0.5;
+    let ay = entry.anchorY ?? entry.ay ?? (Array.isArray(entry.anchor) ? entry.anchor[1] : entry.anchor?.y) ?? 0.86;
+    const nw = img.naturalWidth || entry.w || entry.width || 1;
+    const nh = img.naturalHeight || entry.h || entry.height || 1;
+    if (ax > 1.01) ax /= nw;
+    if (ay > 1.01) ay /= nh;
+    return { x: clamp(ax, 0, 1), y: clamp(ay, 0, 1) };
+  }
+
+  function rememberSprite(id, img, anchor, frames, raw) {
+    if (!id || !img) return;
+    const ax = raw?.anchor?.x ?? raw?.anchorX ?? anchor.x * img.naturalWidth;
+    const ay = raw?.anchor?.y ?? raw?.anchorY ?? anchor.y * img.naturalHeight;
+    const rec = {
+      img,
+      anchor,
+      frames: frames || null,
+      gameScale: Number(raw?.game_scale || raw?.gameScale || 0),
+      anchorPx: {
+        x: ax > 1.01 ? ax : ax * img.naturalWidth,
+        y: ay > 1.01 ? ay : ay * img.naturalHeight,
+      },
+      bottomY: Number(raw?.bottom_y || raw?.bottomY || img.naturalHeight),
+    };
+    art.byId[id] = rec;
+    art.byId[id.replaceAll("-", "_")] = rec;
+    art.byId[id.replaceAll("_", "-")] = rec;
+  }
+
+  function gameScaleOf(id) {
+    const baseId = id.endsWith("_b") ? id.slice(0, -2) : id;
+    return art.byId[baseId]?.gameScale || art.byId[id]?.gameScale || 1;
+  }
+
+  function resolveSprite(id, facing) {
+    if (facing != null && Number(facing) >= 0) {
+      const mir = spriteRecord(id + "_b");
+      if (mir) return mir;
+    }
+    return spriteRecord(id);
+  }
+
+  function spriteRecord(id) {
+    if (!id) return null;
+    if (art.byId[id]) return art.byId[id];
+    const keys = Object.keys(art.byId);
+    const hit = keys.find((k) => k === id || k.endsWith("_" + id) || k.endsWith("-" + id));
+    return hit ? art.byId[hit] : null;
+  }
+
+  function loadImage(url) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img.naturalWidth ? img : null);
+      img.onerror = () => resolve(null);
+      img.src = url;
+    });
+  }
+
+  function spriteEntries(data) {
+    if (Array.isArray(data)) return data;
+    const bag = data.sprites || data.images || data;
+    if (Array.isArray(bag)) return bag;
+    return Object.entries(bag).map(([id, v]) => {
+      if (typeof v === "string") return { id, src: v };
+      if (!v || typeof v !== "object") return null;
+      return { id, ...v };
+    }).filter((e) => e && e.id && e.id !== "version" && e.id !== "meta");
+  }
+
+  async function loadSprites() {
+    if (art.ready) return;
+    art.tries += 1;
+    let data = null;
+    try {
+      const res = await fetch(`assets/sprites/sprites.json?v=${art.tries}`);
+      if (!res.ok) return;
+      data = await res.json();
+    } catch {
+      return;
+    }
+    const jobs = spriteEntries(data).map(async (raw) => {
+      const id = raw.id || raw.name || raw.key;
+      if (!id) return;
+      const files = raw.frames || raw.dirs || raw.images || [raw.src || raw.file || raw.png || raw.image || `${id}.png`];
+      const imgs = [];
+      for (const file of files) {
+        const url = String(file).startsWith("assets/") || String(file).startsWith("/") || String(file).startsWith("http")
+          ? file
+          : `assets/sprites/${file}`;
+        const img = await loadImage(url);
+        if (img) imgs.push(img);
+      }
+      if (!imgs.length) return;
+      rememberSprite(id, imgs[0], normAnchor(raw, imgs[0]), imgs.length > 1 ? imgs : null, raw);
+    });
+    await Promise.all(jobs);
+    if (Object.keys(art.byId).length) art.ready = true;
+  }
+
+  function depthY(col, row) { return (col + row) * (TH / 2); }
+
+  function dropShadow(g, col, row, rx, ry) {
+    const p = iso(col, row);
+    g.fillStyle = "rgba(42,28,16,0.38)";
+    g.beginPath();
+    g.ellipse(p.x, p.y + 2, Math.max(6, rx), Math.max(3, ry), 0, 0, Math.PI * 2);
+    g.fill();
+  }
+
+  function drawSprite(g, id, col, row, opt = {}) {
+    const rec = resolveSprite(id, opt.mirror ? opt.facing : null);
+    if (!rec) return false;
+    const img = rec.img;
+    if (!img || !img.naturalWidth) return false;
+    const wTiles = opt.w ?? 0;
+    const hTiles = opt.h ?? 0;
+    let dw;
+    let dh;
+    const diamond = wTiles > 0 && hTiles > 0 && rec.bottomY > rec.anchorPx.y + 4;
+    if (diamond && !opt.vehicle) {
+      const half = rec.bottomY - rec.anchorPx.y;
+      const worldHalf = (wTiles + hTiles) * (TH / 4);
+      const scale = worldHalf / half;
+      dw = img.naturalWidth * scale;
+      dh = img.naturalHeight * scale;
+    } else if (opt.vehicle || rec.gameScale) {
+      const refW = art.byId["vehicles/sedan"]?.img.naturalWidth || 301;
+      const tiles = 0.5 * gameScaleOf(id) * (img.naturalWidth / refW);
+      dw = tiles * TW;
+      dh = dw * (img.naturalHeight / img.naturalWidth);
+    } else if (opt.length) {
+      dw = opt.length * TW;
+      dh = dw * (img.naturalHeight / img.naturalWidth);
+    } else {
+      dw = Math.max(TW * 0.5, (Math.max(wTiles, 0.2) + Math.max(hTiles, 0.2)) * (TW / 2));
+      dh = dw * (img.naturalHeight / img.naturalWidth);
+    }
+    const p = iso(col + wTiles / 2, row + hTiles / 2);
+    dropShadow(g, col + wTiles / 2, row + hTiles / 2, Math.max(8, dw * 0.22), Math.max(4, dw * 0.09));
+    g.drawImage(img, p.x - rec.anchor.x * dw, p.y - rec.anchor.y * dh, dw, dh);
+    return true;
+  }
+
+  function tileRGB(c, r) {
     const b = biome[idx(c, r)];
     const n = hash(c, r);
+    const n2 = hash(c + 17, r * 3 + 5);
     const plot = plotOf[idx(c, r)];
     let pal = {
       [DESERT]: [[196, 164, 116], [214, 184, 136], [176, 142, 96]],
@@ -1085,8 +1261,102 @@
       else if (state.age >= 1) pal = [[74, 76, 82], [62, 64, 70], [90, 92, 96]];
     }
     const base = pal[(n * pal.length) | 0];
-    const lift = ((n - 0.5) * 16) | 0;
-    return `rgb(${base[0] + lift},${base[1] + lift},${base[2] + lift})`;
+    const lift = ((n - 0.5) * 14 + (n2 - 0.5) * 8) | 0;
+    return [base[0] + lift, base[1] + lift, base[2] + lift];
+  }
+  function tileColor(c, r) {
+    const [r0, g0, b0] = tileRGB(c, r);
+    const here = biome[idx(c, r)];
+    if (here === ROAD || here === WATER) return `rgb(${r0},${g0},${b0})`;
+    let rr = 0, gg = 0, bb = 0, n = 0;
+    for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      if (!inside(c + dc, r + dr)) continue;
+      const nb = biome[idx(c + dc, r + dr)];
+      if (nb === ROAD || nb === WATER) continue;
+      const [r1, g1, b1] = tileRGB(c + dc, r + dr);
+      rr += r1; gg += g1; bb += b1; n += 1;
+    }
+    if (!n) return `rgb(${r0},${g0},${b0})`;
+    const mix = (a, b) => (a * 0.58 + (b / n) * 0.42) | 0;
+    return `rgb(${mix(r0, rr)},${mix(g0, gg)},${mix(b0, bb)})`;
+  }
+  function speckleTile(g, c, r) {
+    const b = biome[idx(c, r)];
+    if (b === WATER || b === ROAD) return;
+    const n = hash(c + 3, r + 11);
+    const n2 = hash(c * 5 + 1, r * 7 + 2);
+    const q = iso(c + 0.22 + n * 0.55, r + 0.22 + n2 * 0.5);
+    g.fillStyle = n2 > 0.55 ? "rgba(255,248,230,0.1)" : "rgba(40,24,12,0.11)";
+    g.beginPath();
+    g.ellipse(q.x, q.y, 2 + n * 5, 1.2 + n2 * 2.4, n * 4, 0, Math.PI * 2);
+    g.fill();
+    const q2 = iso(c + 0.15 + n2 * 0.4, r + 0.55 + n * 0.25);
+    g.fillStyle = n > 0.5 ? "rgba(255,248,230,0.07)" : "rgba(40,24,12,0.08)";
+    g.beginPath();
+    g.ellipse(q2.x, q2.y, 1.5 + n2 * 3, 1 + n * 1.6, n2 * 3, 0, Math.PI * 2);
+    g.fill();
+  }
+  function blendEdges(g, c, r) {
+    const here = biome[idx(c, r)];
+    if (here === ROAD) return;
+    const edges = [
+      [0, -1, [0, 0], [1, 0]],
+      [1, 0, [1, 0], [1, 1]],
+      [0, 1, [1, 1], [0, 1]],
+      [-1, 0, [0, 1], [0, 0]],
+    ];
+    const center = iso(c + 0.5, r + 0.5);
+    for (const [dc, dr, a, b] of edges) {
+      const nc = c + dc;
+      const nr = r + dr;
+      if (!inside(nc, nr)) continue;
+      const nb = biome[idx(nc, nr)];
+      if (nb === here || nb === ROAD) continue;
+      const pa = iso(c + a[0], r + a[1]);
+      const pb = iso(c + b[0], r + b[1]);
+      const ia = { x: pa.x * 0.58 + center.x * 0.42, y: pa.y * 0.58 + center.y * 0.42 };
+      const ib = { x: pb.x * 0.58 + center.x * 0.42, y: pb.y * 0.58 + center.y * 0.42 };
+      if (here !== WATER && nb === WATER) g.fillStyle = "rgba(92,74,48,0.62)";
+      else {
+        const [rr, gg, bb] = tileRGB(nc, nr);
+        g.fillStyle = `rgba(${rr},${gg},${bb},0.5)`;
+      }
+      poly(g, [pa, pb, ib, ia]);
+      g.fill();
+    }
+  }
+  function drawRoadMarks(g, c, r) {
+    const nbrs = [];
+    for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]) {
+      if (inside(c + dc, r + dr) && road[idx(c + dc, r + dr)]) nbrs.push([dc, dr]);
+    }
+    g.strokeStyle = AMBER;
+    g.globalAlpha = 0.9;
+    g.lineWidth = 1.5;
+    g.setLineDash([4, 5]);
+    g.beginPath();
+    const mid = iso(c + 0.5, r + 0.5);
+    if (nbrs.length >= 2) {
+      for (const [dc, dr] of nbrs) {
+        const p = iso(c + 0.5 + dc * 0.46, r + 0.5 + dr * 0.46);
+        g.moveTo(mid.x, mid.y);
+        g.lineTo(p.x, p.y);
+      }
+    } else if (nbrs.length === 1) {
+      const [dc, dr] = nbrs[0];
+      const a = iso(c + 0.5 + dc * 0.46, r + 0.5 + dr * 0.46);
+      const b = iso(c + 0.5 - dc * 0.46, r + 0.5 - dr * 0.46);
+      g.moveTo(a.x, a.y);
+      g.lineTo(b.x, b.y);
+    } else {
+      const a = iso(c + 0.5, r + 0.12);
+      const b = iso(c + 0.5, r + 0.88);
+      g.moveTo(a.x, a.y);
+      g.lineTo(b.x, b.y);
+    }
+    g.stroke();
+    g.setLineDash([]);
+    g.globalAlpha = 1;
   }
   function poly(g, pts) {
     g.beginPath();
@@ -1119,10 +1389,13 @@
           g.lineWidth = 1;
           g.strokeStyle = fill;
           g.stroke();
+          speckleTile(g, c, r);
+          blendEdges(g, c, r);
           const o = owner[idx(c, r)];
           if (o) {
+            poly(g, pts);
             g.fillStyle = FACTION_COLOR[o];
-            g.globalAlpha = 0.26;
+            g.globalAlpha = 0.15;
             g.fill();
             g.globalAlpha = 1;
           }
@@ -1137,32 +1410,11 @@
             g.fillStyle = peak > 26 ? "#E7E2DA" : "#8C8680";
             g.fill();
           }
-          if (biome[idx(c, r)] === WATER) {
-            g.strokeStyle = "rgba(210,236,255,0.45)";
-            const a = iso(c + 0.2, r + 0.45);
-            const b = iso(c + 0.8, r + 0.6);
-            g.beginPath();
-            g.moveTo(a.x, a.y);
-            g.lineTo(b.x, b.y);
-            g.stroke();
-          }
-          if (road[idx(c, r)]) {
-            g.strokeStyle = AMBER;
-            g.globalAlpha = 0.8;
-            g.lineWidth = 1.6;
-            g.setLineDash([5, 6]);
-            const a = iso(c + 0.5, r + 0.15);
-            const b = iso(c + 0.5, r + 0.85);
-            g.beginPath();
-            g.moveTo(a.x, a.y);
-            g.lineTo(b.x, b.y);
-            g.stroke();
-            g.setLineDash([]);
-            g.globalAlpha = 1;
-          }
+          if (road[idx(c, r)]) drawRoadMarks(g, c, r);
           const n = hash(c, r);
-          const p = iso(c + 0.55, r + 0.45);
-          if (biome[idx(c, r)] === DESERT && n > 0.92) {
+          const zone = hash((c / 3) | 0, (r / 3) | 0);
+          const p = iso(c + 0.35 + n * 0.35, r + 0.3 + hash(c + 9, r + 4) * 0.35);
+          if (biome[idx(c, r)] === DESERT && zone > 0.84 && n > 0.72) {
             g.fillStyle = "rgba(48,32,18,0.35)";
             g.beginPath();
             g.ellipse(p.x, p.y + 2, 8, 3, 0, 0, Math.PI * 2);
@@ -1185,7 +1437,8 @@
           }
           if (o) {
             g.strokeStyle = FACTION_COLOR[o];
-            g.lineWidth = 2.4;
+            g.lineWidth = 2.2;
+            g.setLineDash([6, 5]);
             g.beginPath();
             const edges = [[[0, 0], [1, 0], 0, -1], [[1, 0], [1, 1], 1, 0], [[1, 1], [0, 1], 0, 1], [[0, 1], [0, 0], -1, 0]];
             for (const [a, bpt, dc, dr] of edges) {
@@ -1199,6 +1452,7 @@
               g.lineTo(pb.x, pb.y);
             }
             g.stroke();
+            g.setLineDash([]);
           }
         }
       }
@@ -1304,18 +1558,18 @@
   }
 
   function drawHQ(g, b) {
-    const h = state.age >= 2 ? 68 : state.age >= 1 ? 50 : 34;
+    const h = state.age >= 2 ? 22 : state.age >= 1 ? 18 : 14;
     drawBox(g, b.col, b.row, b.w, b.h, h, RED, "#F7F4EE");
-    if (state.age >= 1) drawBox(g, b.col + 0.55, b.row + 0.55, 1.7, 1.7, h + 8, "#C4281C", "#F7F4EE");
-    if (state.age >= 2) drawBox(g, b.col + 0.95, b.row + 0.95, 0.9, 0.9, h + 26, "#A81E16", "#F7F4EE");
+    if (state.age >= 1) drawBox(g, b.col + 0.9, b.row + 0.9, 1.05, 1.05, h + 6, "#C4281C", "#F7F4EE");
+    if (state.age >= 2) drawBox(g, b.col + 1.15, b.row + 1.15, 0.55, 0.55, h + 12, "#A81E16", "#F7F4EE");
     const p = iso(b.col + b.w * 0.5, b.row + 0.8);
     g.strokeStyle = CREAM;
     g.lineWidth = 1.4;
     g.beginPath();
-    g.moveTo(p.x, p.y - h - 6);
-    g.lineTo(p.x, p.y - h - 36);
+    g.moveTo(p.x, p.y - h - 4);
+    g.lineTo(p.x, p.y - h - 16);
     g.stroke();
-    drawFlag(g, p.x, p.y - h - 36, FACTION_COLOR[b.faction]);
+    drawFlag(g, p.x, p.y - h - 16, FACTION_COLOR[b.faction]);
   }
   function drawDC(g, b) {
     const dark = isBrownout() || b.protested > state.time;
@@ -1422,20 +1676,24 @@
   }
 
   function drawBuilding(g, b) {
-    if (!b.done) drawScaffold(g, b);
+    if (!b.done && !drawSprite(g, "scaffold", b.col, b.row, { w: b.w, h: b.h })) drawScaffold(g, b);
     g.save();
     g.globalAlpha = b.done ? 1 : 0.25 + b.progress * 0.7;
-    if (b.kind === "hq") drawHQ(g, b);
-    else if (b.kind === "dc") drawDC(g, b);
-    else if (b.kind === "mcs") drawMCS(g, b);
-    else if (b.kind === "bess") drawBESS(g, b);
-    else if (b.kind === "substation") drawSub(g, b);
-    else if (b.kind === "warehouse") drawWarehouse(g, b);
-    else if (b.kind === "lounge") drawLounge(g, b);
-    else if (b.kind === "market") drawMarket(g, b);
-    else if (b.kind === "permit") drawPermit(g, b);
-    else if (b.kind === "sales") drawSales(g, b);
-    else drawBox(g, b.col, b.row, b.w, b.h, 18, "#C8B89A", CREAM);
+    const drew = drawSprite(g, spriteKey(b.kind), b.col, b.row, { w: b.w, h: b.h });
+    if (!drew) {
+      dropShadow(g, b.col + b.w / 2, b.row + b.h / 2, 8 + b.w * 7, 4 + b.h * 2);
+      if (b.kind === "hq") drawHQ(g, b);
+      else if (b.kind === "dc") drawDC(g, b);
+      else if (b.kind === "mcs") drawMCS(g, b);
+      else if (b.kind === "bess") drawBESS(g, b);
+      else if (b.kind === "substation") drawSub(g, b);
+      else if (b.kind === "warehouse") drawWarehouse(g, b);
+      else if (b.kind === "lounge") drawLounge(g, b);
+      else if (b.kind === "market") drawMarket(g, b);
+      else if (b.kind === "permit") drawPermit(g, b);
+      else if (b.kind === "sales") drawSales(g, b);
+      else drawBox(g, b.col, b.row, b.w, b.h, 18, "#C8B89A", CREAM);
+    }
     g.restore();
     if (!b.done && !state.portrait) drawProgress(g, b);
     if (selection.has(b.id) && !state.portrait) {
@@ -1451,22 +1709,26 @@
   function drawUnit(g, u) {
     if (u.garrison) return;
     const crew = u.kind === "crew";
-    const color = crew ? RED : CREAM;
-    const roof = crew ? "#F5C518" : CYAN;
-    const w = crew ? 0.52 : 0.48;
-    const h = crew ? 0.82 : 0.7;
-    drawBox(g, u.col - w / 2, u.row - h / 2, w, h * 0.55, crew ? 10 : 12, color, shade(color, 16));
-    drawBox(g, u.col - w * 0.2, u.row - h / 2, w * 0.62, h * 0.38, crew ? 14 : 15, shade(color, -12), roof);
-    if (crew) {
-      const p = iso(u.col, u.row);
-      g.fillStyle = "#F5C518";
-      g.beginPath();
-      g.arc(p.x + 2, p.y - 20, 3.5, 0, Math.PI * 2);
-      g.fill();
-      g.fillStyle = CREAM;
-      g.beginPath();
-      g.arc(p.x + 6, p.y - 16, 2.2, 0, Math.PI * 2);
-      g.fill();
+    const drew = crew && drawSprite(g, spriteKey("crew"), u.col, u.row, { vehicle: true, mirror: true, facing: u.facing });
+    if (!drew) {
+      dropShadow(g, u.col, u.row, crew ? 14 : 12, 6);
+      const color = crew ? RED : CREAM;
+      const roof = crew ? "#F5C518" : CYAN;
+      const w = crew ? 0.52 : 0.48;
+      const h = crew ? 0.82 : 0.7;
+      drawBox(g, u.col - w / 2, u.row - h / 2, w, h * 0.55, crew ? 10 : 12, color, shade(color, 16));
+      drawBox(g, u.col - w * 0.2, u.row - h / 2, w * 0.62, h * 0.38, crew ? 14 : 15, shade(color, -12), roof);
+      if (crew) {
+        const p = iso(u.col, u.row);
+        g.fillStyle = "#F5C518";
+        g.beginPath();
+        g.arc(p.x + 2, p.y - 20, 3.5, 0, Math.PI * 2);
+        g.fill();
+        g.fillStyle = CREAM;
+        g.beginPath();
+        g.arc(p.x + 6, p.y - 16, 2.2, 0, Math.PI * 2);
+        g.fill();
+      }
     }
     if (u.job?.type === "build" && !state.portrait) {
       const p = iso(u.col, u.row);
@@ -1493,6 +1755,13 @@
   function drawVehicle(g, v) {
     const spec = VEHICLES[v.kind];
     if (!spec) return;
+    const len = VEHICLE_LEN[v.kind] || spec.h;
+    const drew = drawSprite(g, spriteKey(v.kind), v.col, v.row, { vehicle: true, mirror: true, facing: v.facing });
+    if (drew) {
+      drawVehicleExtras(g, v);
+      return;
+    }
+    dropShadow(g, v.col, v.row, len * 16, len * 6);
     const ox = v.col - spec.w / 2;
     const oy = v.row - (spec.trailer ? spec.h + spec.trailer.h : spec.h) / 2;
     if (spec.trailer) drawBox(g, ox, oy + spec.h * 0.2, spec.trailer.w, spec.trailer.h, spec.trailer.body, spec.trailer.color, shade(spec.trailer.color, -12));
@@ -1506,6 +1775,10 @@
         g.fillRect(p.x, p.y - spec.body - 2, 3, 3);
       }
     }
+    drawVehicleExtras(g, v);
+  }
+  function drawVehicleExtras(g, v) {
+    const spec = VEHICLES[v.kind];
     const building = buildings.find((b) => b.id === v.buildingId);
     if (building && (v.phase === "cable" || v.phase === "charge" || v.phase === "pay")) {
       const stall = iso(building.col + building.w * 0.5, building.row + 0.3);
@@ -1549,8 +1822,11 @@
   }
 
   function drawConvoy(g, c) {
-    drawBox(g, c.col - 0.85, c.row - 0.32, 0.7, 0.62, 16, CYAN, "#E7FBFF");
-    drawBox(g, c.col - 0.2, c.row - 0.28, 0.95, 0.55, 18, "#D7F7FF", CYAN);
+    if (!drawSprite(g, spriteKey("semi"), c.col, c.row, { vehicle: true, mirror: true, facing: c.facing ?? 1 })) {
+      dropShadow(g, c.col, c.row, 22, 8);
+      drawBox(g, c.col - 0.85, c.row - 0.32, 0.7, 0.62, 16, CYAN, "#E7FBFF");
+      drawBox(g, c.col - 0.2, c.row - 0.28, 0.95, 0.55, 18, "#D7F7FF", CYAN);
+    }
     const p = iso(c.col, c.row);
     drawFlag(g, p.x + 8, p.y - 28, FACTION_COLOR[c.faction] || AMBER);
     if (state.portrait) return;
@@ -1567,6 +1843,7 @@
 
   function drawNode(g, n) {
     const color = n.kind === "hall" ? "#E7DCC8" : "#C46A3A";
+    dropShadow(g, n.col, n.row, 12, 5);
     drawBox(g, n.col - 0.35, n.row - 0.35, 0.7, 0.7, n.kind === "yard" ? 8 : 14, color, shade(color, 20));
   }
 
@@ -1690,6 +1967,37 @@
     return vis[idx(c, r)] >= 1;
   }
 
+  function drawShimmer(g) {
+    const t = performance.now() / 1000;
+    const corners = [screenToWorld(0, 0), screenToWorld(viewW(), 0), screenToWorld(0, viewH()), screenToWorld(viewW(), viewH())];
+    let c0 = COLS, c1 = 0, r0 = ROWS, r1 = 0;
+    for (const p of corners) {
+      c0 = Math.min(c0, p.col);
+      c1 = Math.max(c1, p.col);
+      r0 = Math.min(r0, p.row);
+      r1 = Math.max(r1, p.row);
+    }
+    c0 = clamp(Math.floor(c0) - 1, 0, COLS - 1);
+    c1 = clamp(Math.ceil(c1) + 1, 0, COLS - 1);
+    r0 = clamp(Math.floor(r0) - 1, 0, ROWS - 1);
+    r1 = clamp(Math.ceil(r1) + 1, 0, ROWS - 1);
+    g.lineWidth = 1.2;
+    for (let r = r0; r <= r1; r++) {
+      for (let c = c0; c <= c1; c++) {
+        if (biome[idx(c, r)] !== WATER) continue;
+        if (vis[idx(c, r)] === 0 && state.shot !== "region") continue;
+        const wobble = Math.sin(t * 1.7 + c * 0.65 + r * 0.4) * 0.07;
+        const a = iso(c + 0.22, r + 0.42 + wobble);
+        const b = iso(c + 0.78, r + 0.58 - wobble * 0.4);
+        g.strokeStyle = `rgba(220,245,255,${0.28 + 0.35 * (0.5 + 0.5 * Math.sin(t * 2.2 + c + r))})`;
+        g.beginPath();
+        g.moveTo(a.x, a.y);
+        g.lineTo(b.x, b.y);
+        g.stroke();
+      }
+    }
+  }
+
   function draw() {
     paintMaps();
     const w = canvas.width;
@@ -1700,12 +2008,7 @@
     ctx.setTransform(camera.zoom, 0, 0, camera.zoom, camera.x, camera.y);
     ctx.drawImage(landCanvas, ORIGIN_X, ORIGIN_Y);
     ctx.drawImage(fogCanvas, ORIGIN_X, ORIGIN_Y);
-    if (camera.zoom < 0.52) {
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.fillStyle = "rgba(214,186,140,0.4)";
-      ctx.fillRect(0, 0, w, h);
-      ctx.setTransform(camera.zoom, 0, 0, camera.zoom, camera.x, camera.y);
-    }
+    drawShimmer(ctx);
     if (state.age >= 1) {
       ctx.fillStyle = state.age >= 2 ? "rgba(198,194,186,0.72)" : "rgba(52,54,60,0.78)";
       for (const city of cities) {
@@ -1721,11 +2024,11 @@
     }
     for (const city of cities) if (tileSeen(city.col, city.row)) drawFence(ctx, city);
     const drawables = [];
-    for (const n of nodes) drawables.push({ z: n.col + n.row, draw: () => seen(n.col, n.row) && drawNode(ctx, n) });
-    for (const b of buildings) drawables.push({ z: b.col + b.row + b.w, draw: () => tileSeen(b.col, b.row) && drawBuilding(ctx, b) });
-    for (const u of units) drawables.push({ z: u.col + u.row, draw: () => seen(u.col, u.row) && drawUnit(ctx, u) });
-    for (const v of vehicles) drawables.push({ z: v.col + v.row, draw: () => (state.shot === "vehicles" || state.shot === "traffic" || seen(v.col, v.row)) && drawVehicle(ctx, v) });
-    for (const c of convoys) if (!c.done) drawables.push({ z: c.col + c.row + 0.2, draw: () => (state.shot === "convoy" || seen(c.col, c.row)) && drawConvoy(ctx, c) });
+    for (const n of nodes) drawables.push({ z: depthY(n.col, n.row), draw: () => seen(n.col, n.row) && drawNode(ctx, n) });
+    for (const b of buildings) drawables.push({ z: depthY(b.col + b.w / 2, b.row + b.h / 2), draw: () => tileSeen(b.col, b.row) && drawBuilding(ctx, b) });
+    for (const u of units) drawables.push({ z: depthY(u.col, u.row), draw: () => seen(u.col, u.row) && drawUnit(ctx, u) });
+    for (const v of vehicles) drawables.push({ z: depthY(v.col, v.row), draw: () => (state.shot === "vehicles" || state.shot === "traffic" || seen(v.col, v.row)) && drawVehicle(ctx, v) });
+    for (const c of convoys) if (!c.done) drawables.push({ z: depthY(c.col, c.row) + 0.2, draw: () => (state.shot === "convoy" || seen(c.col, c.row)) && drawConvoy(ctx, c) });
     drawables.sort((a, b) => a.z - b.z);
     for (const d of drawables) d.draw();
     for (const d of dust) {
@@ -1858,7 +2161,10 @@
     state.portrait = true;
     try {
       const anchor = ent.w ? iso(ent.col + ent.w / 2, ent.row + ent.h / 2) : iso(ent.col, ent.row);
-      g.setTransform(1.3, 0, 0, 1.3, 80 - anchor.x * 1.3, 96 - anchor.y * 1.3);
+      const span = ent.w ? (ent.w + ent.h) * (TW / 2) : 40;
+      const scale = ent.w ? Math.min(1.15, 140 / span) : 2.3;
+      const foot = ent.w ? 128 : 108;
+      g.setTransform(scale, 0, 0, scale, 80 - anchor.x * scale, foot - anchor.y * scale);
       if (ent.w) drawBuilding(g, ent);
       else if (VEHICLES[ent.kind]) drawVehicle(g, ent);
       else drawUnit(g, ent);
@@ -1940,12 +2246,23 @@
       slots.appendChild(s);
     }
     if (!first) {
-      $("select-name").textContent = "Western Interconnect";
-      $("select-meta").textContent = "Box-select crews. Right-click to move or work.";
-      $("select-bar").style.width = "0";
+      const looked = focusCity();
+      const city = looked && looked.owner === FACTION.zaps
+        ? looked
+        : (cities.find((c) => c.id === "phoenix" && c.owner === FACTION.zaps) || cities.find((c) => c.owner === FACTION.zaps));
+      const hq = buildings.find((b) => b.kind === "hq" && b.faction === FACTION.zaps && city && Math.hypot(b.col + b.w / 2 - city.col, b.row + b.h / 2 - city.row) < 6)
+        || buildings.find((b) => b.kind === "hq" && b.faction === FACTION.zaps);
+      const share = sharePct();
+      const built = buildings.filter((b) => b.faction === FACTION.zaps && b.done).length;
+      const noun = built === 1 ? "building" : "buildings";
+      $("select-name").textContent = city ? city.name : "Western Interconnect";
+      $("select-meta").textContent = city
+        ? `${AGES[state.age].name} · ${share}% share · ${built} ${noun}`
+        : "Box-select crews. Right-click to move or work.";
+      $("select-bar").style.width = hq ? "100%" : "0";
       $("bar-use").style.width = "0";
       $("bar-queue").style.width = "0";
-      paintPortrait(null);
+      paintPortrait(hq || null);
     } else if (first.faction && !first.w) {
       const label = first.kind === "scout" ? "Scout van" : first.kind === "van" ? "Raid van" : "Crew truck";
       $("select-name").textContent = selected.length > 1 ? `${selected.length} units` : label;
@@ -2240,16 +2557,7 @@
       fogDirty = true;
     } else if (name === "compound") {
       state.age = 2;
-      buildings.push(makeBuilding("dc", city.col + 2, city.row - 3, FACTION.zaps, 1));
-      buildings.push(makeBuilding("bess", city.col, city.row - 3, FACTION.zaps, 1));
-      buildings.push(makeBuilding("mcs", city.col + 1, city.row - 2, FACTION.zaps, 1));
-      buildings.push(makeBuilding("lounge", city.col - 3, city.row + 1, FACTION.zaps, 1));
-      buildings.push(makeBuilding("warehouse", city.col + 1, city.row + 2, FACTION.zaps, 1));
-      buildings.push(makeBuilding("market", city.col - 1, city.row + 2, FACTION.zaps, 1));
-      const dc = buildings.find((b) => b.kind === "dc" && b.faction === FACTION.zaps);
-      parkVehicle("sedan", dc.col + 0.2, dc.row + 1.15, "charge", { buildingId: dc.id });
-      parkVehicle("hatch", dc.col + 1.1, dc.row + 1.5, "cable", { buildingId: dc.id });
-      parkVehicle("suv", city.col + 3.2, city.row + 1.2, "drive");
+      dressCompound(city, true);
       revealDisk(city.col, city.row, 24, 2);
     } else if (name === "build") {
       const b = makeBuilding("dc", city.col + 1, city.row - 2, FACTION.zaps, 0.5);
@@ -2326,12 +2634,33 @@
     } else if (name === "night") {
       state.age = 2;
       state.hour = 21.5;
-      buildings.push(makeBuilding("dc", city.col + 1, city.row - 2, FACTION.zaps, 1));
-      buildings.push(makeBuilding("mcs", city.col - 1, city.row + 1, FACTION.zaps, 1));
-      buildings.push(makeBuilding("bess", city.col + 2, city.row + 1, FACTION.zaps, 1));
-      buildings.push(makeBuilding("lounge", city.col - 3, city.row + 1, FACTION.zaps, 1));
+      dressCompound(city, false);
       revealDisk(city.col, city.row, 20, 2);
     }
+  }
+
+  function dressCompound(city, withCars) {
+    const c = city.col;
+    const r = city.row;
+    const add = (kind, col, row) => {
+      if (!buildings.some((b) => b.kind === kind && b.col === col && b.row === row)) {
+        buildings.push(makeBuilding(kind, col, row, FACTION.zaps, 1));
+      }
+    };
+    add("bess", c, r - 3);
+    add("dc", c + 2, r - 3);
+    add("dc", c + 3, r - 3);
+    add("lounge", c, r - 1);
+    add("warehouse", c + 2, r - 1);
+    add("mcs", c - 3, r + 1);
+    add("market", c, r + 2);
+    add("substation", c + 2, r + 1);
+    if (!withCars) return;
+    const left = buildings.find((b) => b.kind === "dc" && b.col === c + 2);
+    const right = buildings.find((b) => b.kind === "dc" && b.col === c + 3);
+    parkVehicle("sedan", c + 2.15, r - 2.05, "charge", { buildingId: left.id });
+    parkVehicle("hatch", c + 3.15, r - 1.9, "cable", { buildingId: right.id });
+    parkVehicle("suv", c + 0.4, r - 2.15, "drive");
   }
 
   function frameShot(name) {
@@ -2340,7 +2669,7 @@
       const c = cities.reduce((s, x) => s + x.col, 0) / cities.length;
       const r = cities.reduce((s, x) => s + x.row, 0) / cities.length;
       focus(c, r - 1, 0.4);
-    } else if (name === "compound" || name === "night") focus(city.col + 0.2, city.row + 0.2, 1.02);
+    } else if (name === "compound" || name === "night") focus(city.col + 0.35, city.row + 0.15, 0.92);
     else if (name === "age") focus(city.col + 0.4, city.row + 0.6, 1.48);
     else if (name === "build") focus(city.col + 1.4, city.row - 1.2, 1.4);
     else if (name === "select") {
@@ -2432,6 +2761,11 @@
       if (pay) spawnFloat(pay.col, pay.row, "+$320", true);
     }
     syncHud();
+    loadSprites();
+    const spritePoll = setInterval(() => {
+      if (art.ready) { clearInterval(spritePoll); return; }
+      loadSprites();
+    }, 4000);
     let last = performance.now();
     const loop = (now) => {
       const dt = Math.min(0.05, (now - last) / 1000);
@@ -2454,6 +2788,7 @@
     requestAnimationFrame(loop);
     window.__EMPIRE_SMOKE__ = {
       ready: true,
+      sprites: () => art.ready,
       build: "empire-aoe-design",
       resources: () => ({ ...state.res, grid: gridUsed(), gridCap: gridCap() }),
       age: () => AGES[state.age].name,

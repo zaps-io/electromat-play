@@ -351,6 +351,7 @@ html, body {
 }
 
 #cmd button {
+  position: relative;
   width: 70px;
   height: 70px;
   background: var(--char);
@@ -358,29 +359,46 @@ html, body {
   border: 2px solid var(--amber);
   cursor: pointer;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0;
-  padding: 2px;
+  padding: 0;
   font-family: "Barlow Condensed", sans-serif;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.03em;
+  opacity: 1;
 }
 
 #cmd button kbd {
+  position: absolute;
+  left: 3px;
+  top: 1px;
   font-family: "Share Tech Mono", monospace;
   font-size: 11px;
   color: var(--amber);
   font-weight: 400;
+  line-height: 1;
 }
 
-#cmd button svg { display: block; }
+#cmd button span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+#cmd button svg { display: block; width: 48px; height: 48px; }
+#cmd button:not(:disabled) svg { opacity: 1; }
 #cmd button.armed { outline: 2px solid var(--cyan); outline-offset: -3px; }
 #cmd button.locked,
 #cmd button.poor,
 #cmd button:disabled { opacity: 0.38; cursor: not-allowed; }
+#cmd button:not(:disabled) { opacity: 1; }
 #cmd button:hover:not(:disabled) { border-color: var(--cream); }
 
 #notes {
