@@ -1,4 +1,4 @@
-/* empire-build: rts-yard-21 */
+/* empire-build: rts-yard-22 */
 :root {
   --red: #e63225;
   --charcoal: #1e1e24;
@@ -836,7 +836,7 @@ button {
 }
 
 .site-base[data-kind="dirt"] {
-  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.45)) saturate(1.1) contrast(1.06);
+  opacity: 0;
 }
 
 .site-kit {
@@ -1505,8 +1505,17 @@ button {
 
 .crew-tokens.yard {
   position: absolute;
-  left: 3%;
-  bottom: 5%;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.crew-tokens.yard .crew-token {
+  position: absolute;
+  width: 40px;
+  transform: translate(-50%, -85%);
+  pointer-events: auto;
+  z-index: 6;
 }
 
 .crew-tokens.map {
@@ -1665,28 +1674,28 @@ button {
 }
 
 .site-board-grout {
-  fill: rgba(245, 240, 232, 0.2);
-  stroke: rgba(154, 132, 96, 0.55);
-  stroke-width: 0.16;
+  fill: rgba(30, 30, 36, 0.18);
+  stroke: rgba(30, 30, 36, 0.55);
+  stroke-width: 0.22;
 }
 
 .site-board-etch {
-  fill: rgba(232, 210, 160, 0.22);
-  stroke: rgba(245, 240, 232, 0.35);
-  stroke-width: 0.2;
+  fill: rgba(30, 30, 36, 0.08);
+  stroke: rgba(245, 240, 232, 0.45);
+  stroke-width: 0.22;
 }
 
 .site-board-etch.odd {
-  fill: rgba(90, 70, 42, 0.2);
+  fill: rgba(30, 30, 36, 0.16);
 }
 
 .site-overlay-svg.empty-board .site-board-etch {
-  fill: rgba(232, 210, 160, 0.34);
-  stroke: rgba(245, 240, 232, 0.5);
+  fill: rgba(30, 30, 36, 0.05);
+  stroke: rgba(245, 240, 232, 0.62);
 }
 
 .site-overlay-svg.empty-board .site-board-etch.odd {
-  fill: rgba(90, 70, 42, 0.34);
+  fill: rgba(30, 30, 36, 0.14);
 }
 
 .site-tile-curb {
@@ -2344,10 +2353,61 @@ button {
   top: 64px;
 }
 
+.map-stage:has(.site-overlay:not(.hidden)) .deal-sheet.build-fork {
+  top: auto;
+  bottom: 10px;
+}
+
 .deal-sheet.build-fork {
   width: min(440px, calc(100% - 24px));
   max-width: 440px;
   border-color: var(--cream);
+}
+
+.deal-sheet.build-fork.dock-strip {
+  top: auto;
+  bottom: 10px;
+  left: 10px;
+  right: 10px;
+  width: auto;
+  max-width: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+  padding: 0.4rem 0.65rem;
+}
+
+.deal-sheet.build-fork.dock-strip h3 {
+  flex: 1 1 180px;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.deal-sheet.build-fork.dock-strip p {
+  flex: 1 1 100%;
+  margin: 0;
+}
+
+.deal-sheet.build-fork.collapsed p {
+  display: none;
+}
+
+.deal-sheet.build-fork .fork-collapse {
+  background: transparent;
+  color: var(--amber);
+  border: 1px solid var(--amber);
+  font-family: "Share Tech Mono", monospace;
+  letter-spacing: 0.12em;
+  font-size: 0.68rem;
+  padding: 0.35rem 0.5rem;
+}
+
+.deal-sheet.build-fork .modal-actions {
+  flex: 1 1 280px;
+  display: flex;
+  gap: 0.4rem;
+  margin: 0;
 }
 
 .deal-sheet.build-fork h3 {
@@ -2915,5 +2975,210 @@ button {
 
   .map-wrap:has(.site-overlay:not(.hidden)) {
     grid-template-rows: 1fr 72px;
+  }
+}
+
+.site-cell-valid,
+.site-cell-blocked,
+.site-footprint {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.site-cell-valid {
+  fill: rgba(0, 212, 245, 0.28);
+  stroke: #00d4f5;
+  stroke-width: 0.35;
+}
+
+.site-cell-blocked {
+  fill: rgba(230, 50, 37, 0.22);
+  stroke: #e63225;
+  stroke-width: 0.28;
+}
+
+.site-footprint {
+  fill: rgba(0, 212, 245, 0.38);
+  stroke: #f5f0e8;
+  stroke-width: 0.45;
+  stroke-dasharray: 1.1 0.7;
+}
+
+.site-footprint.bad {
+  fill: rgba(230, 50, 37, 0.4);
+  stroke: #e63225;
+}
+
+.site-cell-reason {
+  fill: #f5f0e8;
+  font-family: "IBM Plex Mono", "Share Tech Mono", monospace;
+  font-size: 2.15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+}
+
+.site-scaffold line {
+  stroke: #e89a2e;
+  stroke-width: 0.46;
+  stroke-dasharray: 0.85 0.4;
+  fill: none;
+}
+
+.site-month-ring .ring-track {
+  fill: rgba(18, 18, 23, 0.82);
+  stroke: rgba(245, 240, 232, 0.55);
+  stroke-width: 0.35;
+}
+
+.site-month-ring .ring-fill {
+  fill: none;
+  stroke: #00d4f5;
+  stroke-width: 0.7;
+}
+
+.site-month-ring.preview .ring-fill {
+  stroke: #e89a2e;
+}
+
+.site-month-ring .site-ghost-count {
+  fill: #f5f0e8;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 2.5px;
+  font-weight: 700;
+}
+
+.site-market-stripe {
+  fill: #e63225;
+}
+
+.site-mcs-amber {
+  fill: #e89a2e;
+}
+
+.own-radius {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  width: 64px;
+  height: 64px;
+  transform: translate(-50%, 0);
+  border-radius: 50%;
+  border: 1px solid var(--own, #e63225);
+  background: color-mix(in srgb, var(--own, #e63225) 22%, transparent);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.faction-flag {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  width: 18px;
+  height: 24px;
+  transform: translateX(-70%);
+  z-index: 4;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 1px #000);
+}
+
+.faction-flag .flag-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.city-node.fogged .map-icon.is-fog {
+  filter: none !important;
+  opacity: 1;
+  width: 26px;
+  height: 20px;
+  bottom: 16px;
+}
+
+.fog-icon {
+  width: 26px;
+  height: 20px;
+  display: block;
+}
+
+.city-share {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: 50%;
+  width: 36px;
+  height: 4px;
+  transform: translateX(-50%);
+  display: flex;
+  background: rgba(245, 240, 232, 0.18);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.city-share i {
+  display: block;
+  height: 100%;
+}
+
+.city-share .you {
+  background: #e63225;
+}
+
+.city-share .them {
+  background: #b8bcc0;
+}
+
+.city-share .fog {
+  width: 100%;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(184, 188, 192, 0.15),
+    rgba(184, 188, 192, 0.15) 2px,
+    rgba(30, 30, 36, 0.2) 2px,
+    rgba(30, 30, 36, 0.2) 4px
+  );
+}
+
+.city-node.obj-target .obj-ring {
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 58px;
+  height: 58px;
+  transform: translateX(-50%);
+  border: 1.5px dashed #e89a2e;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: obj-pulse 1.35s ease-in-out infinite;
+  z-index: 3;
+}
+
+.city-node.obj-target .obj-mo {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-style: normal;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  color: #e89a2e;
+  background: #1e1e24;
+  border: 1px dashed #e89a2e;
+  padding: 0.05rem 0.28rem;
+  white-space: nowrap;
+  z-index: 6;
+  pointer-events: none;
+}
+
+@keyframes obj-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: translateX(-50%) scale(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.06);
   }
 }

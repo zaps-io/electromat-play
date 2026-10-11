@@ -1,4 +1,19 @@
-# Empire playtest — rts-yard-21
+# Empire playtest — rts-yard-22
+
+Replay stills (paused board, no title): `?shot=map` (flags, share bars, fog, objective rings) · `?shot=footprint` (empty Flagstaff, DC footprint snapped to the grid) · `?shot=raising` (mid-build scaffold and months ring) · `?shot=full` (five-kit yard) · `?shot=plate` · `?shot=edict` · `?shot=grade` · `?shot=contested` · `?shot=empty` · `?shot=ghosts` · `?shot=rival` · `?shot=event` · `?shot=hover` · `?shot=fork` · `?shot=pop` · `?shot=objective` · `?shot=crew` · `?shot=scout` · `?shot=scout-map` · `?shot=skirmish` · `?shot=fog` · `?shot=pin-fight` · `?shot=waypoint` · `?showcase=1`.
+
+Checked-in frames: `yard-map.png` · `yard-footprint.png` · `yard-midbuild.png` · `yard-five.png` · `yard-empty.png` · `yard-pad.png` · `yard-ghosts.png` · `yard-event.png` · `yard-raising.png` · `yard-full.png` · `yard-rival.png` · `yard-contested.png` · `yard-hover.png` · `yard-threat.png` · `yard-fork.png` · `yard-pop.png` · `yard-objective.png` · `yard-crew.png` · `yard-scout.png` · `yard-scout-map.png` · `yard-skirmish.png` · `yard-fog.png` · `yard-pin-fight.png` · `yard-waypoint.png`.
+
+## rts-yard-22
+
+Playtest-21 scored the plate. This pass is the yard you can read at a glance, the way an Age of Empires build grid reads.
+
+- **Ghost to complete.** Choosing a kit lights valid cells cyan and blocked cells red with a short reason. A translucent footprint snaps to the grid under the cursor. Commit leaves a scaffold on those cells. The solid fills as the months pass, and the months-left ring sits on the ghost. Crew chips sit on the tiles, not under the diamond.
+- **Silhouettes.** DC is a row of tall slim white posts. MCS is a broad truck gantry with amber trim. BESS is a low dark cabinet bank with cyan lights. Lounge is a low glass box with a warm glow. Market is a red striped awning. The same shapes sit in the deploy tray. The pad is the ochre gravel tile.
+- **One ledger.** The top-bar `$/MO` is the same monthly net as the city income line. Crews on the plate and in the Phoenix blurb are free crews over three. The build-order card is a collapsible strip along the bottom of the map, so it no longer covers the yard.
+- **Map.** Held cities wear a faction-colored flag and a thin tinted ownership radius. A share bar sits under every city name. Unrevealed rivals are a fog mark instead of a grey UNKNOWN box. Flagstaff and Tucson, the opening targets, pulse with a dashed ring and a months-left tag.
+
+## rts-yard-21
 
 Replay stills (paused board, no title): `?shot=plate` (big-number HUD) · `?shot=edict` (strategy cards) · `?shot=grade` (streak ×3 and grade) · `?shot=contested` (share vs rival, price, income) · `?shot=empty` (Flagstaff dirt chessboard) · `?shot=ghosts` (MCS violet ring and edge) · `?shot=raising` · `?shot=full` · `?shot=rival` (LA blocked tray) · `?shot=event` (field-call only — threat chip suppressed) · `?shot=hover` (canopy consequence) · `?shot=fork` · `?shot=pop` (one complete toast) · `?shot=objective` (hold-share arc) · `?shot=crew` (crew tokens on the Phoenix yard) · `?shot=scout` (Vegas detector on the yard) · `?shot=scout-map` (Vegas + LA pulses on the map) · `?shot=skirmish` (price-war tug lane) · `?shot=fog` (Vegas DET plus 1-hop INTEL, distant rivals muted) · `?shot=pin-fight` (Vegas map-pin tug) · `?shot=waypoint` (crew pips on Flagstaff and Tucson) · `?showcase=1`.
 

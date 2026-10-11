@@ -22,6 +22,15 @@
           const d = frame.contentDocument;
           const smoke = w.__EMPIRE_SMOKE__;
           if (!smoke) throw new Error("no __EMPIRE_SMOKE__");
+          const crew0 = smoke.crewTruth();
+          const net0 = smoke.monthlyNet();
+          const phxNet = smoke.cityNet("phoenix");
+          const netText = (d.querySelector("#stat-net") || {}).textContent || "";
+          const crewText = (d.querySelector("#stat-crews") || {}).textContent || "";
+          const objRings = d.querySelectorAll(".obj-ring").length;
+          const shareBars = d.querySelectorAll(".city-share").length;
+          const phxRadius = d.querySelector('.city-node[data-city="phoenix"] .own-radius');
+          const earlyFog = d.querySelector('.city-node[data-city="dallas"] .fog-icon');
           const before = {
             site: smoke.getSite(),
             selected: smoke.getSelected(),
@@ -64,6 +73,11 @@
           const consequenceText = consequence ? consequence.textContent : "";
           const smartAfterOne = smoke.smartSlot("flagstaff");
           const read = smoke.placementRead("flagstaff", "dc");
+          const validCells = d.querySelectorAll(".site-cell-valid").length;
+          const blockedCells = d.querySelectorAll(".site-cell-blocked").length;
+          const footprint = d.querySelector(".site-footprint");
+          const monthRing = d.querySelector(".site-month-ring");
+          const scaffold = d.querySelector(".site-scaffold");
 
           smoke.getState().cities.vegas.sites.zaps.dc = 2;
           smoke.getState().cities.vegas.sites.voltspan.dc = 2;
@@ -166,8 +180,8 @@
             flagStillOpen &&
             smoke.rivalSite("la") === true &&
             smoke.rivalSite("flagstaff") === false &&
-            smoke.build === "rts-yard-21" &&
-            buildName === "rts-yard-21" &&
+            smoke.build === "rts-yard-22" &&
+            buildName === "rts-yard-22" &&
             cashPx > sharePx &&
             cashPx >= 28 &&
             /NEXT ·/.test(nextLine) &&
@@ -217,7 +231,22 @@
             crewAfter.city === "flagstaff" &&
             Boolean(flagPip) &&
             Boolean(tucsonPip) &&
-            phxPips === 1;
+            phxPips === 1 &&
+            crewText === crew0.text &&
+            crew0.text === "3/3" &&
+            net0 === phxNet &&
+            net0 > 0 &&
+            netText.indexOf("$0/MO") === -1 &&
+            /20K/.test(netText) &&
+            objRings >= 2 &&
+            shareBars === 16 &&
+            Boolean(phxRadius) &&
+            Boolean(earlyFog) &&
+            validCells > 0 &&
+            blockedCells > 0 &&
+            Boolean(footprint) &&
+            Boolean(monthRing) &&
+            Boolean(scaffold);
 
           report({
             ok,
@@ -257,6 +286,8 @@
             pinFight: { tug: Boolean(tug), youBeforePin, youAfterPin },
             waypoint: { assigned, crewAfter, flagPip: Boolean(flagPip), tucsonPip: Boolean(tucsonPip), phxPips },
             buildName,
+            truth: { crewText, crew0, netText, net0, phxNet, objRings, shareBars, phxRadius: Boolean(phxRadius), earlyFog: Boolean(earlyFog) },
+            grid: { validCells, blockedCells, footprint: Boolean(footprint), monthRing: Boolean(monthRing), scaffold: Boolean(scaffold) },
             plate: { cashPx, sharePx, nextLine },
             edict: { edictOk, mcsBefore, mcsAfter },
             streak: { streakNow, multNow, grade: gradeNow },
