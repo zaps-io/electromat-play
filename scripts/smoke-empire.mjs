@@ -432,6 +432,9 @@ if (!review.includes("yard-hover-left-26.png") || !review.includes("yard-hover-r
   fail("REVIEW must list the yard-26 stills");
 } else ok("REVIEW lists yard-26 stills");
 
+if (!game.includes("function labelOverlaps") || !game.includes("settleMapChrome")) {
+  fail("label overlap settle missing");
+} else ok("label overlap settle");
 if (!game.includes("function trafficPlan") || !game.includes("assets/sprites/vehicles/sedan-") || !game.includes("CLAIM ·")) {
   fail("traffic or objective claim tag missing");
 } else ok("traffic sprites and CLAIM tag");

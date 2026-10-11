@@ -626,7 +626,8 @@ button {
   bottom: 14px;
   transform: translateX(-50%);
   display: block;
-  width: 36px;
+  width: calc(32px * var(--pin-scale, 1));
+  max-height: calc(36px * var(--pin-scale, 1));
   height: auto;
   margin: 0;
   background: none;
@@ -635,20 +636,20 @@ button {
 }
 
 .city-node.dirt .map-icon {
-  width: 38px;
+  width: calc(30px * var(--pin-scale, 1));
 }
 
 .city-node.zaps .map-icon {
-  width: 42px;
+  width: calc(34px * var(--pin-scale, 1));
 }
 
 .city-node.rival .map-icon,
 .city-node.hostile .map-icon {
-  width: 46px;
+  width: calc(36px * var(--pin-scale, 1));
 }
 
 .city-node.sharp-rival .map-icon {
-  width: 52px;
+  width: calc(40px * var(--pin-scale, 1));
   filter: contrast(1.42) saturate(1.24)
     drop-shadow(1.25px 0 0 var(--rival, #00d4f5))
     drop-shadow(-1.25px 0 0 var(--rival, #00d4f5))
@@ -682,8 +683,19 @@ button {
 .city-node[data-sprite="hq"] .map-icon,
 .city-node[data-sprite="hq"].selected .map-icon,
 .city-node[data-sprite="hq"].site-focus .map-icon {
-  width: 24px;
+  width: calc(20px * var(--pin-scale, 1));
+  max-height: calc(22px * var(--pin-scale, 1));
   bottom: 1px;
+}
+
+.city-node[data-sprite="hq"] .map-sprite {
+  max-height: calc(22px * var(--pin-scale, 1));
+}
+
+.city-node[data-sprite="vegas"] .map-sprite,
+.city-node[data-sprite="tucson"] .map-sprite,
+.city-node[data-sprite="plaza"] .map-sprite {
+  max-height: calc(28px * var(--pin-scale, 1));
 }
 
 .city-node.raising.selected .map-icon,
@@ -711,6 +723,9 @@ button {
   display: block;
   width: 100%;
   height: auto;
+  max-height: calc(36px * var(--pin-scale, 1));
+  object-fit: contain;
+  object-position: center bottom;
   image-rendering: auto;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
 }
@@ -1455,8 +1470,8 @@ button {
 
 .territory-seam {
   stroke: #f5f0e8;
-  stroke-width: 2.4;
-  opacity: 0.9;
+  stroke-width: 1.4;
+  opacity: 0.55;
   pointer-events: none;
 }
 

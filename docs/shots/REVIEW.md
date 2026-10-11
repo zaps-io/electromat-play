@@ -1,6 +1,6 @@
 # Empire playtest — rts-yard-27
 
-Replay stills: `?shot=contested-built` (sedans at the DC stalls, a truck at MCS, a queue past the stalls) · `?shot=states` (faint planned footprint, red scaffold with a progress bar, finished kit) · exit a contested yard at 1280×720 (territory fields, CLAIM tags, selected bracket).
+Replay stills at 1600×900: `?shot=contested-built` (sedans at the DC stalls, a truck at MCS, a queue past the stalls, the whole pad inside the frame) · `?shot=states` (faint planned footprint, red scaffold with a progress bar, finished kit) · exit a contested yard (territory fields, CLAIM tags clear of labels, selected bracket).
 
 Checked-in frames: `yard-traffic-27.png` · `yard-states-27.png` · `yard-map-27.png` · `yard-hover-left-26.png` · `yard-hover-right-26.png` · `yard-map-26.png` · `yard-pop-26.png`.
 
@@ -8,11 +8,11 @@ Checked-in frames: `yard-traffic-27.png` · `yard-states-27.png` · `yard-map-27
 
 Live play of rts-yard-26.
 
-- **Pad scale.** The yard zooms so the diamond covers at least 65% of the viewport width. Grid snap and the screen-matrix pointer pick stay on the same cells.
+- **Pad scale.** The whole pad, including kit height and the vehicle queue, fits inside the yard with about 16px of margin. Filling 65% of the viewport yields when that would clip a kit. Grid snap and the screen-matrix pointer pick stay on the same cells.
 - **Traffic.** Grey sedans sit on DC stalls and grey semis on MCS. Arrival count is demand times share. Cars past the stalls are the unmet queue.
 - **Kit states.** A planned slot is a faint footprint. A raising kit wears a faction-red scaffold and a progress bar on the building. A finished kit is solid and drops the scaffold.
 - **Strain.** With chargers and no BESS, cable glow flickers amber and idle stalls dim.
-- **Ownership.** Each held city has a soft field sized by demand and faded by share. A contested city splits the two colors with a seam. Objective cities pulse with a CLAIM · N MO tag, the selected city gets a bracket, and the other markers stay the same size. The objective banner pans to the target. The terrain is darker so the labels read.
+- **Ownership.** City coordinates are the rts-yard-25 set. Each held city has a small soft field sized by demand and faded by share, light enough that the terrain still reads. A contested city splits both colors with a seam. Objective cities pulse with a CLAIM · N MO tag set off to the side away from neighbors. The HQ sprite stays off every label. The selected city gets a bracket, and the other markers stay the same size. The objective banner pans to the target. The terrain is darker so the labels read.
 
 ## rts-yard-26
 

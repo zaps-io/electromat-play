@@ -2877,12 +2877,12 @@
       const rival = strongestRival(city);
       if (!you && !rival) continue;
       const hidden = rivalSite(city) && !cityRevealed(meta.id);
-      const veil = hidden ? 0.55 : 1;
-      const radius = 22 + meta.demand * 0.34;
+      const veil = hidden ? 0.45 : 1;
+      const radius = 10 + meta.demand * 0.1;
       const youShare = city.share[YOU] || 0;
       const rivShare = rival ? city.share[rival.id] || 0 : 0;
       if (you && rival) {
-        const fade = Math.max(0.16, Math.min(0.55, (0.12 + Math.max(youShare, rivShare) * 0.4) * veil));
+        const fade = Math.max(0.05, Math.min(0.14, (0.04 + Math.max(youShare, rivShare) * 0.1) * veil));
         const x = meta.x;
         const y = meta.y;
         const r = radius;
@@ -2895,7 +2895,7 @@
       } else {
         const color = you ? PAL.red : rival.color;
         const share = you ? youShare : rivShare;
-        const fade = Math.max(0.1, Math.min(0.42, (0.08 + share * 0.34) * veil));
+        const fade = Math.max(0.045, Math.min(0.12, (0.035 + share * 0.08) * veil));
         html += `<circle class="territory" cx="${meta.x}" cy="${meta.y}" r="${radius.toFixed(1)}" fill="${color}" opacity="${fade.toFixed(2)}"/>`;
       }
     }
@@ -3472,6 +3472,199 @@
     return [];
   }
 
+  function boxOf(el) {
+    if (!el) return null;
+    const b = el.getBoundingClientRect();
+    if (b.width < 1 || b.height < 1) return null;
+    return b;
+  }
+
+  function boxesHit(a, b) {
+    if (!a || !b) return false;
+    const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+    const oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+    return ox > 0.5 && oy > 0.5;
+  }
+
+  function labelOverlaps() {
+    const items = [];
+    document.querySelectorAll(".city-node").forEach((node) => {
+      const id = node.dataset.city || "";
+      const label = boxOf(node.querySelector(".city-label"));
+      const sprite = boxOf(node.querySelector(".map-icon"));
+      const tag = boxOf(node.querySelector(".obj-mo"));
+      if (label) items.push({ id, kind: "label", box: label });
+      if (sprite) items.push({ id, kind: "sprite", box: sprite });
+      if (tag) items.push({ id, kind: "tag", box: tag });
+    });
+    const hits = [];
+    for (let i = 0; i < items.length; i += 1) {
+      for (let j = i + 1; j < items.length; j += 1) {
+        const a = items[i];
+        const b = items[j];
+        const labelInvolved = a.kind === "label" || b.kind === "label";
+        if (!labelInvolved) continue;
+        if (!boxesHit(a.box, b.box)) continue;
+        hits.push({ a: `${a.id}:${a.kind}`, b: `${b.id}:${b.kind}` });
+      }
+    }
+    return hits;
+  }
+
+  function nearestCity(meta) {
+    let best = null;
+    let bestD = Infinity;
+    for (const other of CITIES) {
+      if (other.id === meta.id) continue;
+      const d = (other.x - meta.x) ** 2 + (other.y - meta.y) ** 2;
+      if (d < bestD) {
+        bestD = d;
+        best = other;
+      }
+    }
+    return best;
+  }
+
+  function applyTagSpot(tag, spot) {
+    tag.style.left = spot.left;
+    tag.style.right = spot.right;
+    tag.style.top = spot.top;
+    tag.style.bottom = spot.bottom;
+    tag.style.transform = spot.transform;
+  }
+
+  function tagSpots(meta) {
+    const near = nearestCity(meta);
+    const goRight = !near || near.x < meta.x;
+    const right = { left: "calc(100% + 8px)", right: "auto", top: "4px", bottom: "auto", transform: "none" };
+    const left = { left: "auto", right: "calc(100% + 8px)", top: "4px", bottom: "auto", transform: "none" };
+    const above = { left: "50%", right: "auto", top: "auto", bottom: "calc(100% + 2px)", transform: "translateX(-50%)" };
+    const below = { left: "50%", right: "auto", top: "calc(100% + 22px)", bottom: "auto", transform: "translateX(-50%)" };
+    return goRight ? [right, left, above, below] : [left, right, above, below];
+  }
+
+  function foreignHits(el, ownId) {
+    let n = 0;
+    document.querySelectorAll(".city-label, .obj-mo, .map-icon").forEach((other) => {
+      if (other === el) return;
+      const node = other.closest(".city-node");
+      const id = node ? node.dataset.city : "";
+      if (id === ownId && other.classList.contains("map-icon")) return;
+      if (id === ownId && other.classList.contains("city-label") && el.classList.contains("city-label")) return;
+      if (boxesHit(el.getBoundingClientRect(), other.getBoundingClientRect())) n += 1;
+    });
+    return n;
+  }
+
+  function settleMapChrome() {
+    const stage = $("map-stage");
+    const h = stage ? stage.clientHeight : 500;
+    const pin = Math.max(0.55, Math.min(1, h / 560));
+    document.documentElement.style.setProperty("--pin-scale", pin.toFixed(3));
+    document.querySelectorAll(".city-label").forEach((label) => {
+      label.dataset.nudgeX = "0";
+      label.style.transform = "translateX(-50%)";
+    });
+    document.querySelectorAll(".map-icon").forEach((icon) => {
+      icon.dataset.nudgeX = "0";
+      icon.dataset.nudgeY = "0";
+      icon.style.translate = "0 0";
+    });
+    document.querySelectorAll(".city-node.obj-target").forEach((node) => {
+      const tag = node.querySelector(".obj-mo");
+      const meta = CITY_BY_ID[node.dataset.city];
+      if (!tag || !meta) return;
+      let chosen = tagSpots(meta)[0];
+      let best = Infinity;
+      for (const spot of tagSpots(meta)) {
+        applyTagSpot(tag, spot);
+        const score = foreignHits(tag, node.dataset.city);
+        if (score < best) {
+          best = score;
+          chosen = spot;
+        }
+        if (score === 0) break;
+      }
+      applyTagSpot(tag, chosen);
+    });
+    const labels = [...document.querySelectorAll(".city-label")];
+    for (let pass = 0; pass < 12; pass += 1) {
+      let moved = false;
+      for (let i = 0; i < labels.length; i += 1) {
+        for (let j = i + 1; j < labels.length; j += 1) {
+          const a = labels[i].getBoundingClientRect();
+          const b = labels[j].getBoundingClientRect();
+          if (!boxesHit(a, b)) continue;
+          const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+          const shift = a.left <= b.left ? labels[j] : labels[i];
+          const dir = a.left <= b.left ? 1 : -1;
+          const cur = Number(shift.dataset.nudgeX || 0);
+          const next = cur + dir * (ox + 4);
+          shift.dataset.nudgeX = String(next);
+          shift.style.transform = `translateX(calc(-50% + ${next}px))`;
+          moved = true;
+        }
+      }
+      if (!moved) break;
+    }
+    document.querySelectorAll(".map-icon").forEach((icon) => {
+      const node = icon.closest(".city-node");
+      const own = node ? node.dataset.city : "";
+      for (let step = 0; step < 14; step += 1) {
+        const a = icon.getBoundingClientRect();
+        let hit = null;
+        document.querySelectorAll(".city-label, .obj-mo").forEach((other) => {
+          if (hit) return;
+          const host = other.closest(".city-node");
+          if (host && host.dataset.city === own && other.classList.contains("city-label") === false && other.classList.contains("obj-mo") === false) return;
+          const b = other.getBoundingClientRect();
+          if (!boxesHit(a, b)) return;
+          hit = b;
+        });
+        if (!hit) break;
+        const acx = (a.left + a.right) / 2;
+        const acy = (a.top + a.bottom) / 2;
+        const bcx = (hit.left + hit.right) / 2;
+        const bcy = (hit.top + hit.bottom) / 2;
+        let nx = Number(icon.dataset.nudgeX || 0);
+        let ny = Number(icon.dataset.nudgeY || 0);
+        nx += Math.sign(acx - bcx || (own === "phoenix" ? 0 : 1)) * 6;
+        ny += Math.sign(acy - bcy || -1) * 6;
+      icon.dataset.nudgeX = String(nx);
+      icon.dataset.nudgeY = String(ny);
+      icon.style.translate = `${nx}px ${ny}px`;
+    }
+    });
+    for (let pass = 0; pass < 16; pass += 1) {
+      let moved = false;
+      document.querySelectorAll(".city-label, .obj-mo").forEach((label) => {
+        const own = label.closest(".city-node");
+        const ownId = own ? own.dataset.city : "";
+        const a = label.getBoundingClientRect();
+        document.querySelectorAll(".map-icon, .city-label, .obj-mo").forEach((other) => {
+          if (other === label) return;
+          const host = other.closest(".city-node");
+          if (host && host.dataset.city === ownId && other.classList.contains("map-icon") && label.classList.contains("obj-mo")) return;
+          if (!boxesHit(a, other.getBoundingClientRect())) return;
+          const b = other.getBoundingClientRect();
+          const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+          const cur = Number(label.dataset.nudgeX || 0);
+          const dir = (a.left + a.right) / 2 >= (b.left + b.right) / 2 ? 1 : -1;
+          const next = cur + dir * (ox + 4);
+          label.dataset.nudgeX = String(next);
+          if (label.classList.contains("city-label")) {
+            label.style.transform = `translateX(calc(-50% + ${next}px))`;
+          } else {
+            const base = label.style.transform && label.style.transform !== "none" ? label.style.transform : "none";
+            label.style.translate = `${next}px 0`;
+          }
+          moved = true;
+        });
+      });
+      if (!moved) break;
+    }
+  }
+
   function renderCities() {
     const layer = $("city-layer");
     layer.innerHTML = "";
@@ -3618,6 +3811,10 @@
         holder.className = "crew-tokens map";
         holder.innerHTML = crewTokenMarkup(meta.id);
         if (holder.innerHTML) btn.append(holder);
+      }
+      const sprite = btn.querySelector(".map-sprite");
+      if (sprite && !sprite.complete) {
+        sprite.addEventListener("load", () => settleMapChrome(), { once: true });
       }
       layer.appendChild(btn);
     }
@@ -4892,9 +5089,7 @@
     const ratio = aw / ah;
     const floorW = Math.min(boxW * 0.76, 800);
     const viewW = window.innerWidth || boxW;
-    const gridSpanX = 0.70;
-    const yardEl = $("site-yard");
-    const intelOpen = yardEl && yardEl.classList.contains("has-intel");
+    const intelOpen = yard.classList.contains("has-intel");
     let head = 0;
     if (intelOpen) {
       ["site-plate", "site-overlay-intel"].forEach((id) => {
@@ -4902,36 +5097,51 @@
         if (el && !el.classList.contains("hidden")) head += el.offsetHeight;
       });
     }
-    const gutter = intelOpen ? 12 : 0;
-    const availH = intelOpen ? Math.max(160, boxH - head - gutter - 4) : Math.max(160, boxH * 0.96);
-    let w = Math.min(boxW * 0.98, availH * ratio);
-    let h = w / ratio;
-    if (h > availH) {
-      h = availH;
-      w = h * ratio;
-    }
-    if (w < floorW) w = floorW;
-    const havePad = w * gridSpanX;
-    const wantPad = viewW * 0.68;
-    const zoom = Math.max(1, wantPad / Math.max(1, havePad));
+    const margin = 16;
+    const safeW = Math.max(80, boxW - margin * 2);
+    const safeH = Math.max(80, boxH - head - margin * 2);
+    let w = Math.min(safeW, Math.max(floorW, safeH * ratio));
+    if (w > safeW) w = safeW;
     stack.style.aspectRatio = css;
     stack.style.width = `${Math.round(w)}px`;
     stack.style.maxWidth = "none";
-    stack.dataset.padFrac = viewW ? ((havePad * zoom) / viewW).toFixed(2) : "";
-    stack.style.transformOrigin = intelOpen ? "center 18%" : "center center";
-    if (intelOpen) {
-      stack.style.position = "relative";
-      stack.style.left = "50%";
-      stack.style.top = "auto";
-      stack.style.margin = `${gutter}px 0 0`;
-      stack.style.transform = `translateX(-50%) scale(${zoom.toFixed(3)})`;
-    } else {
-      stack.style.position = "";
-      stack.style.left = "";
-      stack.style.top = "50%";
-      stack.style.margin = "";
-      stack.style.transform = `translate(-50%, -50%) scale(${zoom.toFixed(3)})`;
-    }
+    stack.style.position = "absolute";
+    stack.style.left = "0px";
+    stack.style.top = "0px";
+    stack.style.margin = "0";
+    stack.style.transformOrigin = "0 0";
+    stack.style.transform = "none";
+    const yardRect = yard.getBoundingClientRect();
+    const bounds = padContentBounds(stack) || stack.getBoundingClientRect();
+    const localX = bounds.left - yardRect.left;
+    const localY = bounds.top - yardRect.top;
+    const z = Math.min(safeW / Math.max(1, bounds.width), safeH / Math.max(1, bounds.height));
+    const tx = margin + (safeW - bounds.width * z) / 2 - localX * z;
+    const ty = head + margin + (safeH - bounds.height * z) / 2 - localY * z;
+    stack.style.transform = `translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px) scale(${z.toFixed(4)})`;
+    stack.dataset.padFrac = viewW ? ((bounds.width * z) / viewW).toFixed(2) : "";
+  }
+
+  function padContentBounds(stack) {
+    const nodes = stack.querySelectorAll(
+      ".site-bldg, .yard-vehicle, .yard-queue-tag, .site-gravel, .kit-progress, .site-scaffold, .site-footprint"
+    );
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    let n = 0;
+    nodes.forEach((el) => {
+      const r = el.getBoundingClientRect();
+      if (r.width < 0.5 && r.height < 0.5) return;
+      n += 1;
+      minX = Math.min(minX, r.left);
+      minY = Math.min(minY, r.top);
+      maxX = Math.max(maxX, r.right);
+      maxY = Math.max(maxY, r.bottom);
+    });
+    if (!n) return null;
+    return { left: minX, top: minY, width: maxX - minX, height: maxY - minY };
   }
 
   function inspectRaising(type) {
@@ -5615,6 +5825,7 @@
     renderOps();
     renderWaypointHint();
     $("map-stage")?.classList.toggle("await-waypoint", Boolean(waypointCrew()) && !siteView);
+    settleMapChrome();
   }
 
   function hasSave() {
@@ -6061,6 +6272,12 @@
     document.querySelectorAll(".speed button").forEach((b) => {
       b.addEventListener("click", () => setSpeed(Number(b.dataset.speed)));
     });
+    window.addEventListener("resize", () => {
+      settleMapChrome();
+      const stack = $("site-stack");
+      if (stack && siteView) frameSiteStack(stack, stack.style.aspectRatio || "220 / 131");
+    });
+
     document.addEventListener("keydown", (e) => {
       const onBoard = state && !$("board-screen").classList.contains("hidden");
       const typing = e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA");
@@ -6213,6 +6430,7 @@
     applyPlayerPrice: (id, price) => applyPlayerPrice(state.cities[id], price),
     placementRead: (id, type) => placementRead(state.cities[id], type),
     traffic: (id) => trafficPlan(state.cities[id]),
+    labelOverlaps: () => labelOverlaps(),
     strained: (id) => gridStrained(state.cities[id]),
     panToCity: (id) => panToCity(id),
     smartSlot: (id) => {
