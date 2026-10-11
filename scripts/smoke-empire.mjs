@@ -468,6 +468,7 @@ const yard28 = [
   ["docs/shots/yard-arm-b-28.png", 80000],
   ["docs/shots/yard-floats-28.png", 80000],
   ["docs/shots/yard-map-28.png", 80000],
+  ["docs/shots/yard-map-zoom-28.png", 80000],
 ];
 for (const [rel, min] of yard28) {
   const p = join(root, rel);
@@ -475,7 +476,7 @@ for (const [rel, min] of yard28) {
   else if (statSync(p).size < min) fail(`${rel} too small (${statSync(p).size} bytes)`);
 }
 if (!process.exitCode) ok("yard-28 arm, float, and map stills");
-if (!review.includes("yard-arm-a-28.png") || !review.includes("yard-arm-b-28.png") || !review.includes("yard-floats-28.png") || !review.includes("yard-map-28.png")) {
+if (!review.includes("yard-arm-a-28.png") || !review.includes("yard-arm-b-28.png") || !review.includes("yard-floats-28.png") || !review.includes("yard-map-28.png") || !review.includes("yard-map-zoom-28.png")) {
   fail("REVIEW must list the yard-28 stills");
 } else ok("REVIEW lists yard-28 stills");
 

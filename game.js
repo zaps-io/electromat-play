@@ -166,23 +166,27 @@
     ampfield: { id: "ampfield", name: "AMPFIELD", color: "#2EAF6A", home: "albuquerque", unlock: 24, priceBias: 1.0 },
   };
 
+  // Painted terrain is a 1200×800 plate. Pins use one affine lat/lon → pixel
+  // plane, solved so Los Angeles, Denver, and El Paso sit on their anchors:
+  //   x = 31.125726·lon + 0.435784·lat + 3890.582
+  //   y = -0.925216·lon - 50.595700·lat + 2068.494
   const CITIES = [
-    { id: "sacramento", name: "Sacramento", state: "CA", x: 235, y: 225, demand: 90, truck: 25, land: 1.15, neighbors: ["reno", "la"] },
-    { id: "reno", name: "Reno", state: "NV", x: 285, y: 175, demand: 55, truck: 30, land: 0.9, neighbors: ["sacramento", "vegas", "slc"] },
-    { id: "slc", name: "Salt Lake City", state: "UT", x: 400, y: 130, demand: 95, truck: 40, land: 1.05, neighbors: ["reno", "stgeorge", "grandjunction", "denver"] },
-    { id: "grandjunction", name: "Grand Junction", state: "CO", x: 520, y: 210, demand: 40, truck: 35, land: 0.82, neighbors: ["denver", "flagstaff", "santafe", "slc"] },
+    { id: "sacramento", name: "Sacramento", state: "CA", x: 126, y: 229, demand: 90, truck: 25, land: 1.15, neighbors: ["reno", "la"] },
+    { id: "reno", name: "Reno", state: "NV", x: 179, y: 179, demand: 55, truck: 30, land: 0.9, neighbors: ["sacramento", "vegas", "slc"] },
+    { id: "slc", name: "Salt Lake City", state: "UT", x: 426, y: 110, demand: 95, truck: 40, land: 1.05, neighbors: ["reno", "stgeorge", "grandjunction", "denver"] },
+    { id: "grandjunction", name: "Grand Junction", state: "CO", x: 529, y: 193, demand: 40, truck: 35, land: 0.82, neighbors: ["denver", "flagstaff", "santafe", "slc"] },
     { id: "denver", name: "Denver", state: "CO", x: 640, y: 155, demand: 120, truck: 35, land: 1.2, neighbors: ["santafe", "grandjunction", "slc"] },
     { id: "la", name: "Los Angeles", state: "CA", x: 225, y: 455, demand: 210, truck: 55, land: 1.7, neighbors: ["vegas", "sandiego", "sacramento"] },
-    { id: "vegas", name: "Las Vegas", state: "NV", x: 300, y: 330, demand: 140, truck: 50, land: 1.35, neighbors: ["phoenix", "la", "stgeorge", "reno"] },
-    { id: "stgeorge", name: "St. George", state: "UT", x: 360, y: 285, demand: 45, truck: 28, land: 0.85, neighbors: ["vegas", "flagstaff", "slc"] },
-    { id: "flagstaff", name: "Flagstaff", state: "AZ", x: 400, y: 370, demand: 50, truck: 22, land: 0.88, neighbors: ["phoenix", "stgeorge", "grandjunction"] },
-    { id: "phoenix", name: "Phoenix", state: "AZ", x: 420, y: 455, demand: 150, truck: 45, land: 1.0, neighbors: ["tucson", "flagstaff", "vegas", "albuquerque"] },
-    { id: "sandiego", name: "San Diego", state: "CA", x: 245, y: 555, demand: 130, truck: 30, land: 1.4, neighbors: ["la", "tucson"] },
-    { id: "tucson", name: "Tucson", state: "AZ", x: 455, y: 545, demand: 80, truck: 30, land: 0.92, neighbors: ["phoenix", "elpaso", "sandiego"] },
-    { id: "santafe", name: "Santa Fe", state: "NM", x: 600, y: 330, demand: 48, truck: 18, land: 0.95, neighbors: ["albuquerque", "denver", "grandjunction"] },
-    { id: "albuquerque", name: "Albuquerque", state: "NM", x: 580, y: 420, demand: 85, truck: 40, land: 0.98, neighbors: ["phoenix", "santafe", "elpaso", "dallas"] },
+    { id: "vegas", name: "Las Vegas", state: "NV", x: 323, y: 345, demand: 140, truck: 50, land: 1.35, neighbors: ["phoenix", "la", "stgeorge", "reno"] },
+    { id: "stgeorge", name: "St. George", state: "UT", x: 372, y: 297, demand: 45, truck: 28, land: 0.85, neighbors: ["vegas", "flagstaff", "slc"] },
+    { id: "flagstaff", name: "Flagstaff", state: "AZ", x: 431, y: 391, demand: 50, truck: 22, land: 0.88, neighbors: ["phoenix", "stgeorge", "grandjunction"] },
+    { id: "phoenix", name: "Phoenix", state: "AZ", x: 417, y: 480, demand: 150, truck: 45, land: 1.0, neighbors: ["tucson", "flagstaff", "vegas", "albuquerque"] },
+    { id: "sandiego", name: "San Diego", state: "CA", x: 258, y: 522, demand: 130, truck: 30, land: 1.4, neighbors: ["la", "tucson"] },
+    { id: "tucson", name: "Tucson", state: "AZ", x: 451, y: 541, demand: 80, truck: 30, land: 0.92, neighbors: ["phoenix", "elpaso", "sandiego"] },
+    { id: "santafe", name: "Santa Fe", state: "NM", x: 609, y: 361, demand: 48, truck: 18, land: 0.95, neighbors: ["albuquerque", "denver", "grandjunction"] },
+    { id: "albuquerque", name: "Albuquerque", state: "NM", x: 586, y: 392, demand: 85, truck: 40, land: 0.98, neighbors: ["phoenix", "santafe", "elpaso", "dallas"] },
     { id: "elpaso", name: "El Paso", state: "TX", x: 590, y: 560, demand: 75, truck: 55, land: 0.9, neighbors: ["tucson", "albuquerque", "dallas"] },
-    { id: "dallas", name: "Dallas", state: "TX", x: 900, y: 430, demand: 170, truck: 80, land: 1.25, neighbors: ["albuquerque", "elpaso"] },
+    { id: "dallas", name: "Dallas", state: "TX", x: 892, y: 500, demand: 170, truck: 80, land: 1.25, neighbors: ["albuquerque", "elpaso"] },
   ];
 
   const CITY_BY_ID = Object.fromEntries(CITIES.map((c) => [c.id, c]));
@@ -2956,9 +2960,10 @@
     const sw = stage.clientWidth;
     const sh = stage.clientHeight;
     if (sw < 40 || sh < 40) return;
+    const { fw, fh } = frameSize(sw, sh);
     mapCam.scale = 1.85;
-    const cx = (meta.x / 1200) * sw;
-    const cy = (meta.y / 800) * sh;
+    const cx = (meta.x / 1200) * fw;
+    const cy = (meta.y / 800) * fh;
     mapCam.x = sw * 0.46 - cx * mapCam.scale;
     mapCam.y = sh * 0.42 - cy * mapCam.scale;
     clampCam();
@@ -3967,9 +3972,73 @@
     renderFactionLegend();
   }
 
+  const MAP_ASPECT = 1200 / 800;
+  let mapFramed = false;
+  let mapFitted = false;
+
+  function frameSize(sw, sh) {
+    // One extra pixel past the cover size so subpixel rounding cannot open a gap.
+    if (sw / sh > MAP_ASPECT) return { fw: Math.ceil(sw) + 1, fh: Math.ceil(sw / MAP_ASPECT) + 1 };
+    return { fw: Math.ceil(sh * MAP_ASPECT) + 1, fh: Math.ceil(sh) + 1 };
+  }
+
+  function layoutMapFrame() {
+    const stage = $("map-stage");
+    const frame = $("map-frame");
+    if (!stage || !frame) return null;
+    const sw = stage.clientWidth;
+    const sh = stage.clientHeight;
+    if (sw < 40 || sh < 40) return null;
+    const { fw, fh } = frameSize(sw, sh);
+    frame.style.width = `${fw}px`;
+    frame.style.height = `${fh}px`;
+    if (!mapFramed) {
+      mapCam.scale = 1;
+      const ys = CITIES.map((c) => (c.y / 800) * fh);
+      const xs = CITIES.map((c) => (c.x / 1200) * fw);
+      const top = Math.min(...ys) - 22;
+      const bot = Math.max(...ys) + 32;
+      const left = Math.min(...xs) - 64;
+      const right = Math.max(...xs) + 72;
+      mapCam.x = (sw - (right - left)) / 2 - left;
+      mapCam.y = (sh - (bot - top)) / 2 - top;
+      mapFramed = true;
+    }
+    return { sw, sh, fw, fh };
+  }
+
+  // Once, after the pins and labels exist, shift the opening view so the
+  // northern icon and the southern name both sit inside the stage.
+  function fitCityCam() {
+    if (mapFitted) return;
+    const stage = $("map-stage");
+    if (!stage) return;
+    const box = stage.getBoundingClientRect();
+    if (box.height < 40) return;
+    let minTop = Infinity;
+    let maxBot = -Infinity;
+    document.querySelectorAll(".city-node").forEach((node) => {
+      [node.querySelector(".map-icon"), node.querySelector(".city-label")].forEach((el) => {
+        if (!el) return;
+        const r = el.getBoundingClientRect();
+        if (r.width < 2 || r.height < 2) return;
+        minTop = Math.min(minTop, r.top);
+        maxBot = Math.max(maxBot, r.bottom);
+      });
+    });
+    if (!Number.isFinite(minTop)) return;
+    const pad = 6;
+    const overflowTop = box.top + pad - minTop;
+    const overflowBot = maxBot - (box.bottom - pad);
+    mapCam.y -= (overflowBot - overflowTop) / 2;
+    mapFitted = true;
+  }
+
   function applyMapCam() {
     const cam = $("map-cam");
     if (!cam) return;
+    layoutMapFrame();
+    clampCam();
     cam.style.transform = `translate(${mapCam.x}px, ${mapCam.y}px) scale(${mapCam.scale})`;
     $("btn-exit-site")?.classList.toggle("hidden", !siteView);
     $("map-stage")?.classList.toggle("site-open", Boolean(siteView));
@@ -5600,16 +5669,21 @@
 
   function clampCam() {
     const stage = $("map-stage");
-    if (!stage) return;
+    const frame = $("map-frame");
+    if (!stage || !frame) return;
     const sw = stage.clientWidth;
     const sh = stage.clientHeight;
+    if (sw < 40 || sh < 40) return;
+    const { fw, fh } = frameSize(sw, sh);
+    frame.style.width = `${fw}px`;
+    frame.style.height = `${fh}px`;
     mapCam.scale = Math.min(3.4, Math.max(1, mapCam.scale));
-    const slackX = sw * 0.45;
-    const slackY = sh * 0.45;
-    const minX = sw - sw * mapCam.scale - slackX;
-    const maxX = slackX;
-    const minY = sh - sh * mapCam.scale - slackY;
-    const maxY = slackY;
+    const visW = fw * mapCam.scale;
+    const visH = fh * mapCam.scale;
+    const minX = Math.min(0, sw - visW);
+    const maxX = 0;
+    const minY = Math.min(0, sh - visH);
+    const maxY = 0;
     mapCam.x = Math.min(maxX, Math.max(minX, mapCam.x));
     mapCam.y = Math.min(maxY, Math.max(minY, mapCam.y));
   }
@@ -6060,12 +6134,17 @@
     renderInspector();
     renderTray();
     renderTicker();
-    applyMapCam();
     renderSiteYard();
     renderOps();
     renderWaypointHint();
     $("map-stage")?.classList.toggle("await-waypoint", Boolean(waypointCrew()) && !siteView);
+    applyMapCam();
     settleMapChrome();
+    if (!mapFitted && !siteView) {
+      fitCityCam();
+      applyMapCam();
+      settleMapChrome();
+    }
   }
 
   function hasSave() {
@@ -6513,6 +6592,7 @@
       b.addEventListener("click", () => setSpeed(Number(b.dataset.speed)));
     });
     window.addEventListener("resize", () => {
+      applyMapCam();
       settleMapChrome();
       const stack = $("site-stack");
       if (stack && siteView) frameSiteStack(stack, stack.style.aspectRatio || "220 / 131");
